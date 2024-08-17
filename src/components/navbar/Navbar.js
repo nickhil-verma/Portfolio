@@ -26,14 +26,14 @@ const Navbar = () => {
 
   return (
     <nav id="navbar"className="  sticky top-0 p-2 z-40  flex justify-between items-center bg-light dark:bg-dark shadow-md transition-colors duration-500">
-      <a href=''><img src={logoSrc} className="w-11 fill-current text-green-600 duration-700" alt="Logo" /></a>
+      <a href=''><img src={logoSrc} className=" w-11 fill-current text-green-600 duration-700" alt="Logo" /></a>
       <ul className="hidden dark:text-white duration-700 md:flex md:space-x-8 md:items-center flex-grow justify-center">
         <a href='#projects'><li className="text-lg  hover:cursor-pointer hover:scale-105 duration-200">Projects</li></a>
         <a href='#achivements'><li className="text-lg hover:cursor-pointer hover:scale-105 duration-200">Achievements</li></a>
         <a href='#contact'><li className="text-lg hover:cursor-pointer hover:scale-105 duration-200">Contact</li></a>
       </ul>
       <button
-        className="text-xl p-2 rounded-full focus:outline-none transition-transform duration-800 transform hover:scale-110"
+        className="  text-xl p-2 rounded-full focus:outline-none transition-transform duration-800 transform hover:scale-110"
         onClick={changeTheme}
       >
         {theme === 'light' ? <FaMoon className="text-light" /> : <IoSunny className="text-dark" />}
