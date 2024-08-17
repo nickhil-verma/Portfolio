@@ -1,0 +1,94 @@
+.Loading-page {
+    background-color: white;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    z-index: 50;
+    overflow: hidden; /* Prevents any overflow from affecting the layout */
+}
+
+.loading-gifholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 1rem; /* Space below the logo and text */
+}
+
+.loading-gifholder img {
+    margin-right: 1rem; /* Space between the logo and the text */
+    max-width: 100%; /* Ensures the image scales properly */
+    height: auto; /* Maintains aspect ratio */
+}
+
+.text-holder {
+    display: flex;
+    align-items: center;
+    text-align: center; /* Center text for better alignment */
+}
+
+.text-holder h1 {
+    font-size: 2.5rem; /* Default font size for large devices */
+    font-family: Poppins, sans-serif;
+    font-weight: 200;
+    margin-right: 1rem; /* Space between each h1 */
+}
+
+#container {
+    width: 60%; /* Default width for large devices */
+    max-width: 600px; /* Ensure the width does not exceed a certain value */
+    height: 10px;
+    margin: 20px auto 0;
+    padding: 2px 1px;
+    overflow: hidden;
+    font-size: 0;
+}
+
+.box {
+    width: 50%;
+    height: 100%;
+    background: #ffc727;
+    display: inline-block;
+    margin-right: 2px;
+    animation: loader 0.5s infinite;
+    animation-timing-function: linear;
+}
+
+@keyframes loader {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+@media screen and (max-width: 862px) {
+    .text-holder h1 {
+        font-size: 1.8rem; /* Adjust font size for medium devices */
+    }
+
+    #container {
+        width: 70%; /* Adjust width for medium devices */
+    }
+}
+
+@media screen and (max-width: 640px) {
+    .text-holder {
+        flex-direction: column; /* Stack text vertically on small devices */
+    }
+
+    .text-holder h1 {
+        font-size: 1.2rem; /* Further reduced font size for small devices */
+        margin-right: 0; /* Remove margin on small screens */
+        margin-bottom: 0.5rem; /* Add space between stacked text elements */
+    }
+
+    #container {
+        width: 90%; /* Full width for very small screens */
+    }
+}

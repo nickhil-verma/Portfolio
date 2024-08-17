@@ -1,13 +1,22 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+/* Optional Custom Dark Mode Styles */
+@layer components {
+  .dark .custom-component {
+    @apply bg-gray-900 text-white;
+  }
+}
+*{
+  scroll-behavior: smooth;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
+/* button{
+  border: solid black 1.5px;
+  padding:  5px 10px  5px 10px ;
+  border-radius: 20px;
+  margin: 5px;
+  box-shadow: 2.5px 5px #c2c2c2;
+} */
