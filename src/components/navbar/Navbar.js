@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { FaMoon } from 'react-icons/fa';
 import { IoSunny } from 'react-icons/io5';
 import LOGO from '../../../src/logo.svg';
-import "./Navbar.css";
+
+
 import DARKLOGO from '../../../src/logoDARK.svg';
 
 const Navbar = () => {

@@ -13,7 +13,7 @@ const LoadingPage = () => {
         className="Loading-page dark:bg-dark dark:text-white w-full overflow-hidden"
       >
         <div className="loading-gifholder flex justify-center items-center">
-          <img className="w-28 mr-4" src={LOGO} alt="Logo" />
+          <motion.img className="w-28 mr-4" src={LOGO} alt="Logo" />
 
           <div className="text-holder flex">
             <motion.h1
