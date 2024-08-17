@@ -28,7 +28,7 @@ const Hero = () => {
             </p>
             
             {/* Custom Buttons */}
-            <CustomButton text="Resume" />
+            <a href='https://docs.google.com/document/d/1QjrcRxxFIcbXDU_ig183W7Jeud_3yybY3aeWLlu2x5I/edit?usp=sharing'><CustomButton text="Resume" /></a>
             
           </div>
         </div>

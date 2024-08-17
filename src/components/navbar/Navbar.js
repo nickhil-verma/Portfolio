@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaMoon } from 'react-icons/fa';
 import { IoSunny } from 'react-icons/io5';
 import LOGO from '../../../src/logo.svg';
+import "./Navbar.css";
 import DARKLOGO from '../../../src/logoDARK.svg';
 
 const Navbar = () => {
@@ -24,8 +25,8 @@ const Navbar = () => {
   const logoSrc = theme === 'dark' ? DARKLOGO : LOGO;
 
   return (
-    <nav className="p-2 z-40 sticky top-0 flex justify-between items-center bg-light dark:bg-dark shadow-md transition-colors duration-500">
-      <img src={logoSrc} className="w-11 fill-current text-green-600 duration-700" alt="Logo" />
+    <nav id="navbar"className="  sticky top-0 p-2 z-40  flex justify-between items-center bg-light dark:bg-dark shadow-md transition-colors duration-500">
+      <a href=''><img src={logoSrc} className="w-11 fill-current text-green-600 duration-700" alt="Logo" /></a>
       <ul className="hidden dark:text-white duration-700 md:flex md:space-x-8 md:items-center flex-grow justify-center">
         <a href='#projects'><li className="text-lg  hover:cursor-pointer hover:scale-105 duration-200">Projects</li></a>
         <a href='#achivements'><li className="text-lg hover:cursor-pointer hover:scale-105 duration-200">Achievements</li></a>
