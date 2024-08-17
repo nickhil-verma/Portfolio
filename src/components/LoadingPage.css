@@ -1,6 +1,8 @@
-.Loading-page {
+#LoadingPage {
     background-color: white;
     width: 100vw;
+    animation: fadeOut 1s ease-out forwards; /* 1 second fade-out duration */
+    animation-delay: 1s; 
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -10,7 +12,14 @@
     z-index: 50;
     overflow: hidden; /* Prevents any overflow from affecting the layout */
 }
-
+@keyframes fadeOut {
+    0% {
+      opacity: 1; /* Fully visible */
+    }
+    100% {
+      opacity: 0; /* Fully transparent */
+    }
+  }
 .loading-gifholder {
     display: flex;
     align-items: center;

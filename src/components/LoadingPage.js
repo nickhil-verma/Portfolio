@@ -1,12 +1,26 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import './LoadingPage.css';
 import LOGO from '../../src/logo.svg';
 
 const LoadingPage = () => {
+  useEffect(() => {
+    // Set a timeout to hide the LoadingPage after 1000ms (1 second)
+    const timer = setTimeout(() => {
+      const loadingPageElement = document.getElementById('LoadingPage');
+      if (loadingPageElement) {
+        loadingPageElement.style.display = 'none';
+      }
+    }, 2500);
+
+    // Clear the timeout if the component is unmounted before the timeout completes
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <>
       <motion.div
+        id='LoadingPage'
         initial={{ y: 0, opacity: 1, rotateY: 0 }}
         whileInView={{ y: -1200, opacity: 0, rotateY: 25 }}
         transition={{ delay: 2, duration: 1 }}
