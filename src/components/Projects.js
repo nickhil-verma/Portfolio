@@ -2,9 +2,19 @@ import React, { useState } from 'react';
 import { FaGithub } from "react-icons/fa";
 import { motion } from 'framer-motion';
 import CustomButton from './CustomButton';
+
 const Projects = () => {
   const [visibleProjects, setVisibleProjects] = useState(3);
-
+  const bounceVariants = {
+    animate: {
+      y: [0, -10, 0, -5, 0],
+      transition: {
+        duration: 2,
+        repeat: Infinity,
+        repeatType: 'loop',
+      },
+    },
+  };
   const projects = [
     {
       id: 1,
@@ -57,6 +67,8 @@ const Projects = () => {
 
   const showLessProjects = () => {
     setVisibleProjects(3);
+    // Smooth scroll to the top of the projects section
+    document.getElementById('projects').scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -73,7 +85,7 @@ const Projects = () => {
           {projects.slice(0, visibleProjects).map((project) => (
             <motion.div
               key={project.id}
-              className="bg-white dark:bg-lessdark p-6 rounded-lg   flex flex-col duration-700 items-center"
+              className="bg-white dark:bg-lessdark p-6 rounded-lg flex flex-col duration-700 items-center"
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -91,20 +103,15 @@ const Projects = () => {
 
       <div className="text-center mt-8 duration-700">
         {visibleProjects < projects.length ? (
-          // <button
-          //   onClick={showMoreProjects}
-          //  className='border dark:border-white dark:text-white hover:bg-yellow duration-700 border-black border-solid p-2.5 px-3 py-2 rounded-2xl m-2 shadow-md'
-          // >
-          //   Expand
-          // </button>
-          <a onClick={showMoreProjects}><CustomButton  text="EXPAND"></CustomButton></a>
+          <a onClick={showMoreProjects} className="block">
+           <motion.div variants={bounceVariants} animate="animate">
+            <CustomButton text="EXPAND" />
+          </motion.div>
+          </a>
         ) : (
-          // <button
-          //   onClick={showLessProjects}
-          //   className='border dark:border-white dark:text-white hover:bg-yellow duration-700 border-black border-solid p-2.5 px-3 py-2 rounded-2xl m-2 shadow-md'>
-          //   Collapse
-          // </button>
-          <a onClick={showLessProjects}><CustomButton  text="COLLAPSE"></CustomButton></a>
+          <a onClick={showLessProjects} className="  block">
+            <CustomButton text="COLLAPSE" />
+          </a>
         )}
       </div>
     </div>

@@ -5,8 +5,8 @@ import { AiFillInstagram } from "react-icons/ai";
 import { motion } from 'framer-motion';
 import emailjs from '@emailjs/browser';
 import CustomButton from './CustomButton';
-import { toast, ToastContainer } from 'react-toastify'; // Import Toastify
-import 'react-toastify/dist/ReactToastify.css'; // Import the CSS for Toastify
+import { toast, ToastContainer } from 'react-toastify'; 
+import 'react-toastify/dist/ReactToastify.css'; 
 import ContactUS from '../../src/img/Contactus.gif'
 
 const Contact = () => {
@@ -26,21 +26,20 @@ const Contact = () => {
             console.log('Email sent successfully:', result.text);
             form.current.reset();
             setDone(true);
-            toast.success("Message sent successfully!"); // Success message
+            toast.success("Message sent successfully!"); 
             setTimeout(() => {
-                toast.info("Check your email for confirmation."); // Check your mail message after 1 second
+                toast.info("Check your email for confirmation."); 
             }, 1000);
         })
         .catch((error) => {
             console.error('Email not sent:', error);
-            toast.error("Failed to send message. Please try again."); // Error message
+            toast.error("Failed to send message. Please try again."); 
         });
     };
 
     const handleButtonClick = (e) => {
         e.preventDefault();
 
-        // Validate form fields
         const formElements = form.current.elements;
         let allFilled = true;
 
@@ -52,9 +51,9 @@ const Contact = () => {
         }
 
         if (allFilled) {
-            sendEmail(e); // Trigger form submission
+            sendEmail(e); 
         } else {
-            toast.error("Please fill out all required fields."); // Show error message
+            toast.error("Please fill out all required fields."); 
         }
     };
 
@@ -149,19 +148,16 @@ const Contact = () => {
                             placeholder='Your Message'
                         ></motion.textarea>
                          
-                        <a
-                            href="#"
-                            onClick={handleButtonClick} // Use handleButtonClick for form submission
-                            role="button"
-                            tabIndex="0"
-                            className="block m-0" // Reduced margin
-                        >
-                            <CustomButton className="m-0" text="Submit" />
-                        </a>
+                        <CustomButton 
+                            onClick={handleButtonClick}
+                            text="Submit" 
+                        />
                     </form>
                 </div>
             </div>
-            <ToastContainer /> {/* Include ToastContainer to display notifications */}
+            <ToastContainer /> 
+            <hr className="border-gray-300" />
+
         </>
     );
 };

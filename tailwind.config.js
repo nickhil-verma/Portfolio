@@ -9,6 +9,9 @@ module.exports = {
       fontFamily: {
         sans: ['Poppins', 'sans-serif'],
       },
+      boxShadow: {
+        'custom-button': '5px 5px rgba(128, 128, 128, 0.408)', // Customize this value as needed
+      },
       backgroundColor: {
         light: '#F3F1EC',  // Light theme background color
         dark: '#2B2F36',

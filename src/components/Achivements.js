@@ -45,21 +45,7 @@ const Achievements = () => {
       description: "This is a short description for Achievement 2.",
       img: "https://via.placeholder.com/150",
     },
-    {
-      title: "Achievement 3",
-      description: "This is a short description for Achievement 3.",
-      img: "https://via.placeholder.com/150",
-    },
-    {
-      title: "Achievement 4",
-      description: "This is a short description for Achievement 4.",
-      img: "https://via.placeholder.com/150",
-    },
-    {
-      title: "Achievement 5",
-      description: "This is a short description for Achievement 5.",
-      img: "https://via.placeholder.com/150",
-    },
+    
   ];
 
   return (
