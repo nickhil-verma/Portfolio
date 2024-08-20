@@ -16,7 +16,7 @@ const Hero = () => {
       <div className="relative max-md:mt-12 flex max-sm:mt-10 flex-col lg:flex-row h-screen bg-light dark:bg-dark duration-700">
         
         {/* Hamburger Menu for Small Devices */}
-        <div className={`fixed top-0 right-0 p-4 z-50 lg:hidden`}>
+        <div className={`fixed top-0 right-0 p-4 z-40 lg:hidden`}>
           <button 
             className="bg-white dark:text-white dark:bg-dark p-2 rounded-full" 
             onClick={toggleMenu}
