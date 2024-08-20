@@ -10,6 +10,7 @@ const Hero = () => {
     setMenuOpen(!menuOpen);
   };
 
+
   return (
     <>
       <div className="relative max-md:mt-12 flex max-sm:mt-10 flex-col lg:flex-row h-screen bg-light dark:bg-dark duration-700">
@@ -17,7 +18,7 @@ const Hero = () => {
         {/* Hamburger Menu for Small Devices */}
         <div className={`fixed top-0 right-0 p-4 z-50 lg:hidden`}>
           <button 
-            className="text-white bg-black p-2 rounded-full" 
+            className="bg-white dark:text-white dark:bg-dark p-2 rounded-full" 
             onClick={toggleMenu}
           >
             {menuOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
@@ -28,11 +29,11 @@ const Hero = () => {
         <div 
           className={`fixed inset-0 bg-black bg-opacity-75 z-40 lg:hidden transform ${menuOpen ? 'translate-x-0' : 'translate-x-full'} transition-transform duration-300`}
         >
-          <div className="flex flex-col bg-light  items-center justify-center h-full dark:text-white">
+          <div className="flex flex-col bg-light dark:bg-dark  items-center justify-center h-full dark:text-white">
             <a href="#hero" className="text-2xl mb-4" onClick={toggleMenu}>Home</a>
             <a href="#projects" className="text-2xl mb-4" onClick={toggleMenu}>Contact</a>
             <a href="#contact" className="text-2xl mb-4" onClick={toggleMenu}>Contact</a>
-            <a href='https://docs.google.com/document/d/1QjrcRxxFIcbXDU_ig183W7Jeud_3yybY3aeWLlu2x5I/edit?usp=sharing' className="text-2xl mb-4" onClick={toggleMenu}>Resume</a>
+            <a href='https://docs.google.com/document/d/1QjrcRxxFIcbXDU_ig183W7Jeud_3yybY3aeWLlu2x5I/edit?usp=sharing' className="text-2xl mb-4" onClick={toggleMenu}><CustomButton text="Resume"/></a>
           </div>
         </div>
 
@@ -55,7 +56,7 @@ const Hero = () => {
         {/* Left Side (Text) */}
         <div className="lg:w-2/5 w-full flex items-center justify-center bg-light dark:bg-dark duration-700">
           <div className="text-center p-8">
-            <h1 className="text-4xl font-bold mb-4 dark:text-white duration-700">
+            <h1 className="text-4xl font-bold mb-4 dark:text-white dark:bg-dark duration-700">
               HEY👋🏻 <TypeAnimation
                 sequence={[
                   'Welcome to Our Website', // Types 'Welcome to Our Website'

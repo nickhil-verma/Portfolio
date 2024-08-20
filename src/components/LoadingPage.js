@@ -32,14 +32,14 @@ const LoadingPage = () => {
         className="Loading-page dark:bg-dark text-white dark:text-white w-full overflow-hidden"
       >
         <div className="loading-gifholder flex justify-center items-center">
-          <motion.img className="w-28 mr-4" src={LOGO} alt="Logo" />
+          <motion.img className="w-28 max-sm:w-96 mr-4" src={LOGO} alt="Logo" />
 
-          <div className="text-holder flex">
+          <div className="text-holder  flex">
             <motion.h1
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.5 }}
-              className="text-4xl font-bold sm:text-xl text-center mr-4"
+              className="text-4xl  max-sm:text-xl max-sm:font-semibold font-bold sm:text-xl text-center mr-4"
             >
               Nikhil Verma
             </motion.h1>
@@ -49,7 +49,7 @@ const LoadingPage = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 1, duration: 0.5 }}
               exit={{ opacity: 0 }}
-              className="text-4xl font-bold text-center mr-4"
+              className="text-4xl max-sm:hidden max-sm:text-xl max-sm:font-semibold font-bold text-center mr-4"
             >
               Welcomes You
             </motion.h1>
@@ -59,7 +59,7 @@ const LoadingPage = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 1.5, duration: 0.5 }}
               exit={{ opacity: 0 }}
-              className="text-4xl font-bold text-center"
+              className="text-4xl max-sm:hidden max-sm:text-xl  max-sm:font-semibold font-bold text-center"
             >
               To His Creativity Space
             </motion.h1>
