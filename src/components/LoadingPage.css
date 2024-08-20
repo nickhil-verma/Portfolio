@@ -2,7 +2,7 @@
     background-color: white;
     width: 100vw;
     animation: fadeOut 1s ease-out forwards; /* 1 second fade-out duration */
-    animation-delay: 1s; 
+    animation-delay: 1s;
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -12,14 +12,16 @@
     z-index: 50;
     overflow: hidden; /* Prevents any overflow from affecting the layout */
 }
+
 @keyframes fadeOut {
     0% {
-      opacity: 1; /* Fully visible */
+        opacity: 1; /* Fully visible */
     }
     100% {
-      opacity: 0; /* Fully transparent */
+        opacity: 0; /* Fully transparent */
     }
-  }
+}
+
 .loading-gifholder {
     display: flex;
     align-items: center;
@@ -38,6 +40,7 @@
     display: flex;
     align-items: center;
     text-align: center; /* Center text for better alignment */
+    flex-wrap: wrap; /* Allow text to wrap on smaller screens */
 }
 
 .text-holder h1 {
@@ -76,6 +79,7 @@
     }
 }
 
+/* Responsive adjustments */
 @media screen and (max-width: 862px) {
     .text-holder h1 {
         font-size: 1.8rem; /* Adjust font size for medium devices */
@@ -89,6 +93,7 @@
 @media screen and (max-width: 640px) {
     .text-holder {
         flex-direction: column; /* Stack text vertically on small devices */
+        align-items: center; /* Center align text vertically */
     }
 
     .text-holder h1 {
@@ -99,5 +104,15 @@
 
     #container {
         width: 90%; /* Full width for very small screens */
+    }
+}
+
+@media screen and (max-width: 400px) {
+    .text-holder h1 {
+        font-size: 1rem; /* Further reduce font size for very small screens */
+    }
+
+    .loading-gifholder img {
+        width: 18px; /* Adjust width of the logo for very small screens */
     }
 }

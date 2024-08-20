@@ -100,7 +100,7 @@ const TimelineTabs = () => {
   };
 
   return (
-    <div className="w-full max-w-3xl md:mt-40 sm:mt-32 mx-auto p-6">
+    <div className="w-full max-w-3xl md:mt-16 max-sm:mt-32 mx-auto p-6">
       <h1 className='dark:text-white text-5xl text-center font-semibold mt-10 mb-10'> Career Journey</h1>
       <div className="flex items-center justify-center mb-4">
         <button

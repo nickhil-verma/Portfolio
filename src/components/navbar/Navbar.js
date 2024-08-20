@@ -37,7 +37,7 @@ const Navbar = () => {
       
     </nav>
     <button
-       className="fixed top-4 right-4 z-40 bg-white dark:bg-gray-800 p-2 rounded-full shadow-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+       className="fixed top-4 right-4 max-sm:right-20 z-40 bg-white dark:bg-gray-800 p-2 rounded-full shadow-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
         onClick={changeTheme}
       >
         {theme === 'light' ? <FaMoon className="text-light" /> : <IoSunny className="text-dark" />}
