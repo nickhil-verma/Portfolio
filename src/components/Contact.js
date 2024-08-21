@@ -147,11 +147,12 @@ const Contact = () => {
                             name="message"
                             placeholder='Your Message'
                         ></motion.textarea>
-                         
-                        <CustomButton 
-                            onClick={handleButtonClick}
+                         <a type='submit' onClick={handleButtonClick}><CustomButton 
+                           
                             text="Submit" 
-                        />
+                        /></a>
+                        
+                         
                     </form>
                 </div>
             </div>

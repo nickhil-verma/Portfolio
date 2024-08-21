@@ -29,7 +29,7 @@ const LoadingPage = () => {
         initial={{ y: 0, opacity: 1, rotateY: 0, backgroundColor: 'black' }}
         animate={{ y: -1200, opacity: 0, rotateY: 25, backgroundColor: bgColor }}
         transition={{ delay: 2, duration: 1.5 }} // Longer duration to include color transition
-        className="Loading-page dark:bg-dark text-white dark:text-white w-full overflow-hidden"
+        className="Loading-page  dark:bg-dark text-white dark:text-white w-full overflow-x-hidden"
       >
         <div className="loading-gifholder flex justify-center items-center">
           <motion.img className="w-28 max-sm:w-96 mr-4" src={LOGO} alt="Logo" />

@@ -72,16 +72,17 @@ const Projects = () => {
   };
 
   return (
-    <div className="container mx-auto py-8" id='projects'>
+    <div className="container mx-auto py-8 overflow-hidden" id='projects'>
       
       
       {/* Bouncing effect */}
       <motion.div
-        className='w-96 h-96 blur-2xl absolute opacity-30 rounded-full bg-yellow z-10'
+      style={{width:"500px",height:"500px"}}
+        className='   blur-3xl absolute opacity-55 left-0 rounded-full bg-yellow z-10'
         animate={{ y: [0, -20, 0] }} // Bounce animation
-        transition={{ duration: 0.6, repeat: Infinity, repeatType: 'loop' }}
+        transition={{ duration: 1000, repeat: Infinity, repeatType: 'loop' }}
       >
-        h
+        
       </motion.div>
       <h2 className="text-4xl font-bold text-center mb-8 dark:text-white">Projects</h2>
       
@@ -112,6 +113,7 @@ const Projects = () => {
       </motion.div>
 
       <div className="text-center mt-8 duration-700">
+ 
         {visibleProjects < projects.length ? (
           <a onClick={showMoreProjects} className="block">
            <motion.div variants={bounceVariants} animate="animate">

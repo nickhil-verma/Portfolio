@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { motion } from 'framer-motion';
 // Education Component
 const Education = () => {
   return (
@@ -8,7 +8,12 @@ const Education = () => {
         {educationData.map((item, index) => (
           <li key={index} className="mb-10 ml-6">
             <span className="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -left-3 ring-8 ring-white dark:ring-gray-900 dark:bg-blue-900">
-              <svg
+              <motion.svg
+              initial={{ x: 100, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.8 }}
+              viewport={{ once: true }}
+
                 className="w-3 h-3 text-blue-800 dark:text-blue-300"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
@@ -16,22 +21,33 @@ const Education = () => {
                 viewBox="0 0 20 20"
               >
                 <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
-              </svg>
+              </motion.svg>
             </span>
-            <h3 className="flex items-center mb-1 text-lg font-semibold text-gray-900 dark:text-white">
+            <motion.h3 initial={{ x: 100, opacity: 0 }}
+                            whileInView={{ x: 0, opacity: 1 }}
+                            transition={{ delay: 0.6, duration: 0.8 }}
+                            viewport={{ once: true }}
+             className="flex items-center mb-1 text-lg font-semibold text-gray-900 dark:text-white">
               {item.title}
               {item.latest && (
                 <span className="bg-blue-100 text-blue-800 text-sm font-medium ml-3 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
                   Latest
                 </span>
               )}
-            </h3>
+            </motion.h3>
             <time className="block mb-2 text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
               {item.date}
             </time>
-            <p className="mb-4 text-base font-normal text-gray-500 dark:text-gray-400">
+            <motion.p
+             initial={{  opacity: 0 }}
+             whileInView={{   opacity: 1 }}
+             transition={{ delay: 0.6, duration: 1 }}
+             viewport={{ once: true }}
+             className="text-base font-normal text-gray-500 dark:text-gray-400">
+               {item.description}
+            className="mb-4 text-base font-normal text-gray-500 dark:text-gray-400">
               {item.description}
-            </p>
+            </motion.p>
             {item.link && (
               <a
                 href={item.link}
@@ -65,7 +81,11 @@ const Experience = () => {
         {experienceData.map((item, index) => (
           <li key={index} className="mb-10 ml-6">
             <span className="absolute flex items-center justify-center w-6 h-6 bg-green-100 rounded-full -left-3 ring-8 ring-white dark:ring-gray-900 dark:bg-green-900">
-              <svg
+              <motion.svg
+              initial={{ x: 100, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.8 }}
+              viewport={{ once: true }}
                 className="w-3 h-3 text-green-800 dark:text-green-300"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
@@ -73,17 +93,27 @@ const Experience = () => {
                 viewBox="0 0 20 20"
               >
                 <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
-              </svg>
+              </motion.svg>
             </span>
-            <h3 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
+            <motion.h3 
+            initial={{ x: 100, opacity: 0 }}
+            whileInView={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.8 }}
+            viewport={{ once: true }}
+            className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
               {item.title}
-            </h3>
+            </motion.h3>
             <time className="block mb-2 text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
               {item.date}
             </time>
-            <p className="text-base font-normal text-gray-500 dark:text-gray-400">
+            <motion.p
+            initial={{  opacity: 0 }}
+            whileInView={{   opacity: 1 }}
+            transition={{ delay: 0.6, duration: 1 }}
+            viewport={{ once: true }}
+            className="text-base font-normal text-gray-500 dark:text-gray-400">
               {item.description}
-            </p>
+            </motion.p>
           </li>
         ))}
       </ol>
@@ -119,7 +149,7 @@ const TimelineTabs = () => {
           Experience
         </button>
       </div>
-      <div className="p-4 border border-gray-200 rounded-b-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700 relative z-10">
+      <div className="p-4 border  border-gray-200 rounded-b-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700 relative z-10">
         {tab === 0 && <Education />}
         {tab === 1 && <Experience />}
       </div>

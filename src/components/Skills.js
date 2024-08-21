@@ -45,7 +45,7 @@ const Skills = () => {
 
   return (
     <div className="bg-light dark:bg-dark text-gray-800 dark:text-gray-200 p-8 duration-700" id="skills">
-      <h1 className="text-3xl font-bold text-center mb-8">Skills</h1>
+      <h1 className="text-3xl z-10 font-bold text-center mb-8">Skills</h1>
       <p className="text-center text-gray-600 dark:text-gray-400 mb-12">
         To be noted, this was last updated in Dec 2023
       </p>
@@ -59,7 +59,8 @@ const Skills = () => {
             viewport={{ once: true }}
             className="flex flex-col items-center"
           >
-            <div className="flex flex-col items-center bg-white dark:bg-lessdark duration-700 p-4 rounded-lg shadow-lg">
+            
+            <div className="flex flex-col items-center  bg-white dark:bg-lessdark duration-700 p-4 rounded-lg shadow-lg">
               <img src={skill.img} alt={skill.name} className="w-12 h-12 md:w-16 md:h-16 mb-4" />
               <h3 className="text-sm md:text-lg font-semibold mb-2">{skill.name}</h3>
               <p className="text-gray-600 dark:text-gray-400">{skill.level}</p>
