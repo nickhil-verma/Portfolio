@@ -73,6 +73,16 @@ const Projects = () => {
 
   return (
     <div className="container mx-auto py-8" id='projects'>
+      
+      
+      {/* Bouncing effect */}
+      <motion.div
+        className='w-96 h-96 blur-2xl absolute opacity-30 rounded-full bg-yellow z-10'
+        animate={{ y: [0, -20, 0] }} // Bounce animation
+        transition={{ duration: 0.6, repeat: Infinity, repeatType: 'loop' }}
+      >
+        h
+      </motion.div>
       <h2 className="text-4xl font-bold text-center mb-8 dark:text-white">Projects</h2>
       
       <motion.div
@@ -85,7 +95,7 @@ const Projects = () => {
           {projects.slice(0, visibleProjects).map((project) => (
             <motion.div
               key={project.id}
-              className="bg-white dark:bg-lessdark p-6 rounded-lg flex flex-col duration-700 items-center"
+              className="bg-white z-20 dark:bg-lessdark p-6 rounded-lg flex flex-col duration-700 items-center"
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}

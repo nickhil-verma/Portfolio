@@ -27,7 +27,7 @@ const Hero = () => {
         
         {/* Side Menu (Visible on Small Devices when hamburger menu is open) */}
         <div 
-          className={`fixed inset-0 bg-black bg-opacity-75 z-40 lg:hidden transform ${menuOpen ? 'translate-x-0' : 'translate-x-full'} transition-transform duration-300`}
+          className={`fixed inset-0 bg-black bg-opacity-75 z-30 lg:hidden transform ${menuOpen ? 'translate-x-0' : 'translate-x-full'} transition-transform duration-300`}
         >
           <div className="flex flex-col bg-light dark:bg-dark  items-center justify-center h-full dark:text-white">
             <a href="#hero" className="text-2xl mb-4" onClick={toggleMenu}>Home</a>

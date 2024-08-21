@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 // Education Component
 const Education = () => {
@@ -100,9 +100,12 @@ const TimelineTabs = () => {
   };
 
   return (
-    <div className="w-full max-w-3xl md:mt-16 max-sm:mt-32 mx-auto p-6">
-      <h1 className='dark:text-white text-5xl text-center font-semibold mt-10 mb-10'> Career Journey</h1>
-      <div className="flex items-center justify-center mb-4">
+    <div className="relative w-full max-w-3xl mx-auto p-6">
+      <div className="absolute inset-0 -z-10">
+        <div className="blurred-divbox w-full h-full bg-yellow blur-3xl opacity-15"></div>
+      </div>
+      <h1 className='dark:text-white text-5xl text-center font-semibold mt-10 mb-10'>Career Journey</h1>
+      <div className="flex items-center justify-center mb-4 relative z-10">
         <button
           onClick={() => handleTabChange(0)}
           className={`px-4 py-2 rounded-t-lg ${tab === 0 ? 'bg-yellow text-white' : 'bg-gray-200'}`}
@@ -116,7 +119,7 @@ const TimelineTabs = () => {
           Experience
         </button>
       </div>
-      <div className="p-4 border border-gray-200 rounded-b-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+      <div className="p-4 border border-gray-200 rounded-b-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700 relative z-10">
         {tab === 0 && <Education />}
         {tab === 1 && <Experience />}
       </div>
