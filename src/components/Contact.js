@@ -59,10 +59,10 @@ const Contact = () => {
 
     return (
         <>
-            <h1 className='text-center text-4xl font-bold mb-8 dark:text-white'>Contact</h1>
-            <div id="contact" className='flex flex-col lg:flex-row justify-between items-start duration-700 bg-light dark:bg-dark p-8 rounded-lg'>
-                <div className='text-center lg:text-left mb-8 lg:mb-0 lg:w-1/3'>
-                    <h3 className='text-2xl font-semibold dark:text-white'>
+            <h1 className='text-center  max-sm:text-s text-4xl font-bold mb-8 dark:text-white'>Contact</h1>
+            <div id="contact" className='  flex flex-col lg:flex-row justify-between items-start duration-700 bg-light dark:bg-dark p-8 rounded-lg'>
+                <div className=' m-auto text-center lg:text-left mb-8 lg:mb-0 lg:w-1/3'>
+                    <h3 className='text-2xl  max-sm:text-xs font-semibold dark:text-white'>
                         I have got just what you need.<br />
                         <span className='text-yellow-500'>Let's Talk!</span>
                     </h3>
@@ -156,7 +156,8 @@ const Contact = () => {
                     </form>
                 </div>
             </div>
-            <ToastContainer /> 
+            <ToastContainer
+            theme='colored'/>
             <hr className="border-gray-300" />
 
         </>

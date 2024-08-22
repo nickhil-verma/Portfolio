@@ -50,7 +50,7 @@ const Achievements = () => {
 
   return (
     <div id='achievements' className="container mx-auto p-8 bg-light dark:bg-dark transition-colors duration-700">
-      <h1 className="text-gray-800 dark:text-gray-200 text-3xl font-bold text-center mb-8">Achievements</h1>
+      <h1 className="text-gray-800 duration-700 max-sm:text-s dark:text-gray-200 text-3xl font-bold text-center mb-8">Achievements</h1>
       <Slider {...settings}>
         {items.map((item, index) => (
           <div key={index} className="p-4">
@@ -69,8 +69,8 @@ const Achievements = () => {
             >
               <img src={item.img} alt={item.title} className="w-full h-48 object-cover" />
               <div className="p-4">
-                <h3 className="text-lg dark:text-white font-semibold mb-2">{item.title}</h3>
-                <p className="text-gray-600 dark:text-gray-400">{item.description}</p>
+                <h3 className="text-lg dark:text-white font-semibold mb-2duration-700">{item.title}</h3>
+                <p className="text-gray-600 dark:text-gray-400duration-700">{item.description}</p>
               </div>
             </div>
           </div>

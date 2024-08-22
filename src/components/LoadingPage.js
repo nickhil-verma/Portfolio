@@ -12,6 +12,7 @@ const LoadingPage = () => {
       setBgColor('white'); // Change background color to white
       setTimeout(() => {
         const loadingPageElement = document.getElementById('LoadingPage');
+         
         if (loadingPageElement) {
           loadingPageElement.style.display = 'none'; // Hide the element
         }

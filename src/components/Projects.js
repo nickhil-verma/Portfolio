@@ -77,14 +77,14 @@ const Projects = () => {
       
       {/* Bouncing effect */}
       <motion.div
-      style={{width:"500px",height:"500px"}}
-        className='   blur-3xl absolute opacity-55 left-0 rounded-full bg-yellow z-10'
+      style={{width:"300px",height:"300px"}}
+        className='  overflow-hidden blur-3xl absolute opacity-55 left-0 rounded-full bg-yellow z-10'
         animate={{ y: [0, -20, 0] }} // Bounce animation
         transition={{ duration: 1000, repeat: Infinity, repeatType: 'loop' }}
       >
         
       </motion.div>
-      <h2 className="text-4xl font-bold text-center mb-8 dark:text-white">Projects</h2>
+      <h2 className="text-4xl  max-sm:text-s font-bold text-center mb-8 dark:text-white">Projects</h2>
       
       <motion.div
         initial={{ height: 'auto' }}

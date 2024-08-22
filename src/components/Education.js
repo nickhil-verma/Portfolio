@@ -27,7 +27,7 @@ const Education = () => {
                             whileInView={{ x: 0, opacity: 1 }}
                             transition={{ delay: 0.6, duration: 0.8 }}
                             viewport={{ once: true }}
-             className="flex items-center mb-1 text-lg font-semibold text-gray-900 dark:text-white">
+             className="flex  max-sm:text-xs items-center mb-1 text-lg font-semibold text-gray-900 dark:text-white">
               {item.title}
               {item.latest && (
                 <span className="bg-blue-100 text-blue-800 text-sm font-medium ml-3 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
@@ -35,7 +35,7 @@ const Education = () => {
                 </span>
               )}
             </motion.h3>
-            <time className="block mb-2 text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
+            <time className="block mb-2 text-sm max-sm:text-xs font-normal leading-none text-gray-400 dark:text-gray-500">
               {item.date}
             </time>
             <motion.p
@@ -43,15 +43,15 @@ const Education = () => {
              whileInView={{   opacity: 1 }}
              transition={{ delay: 0.6, duration: 1 }}
              viewport={{ once: true }}
-             className="text-base font-normal text-gray-500 dark:text-gray-400">
+             className="text-base max-sm:text-sm font-normal text-gray-500 dark:text-gray-400">
                {item.description}
-            className="mb-4 text-base font-normal text-gray-500 dark:text-gray-400">
+            
               {item.description}
             </motion.p>
             {item.link && (
               <a
                 href={item.link}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:outline-none focus:ring-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+                className="inline-flex max-sm:text-sm   items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:outline-none focus:ring-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700"
               >
                 <svg
                   className="w-3.5 h-3.5 mr-2.5"
@@ -100,10 +100,10 @@ const Experience = () => {
             whileInView={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.8 }}
             viewport={{ once: true }}
-            className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
+            className="mb-1 text-lg max-sm:text-sm font-semibold text-gray-900 dark:text-white">
               {item.title}
             </motion.h3>
-            <time className="block mb-2 text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
+            <time className="block mb-2 text-sm max-sm:text-xs font-normal leading-none text-gray-400 dark:text-gray-500">
               {item.date}
             </time>
             <motion.p
@@ -130,11 +130,11 @@ const TimelineTabs = () => {
   };
 
   return (
-    <div className="relative w-full max-w-3xl mx-auto p-6">
+    <div className="relative w-full max-md:mt-5 max-w-3xl mx-auto p-6">
       <div className="absolute inset-0 -z-10">
         <div className="blurred-divbox w-full h-full bg-yellow blur-3xl opacity-15"></div>
       </div>
-      <h1 className='dark:text-white text-5xl text-center font-semibold mt-10 mb-10'>Career Journey</h1>
+      <h1 className='dark:text-white max-sm:text-2xl text-5xl text-center font-semibold mt-10 mb-10'>Career Journey</h1>
       <div className="flex items-center justify-center mb-4 relative z-10">
         <button
           onClick={() => handleTabChange(0)}
