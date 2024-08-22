@@ -16,7 +16,8 @@ module.exports = {
         light: '#F3F1EC',  // Light theme background color
         dark: '#2B2F36',
         yellow: '#FFC727',
-        lessdark: '#1C2028',   // Dark theme background color
+        lessdark: '#1C2028',
+        bluish:'#1A89E2',   // Dark theme background color
       },
       textColor: {
         light: '#2B2F36',  // Dark text color for light theme

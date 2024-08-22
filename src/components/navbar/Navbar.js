@@ -25,7 +25,7 @@ const Navbar = () => {
 
   return (
     <>
-    <nav className=" fixed w-full top-0 p-2 z-40 flex justify-between items-center bg-light dark:bg-dark shadow-md transition-colors duration-500">
+    <nav className=" fixed w-screen top-0 p-2 z-40 flex justify-between items-center bg-light dark:bg-dark shadow-md transition-colors duration-500">
       <a href='#'>
         <img src={logoSrc} className="w-11 fill-current text-green-600 duration-700" alt="Logo" />
       </a>

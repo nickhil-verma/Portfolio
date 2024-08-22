@@ -64,7 +64,7 @@ const Contact = () => {
                 <div className=' m-auto text-center lg:text-left mb-8 lg:mb-0 lg:w-1/3'>
                     <h3 className='text-2xl  max-sm:text-xs font-semibold dark:text-white'>
                         I have got just what you need.<br />
-                        <span className='text-yellow-500'>Let's Talk!</span>
+                        <span className='text-yellow'>Let's Talk!</span>
                     </h3>
                     
                     <div className='flex justify-center lg:justify-start mt-4'>
@@ -152,7 +152,7 @@ const Contact = () => {
                             text="Submit" 
                         /></a>
                         
-                         
+                  
                     </form>
                 </div>
             </div>

@@ -12,9 +12,13 @@ const LoadingPage = () => {
       setBgColor('white'); // Change background color to white
       setTimeout(() => {
         const loadingPageElement = document.getElementById('LoadingPage');
+        const flame = document.getElementById('flame');
+        const flame2 = document.getElementById('flame2');
          
         if (loadingPageElement) {
-          loadingPageElement.style.display = 'none'; // Hide the element
+          loadingPageElement.style.display = 'none';
+          flame.style.display = 'none';
+          flame2.style.display = 'none'; // Hide the element
         }
       }, 500); // Extra time to allow background color transition
     }, 2000); // Initial delay before background color change
@@ -25,6 +29,23 @@ const LoadingPage = () => {
 
   return (
     <>
+        <motion.div id='flame'
+  className="bg-yellow max-lg:hidden top-40 left-0 blur-3xl w-56 h-64 absolute"
+  style={{ zIndex: 51 }}  // Custom z-index
+  initial={{ x: 0, opacity: 1,    }}
+  animate={{ x: '100vw', opacity: 0.7,  }}
+  transition={{ delay: 0, duration:3 }} // Reverses direction smoothly
+   
+/>
+<motion.div id='flame2'
+  className="bg-bluish max-lg:hidden top-40 -left-20 blur-3xl w-56 h-64 absolute"
+  style={{ zIndex: 51 }}  // Custom z-index
+  initial={{ x: 0, opacity: 1,    }}
+  animate={{ x: '100vw', opacity: 0.7,  }}
+  transition={{ delay: 0, duration:3 }} // Reverses direction smoothly
+   
+/>
+
       <motion.div
         id='LoadingPage'
         initial={{ y: 0, opacity: 1, rotateY: 0, backgroundColor: 'black' }}
@@ -37,6 +58,7 @@ const LoadingPage = () => {
 
           <div className="text-holder  flex">
             <motion.h1
+            style={{ zIndex: 55 }}
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.5 }}
@@ -46,6 +68,7 @@ const LoadingPage = () => {
             </motion.h1>
 
             <motion.h1
+            style={{ zIndex: 55 }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1, duration: 0.5 }}
@@ -60,6 +83,7 @@ const LoadingPage = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 1.5, duration: 0.5 }}
               exit={{ opacity: 0 }}
+              style={{ zIndex: 55 }}
               className="text-4xl max-sm:hidden max-sm:text-xl  max-sm:font-semibold font-bold text-center"
             >
               To His Creativity Space

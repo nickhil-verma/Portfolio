@@ -77,14 +77,23 @@ const Projects = () => {
       
       {/* Bouncing effect */}
       <motion.div
-      style={{width:"300px",height:"300px"}}
-        className='  overflow-hidden blur-3xl absolute opacity-55 left-0 rounded-full bg-yellow z-10'
-        animate={{ y: [0, -20, 0] }} // Bounce animation
-        transition={{ duration: 1000, repeat: Infinity, repeatType: 'loop' }}
-      >
-        
-      </motion.div>
-      <h2 className="text-4xl  max-sm:text-s font-bold text-center mb-8 dark:text-white">Projects</h2>
+  initial={{ y: '0', x: '0', opacity: 0.3 }}  // Initial position
+  animate={{ y: ['300px', '0px', '300px'], opacity: 0.5 }}  // To and fro in Y direction
+  transition={{
+    duration: 20, // Speed of the animation
+    ease: "easeInOut",  // Smooth easing function
+    repeat: Infinity,  // Loop indefinitely
+    repeatType: "mirror", // Reverses direction smoothly
+  }}
+  viewport={{ once: true }}
+  style={{ width: "300px", height: "300px" }}
+  className="overflow-hidden blur-3xl absolute opacity-55 left-0 rounded-full bg-yellow z-10"
+/>
+
+
+ 
+
+      <h2 className="text-4xl  max-sm:text-s font-bold z-10 text-center mb-8 dark:text-white">Projects</h2>
       
       <motion.div
         initial={{ height: 'auto' }}
