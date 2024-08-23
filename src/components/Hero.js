@@ -61,7 +61,7 @@ const Hero = () => {
                 <motion.img
                    initial={{ scale: 1.5, opacity: 0 }}
       whileInView={{ scale: 1, opacity: 1 }}
-      transition={{ delay: 3, duration: 0.8 }}
+      transition={{ delay: 0.2, duration: 0.8 }}
       viewport={{ once: false }}
 
                   src={LOGO}
