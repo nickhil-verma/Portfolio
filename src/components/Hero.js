@@ -58,31 +58,36 @@ const Hero = () => {
             <div className="relative z-20">
               {/* Logo Image */}
               <a href='https://www.instagram.com/nickhil_verma?igsh=MWljaDU2bW9kMmZ4dQ%3D%3D&utm_source=qr' className='cursor-pointer'>
-                <img
+                <motion.img
+                   initial={{ scale: 1.5, opacity: 0 }}
+      whileInView={{ scale: 1, opacity: 1 }}
+      transition={{ delay: 3, duration: 0.8 }}
+      viewport={{ once: false }}
+
                   src={LOGO}
                   alt="Hero Image"
                   className="rounded-full hover:scale-105  duration-1000 cursor-pointer  z-40 w-[300px] -top-10 lg:w-[500px]"
                 />
               </a>
               <motion.div
-                initial={{x:-110, opacity: 0 }}
-                whileInView={{ x:0, opacity: 1 }}
-                transition={{ delay: 2.8, duration: 0.8 }}
-                viewport={{ once: true }}
-                className="absolute lg:top-20 max-lg:top-24 lg:left-16 -top-20   backdrop-blur-sm bg-white/30  text-white cursor-pointer hover:scale-105 duration-700 w-44 h-10 flex items-center justify-center text-s rounded-lg shadow-lg z-40"
-              >
-                👨‍💻 Web Developer
-              </motion.div>
+      initial={{ x: -110, opacity: 0 }}
+      whileInView={{ x: 0, opacity: 1 }}
+      transition={{ delay: 2.8, duration: 0.8 }}
+      viewport={{ once: false }}  // Trigger animation every time it comes into view
+      className="absolute lg:top-20 max-lg:top-24 lg:left-16 -top-20 backdrop-blur-sm bg-white/30 text-white cursor-pointer hover:scale-105 duration-700 w-44 h-10 flex items-center justify-center text-s rounded-lg shadow-lg z-40"
+    >
+      👨‍💻 Web Developer
+    </motion.div>
 
-              <motion.div
-                initial={{ x:100,opacity: 0 }}
-                whileInView={{ x:0, opacity: 1 }}
-                transition={{ delay: 2.8, duration: 0.8 }}
-                viewport={{ once: true }}
-                className="absolute max-sm:text-xs lg:bottom-16 max-lg:top-44 lg:-right-0 -bottom-10 -right-8 backdrop-blur-sm bg-white/30  text-white cursor-pointer hover:scale-105 duration-700 w-30 h-12 flex items-center justify-center text-s max-sm:top-48 p-2 rounded-lg shadow-lg z-40"
-              >
-                🥇 Competitive Programmer
-              </motion.div>
+    <motion.div
+      initial={{ x: 100, opacity: 0 }}
+      whileInView={{ x: 0, opacity: 1 }}
+      transition={{ delay: 2.8, duration: 0.8 }}
+      viewport={{ once: false }}  // Trigger animation every time it comes into view
+      className="absolute max-sm:text-xs lg:bottom-16 max-lg:top-44 lg:-right-0 -bottom-10 -right-8 backdrop-blur-sm bg-white/30 text-white cursor-pointer hover:scale-105 duration-700 w-30 h-12 flex items-center justify-center text-s max-sm:top-48 p-2 rounded-lg shadow-lg z-50"
+    >
+      🥇 Competitive Programmer
+    </motion.div>
               {/* VEC1 and VEC2 behind the logo */}
               <img className='absolute -z-10 top-16 left-10 max-sm:left-0' src={VEC1} />
               <img className='absolute -z-10 top-20 left-10 max-sm:left-0 max-sm:top-12' src={VEC2} />
