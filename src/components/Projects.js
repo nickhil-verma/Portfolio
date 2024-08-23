@@ -118,8 +118,8 @@ const Projects = () => {
               transition={{ duration: 0.5 }}
             >
               <img src={project.image} alt={project.title} className="shadow-sm rounded-md mb-4 w-full" />
-              <h3 className="text-2xl font-semibold mb-2 dark:text-white text-center duration-700">{project.title}</h3>
-              <p className="text-gray-500 text-sm dark:text-gray-300 mb-4 text-center duration-700">{project.description}</p>
+              <h3 className="text-2xl font-semibold mb-2 dark:text-white max-sm:text-xs text-center duration-700">{project.title}</h3>
+              <p className="text-gray-500 text-sm max-sm:text-xs dark:text-gray-300 mb-4 text-center duration-700">{project.description}</p>
               <div className='flex text-center justify-center space-x-9'>
                     <a href={project.github} target="_blank" rel="noopener noreferrer" className="  dark:text-white duration-700">
                       <FaGithub className="text-2xl" />

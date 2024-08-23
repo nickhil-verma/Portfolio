@@ -69,7 +69,7 @@ const Hero = () => {
                 whileInView={{ x:0, opacity: 1 }}
                 transition={{ delay: 2.8, duration: 0.8 }}
                 viewport={{ once: true }}
-                className="absolute lg:top-20 max-lg:top-10 lg:left-16 -top-20   backdrop-blur-sm bg-white/30  text-white cursor-pointer hover:scale-105 duration-700 w-44 h-10 flex items-center justify-center text-s rounded-lg shadow-lg z-40"
+                className="absolute lg:top-20 max-lg:top-24 lg:left-16 -top-20   backdrop-blur-sm bg-white/30  text-white cursor-pointer hover:scale-105 duration-700 w-44 h-10 flex items-center justify-center text-s rounded-lg shadow-lg z-40"
               >
                 👨‍💻 Web Developer
               </motion.div>
