@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { FaGithub } from "react-icons/fa";
 import { motion } from 'framer-motion';
 import CustomButton from './CustomButton';
-
+import PROJ1 from "../img/proj1.png"
+import { FaYoutube } from "react-icons/fa"
+import { FaExternalLinkAlt } from "react-icons/fa";
+import PROJ2 from '../img/proj2.png'
+import PROJ3 from '../img/thumbnailfooter.png'
 const Projects = () => {
   const [visibleProjects, setVisibleProjects] = useState(3);
   const bounceVariants = {
@@ -18,24 +22,27 @@ const Projects = () => {
   const projects = [
     {
       id: 1,
-      title: "Project One",
-      description: "A short description of Project One.",
-      image: "https://via.placeholder.com/600x400",
-      github: "https://github.com/project-one"
+      title: "GenCV | AI resume Builder",
+      description: "Gen CV is a online resume builder platform targeing enhancing of ATS score using Google Gemini API ",
+      image: PROJ1,
+      github: "https://github.com/project-one",
+      link: "https://gen-cv-ai-resumebuilder-frontend.vercel.app/login",
     },
     {
       id: 2,
-      title: "Project Two",
-      description: "A short description of Project Two.",
-      image: "https://via.placeholder.com/600x400",
-      github: "https://github.com/project-two"
+      title: "TradeWage | Stock management APP",
+      description: "Built a MERN stack app for real-time stock trading, with React.js, Mongoose, Axios, Chart.js, and secure authentication.",
+      image:PROJ2,
+      github: "https://github.com/nickhil-verma/Trade-wage-frontend",
+      link: "https://trade-wage-frontend.vercel.app/",
     },
     {
       id: 3,
-      title: "Project Three",
-      description: "A short description of Project Three.",
-      image: "https://via.placeholder.com/600x400",
-      github: "https://github.com/project-three"
+      title: "Portfolio Website",
+      description: "A work showcasing website made using ReactJs, Tailwind, EmailJs",
+      image: PROJ3,
+      github: "https://github.com/nickhil-verma/Portfolio",
+      link: "https://portfolio-eight-xi-99.vercel.app/"
     },
     {
       id: 4,
@@ -77,15 +84,15 @@ const Projects = () => {
       
       {/* Bouncing effect */}
       <motion.div
-  initial={{ y: '0', x: '0', opacity: 0.3 }}  // Initial position
-  animate={{ y: ['300px', '0px', '300px'], opacity: 0.5 }}  // To and fro in Y direction
+  initial={{ y: '0', x: '0', opacity: 0.5 }}  // Initial position
+  animate={{ y: ['300px', '0px', '300px'], opacity: 0.7,backgroundColor: '#1A89E2' }}  // To and fro in Y direction
   transition={{
-    duration: 20, // Speed of the animation
+    duration: 15, // Speed of the animation
     ease: "easeInOut",  // Smooth easing function
     repeat: Infinity,  // Loop indefinitely
     repeatType: "mirror", // Reverses direction smoothly
   }}
-  viewport={{ once: true }}
+  
   style={{ width: "300px", height: "300px" }}
   className="overflow-hidden blur-3xl absolute opacity-55 left-0 rounded-full bg-yellow z-10"
 />
@@ -105,17 +112,25 @@ const Projects = () => {
           {projects.slice(0, visibleProjects).map((project) => (
             <motion.div
               key={project.id}
-              className="bg-white z-20 dark:bg-lessdark p-6 rounded-lg flex flex-col duration-700 items-center"
+              className="bg-white z-20     dark:bg-lessdark p-6 rounded-lg flex flex-col duration-700 items-center"
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <img src={project.image} alt={project.title} className="rounded-md mb-4 w-full" />
+              <img src={project.image} alt={project.title} className="shadow-sm rounded-md mb-4 w-full" />
               <h3 className="text-2xl font-semibold mb-2 dark:text-white text-center duration-700">{project.title}</h3>
-              <p className="text-gray-700 dark:text-gray-300 mb-4 text-center duration-700">{project.description}</p>
-              <a href={project.github} target="_blank" rel="noopener noreferrer" className="text-gray-900 dark:text-white hover:text-yellow duration-700">
-                <FaGithub className="text-2xl" />
-              </a>
+              <p className="text-gray-500 text-sm dark:text-gray-300 mb-4 text-center duration-700">{project.description}</p>
+              <div className='flex text-center justify-center space-x-9'>
+                    <a href={project.github} target="_blank" rel="noopener noreferrer" className="  dark:text-white duration-700">
+                      <FaGithub className="text-2xl" />
+                    </a>
+                    <a href={project.link} target="_blank" rel="noopener noreferrer" className="  cursor-pointer text-bluish duration-700">
+                      <FaExternalLinkAlt   className="text-2xl" />
+                    </a>
+                    <a href={project.link} target="_blank" rel="noopener noreferrer" className="   cursor-pointer text-red-500 duration-700">
+                      <FaYoutube   className="text-2xl" />
+                    </a>
+              </div>
             </motion.div>
           ))}
         </div>

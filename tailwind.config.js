@@ -22,7 +22,8 @@ module.exports = {
       textColor: {
         light: '#2B2F36',  // Dark text color for light theme
         dark: '#F3F1EC',
-        yellow: '#FFC727',   // Light text color for dark theme
+        yellow: '#FFC727', 
+        bluish:'#1A89E2'  // Light text color for dark theme
       }
     },
   },

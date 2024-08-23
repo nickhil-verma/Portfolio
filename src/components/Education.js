@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 const Education = () => {
   return (
     <div className="w-full max-w-3xl mx-auto p-6">
-      <ol className="relative border-l border-gray-200 dark:border-gray-700">
+      <ol className="relative  border-l border-gray-200 dark:border-gray-700">
         {educationData.map((item, index) => (
           <li key={index} className="mb-10 ml-6">
             <span className="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -left-3 ring-8 ring-white dark:ring-gray-900 dark:bg-blue-900">
@@ -46,7 +46,7 @@ const Education = () => {
              className="text-base max-sm:text-sm font-normal text-gray-500 dark:text-gray-400">
                {item.description}
             
-              {item.description}
+               
             </motion.p>
             {item.link && (
               <a
@@ -63,7 +63,7 @@ const Education = () => {
                   <path d="M14.707 7.793a1 1 0 0 0-1.414 0L11 10.086V1.5a1 1 0 0 0-2 0v8.586L6.707 7.793a1 1 0 1 0-1.414 1.414l4 4a1 1 0 0 0 1.416 0l4-4a1 1 0 0 0-.002-1.414Z" />
                   <path d="M18 12h-2.55l-2.975 2.975a3.5 3.5 0 0 1-4.95 0L4.55 12H2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2Zm-3 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
                 </svg>
-                Download ZIP
+               Resume
               </a>
             )}
           </li>
@@ -130,7 +130,7 @@ const TimelineTabs = () => {
   };
 
   return (
-    <div className="relative w-full max-md:mt-5 max-w-3xl mx-auto p-6">
+    <div className="relative w-full  rounded-lg max-w-3xl mx-auto p-6">
       <div className="absolute inset-0 -z-10">
         <div className="blurred-divbox w-full h-full bg-yellow blur-3xl opacity-15"></div>
       </div>
@@ -160,24 +160,24 @@ const TimelineTabs = () => {
 // Sample data for Education and Experience
 const educationData = [
   {
-    title: "Flowbite Application UI v2.0.0",
-    date: "Released on January 13th, 2022",
+    title: "B.Tech",
+    date: "2023-2027",
     description:
-      "Get access to over 20+ pages including a dashboard layout, charts, kanban board, calendar, and pre-order E-commerce & Marketing pages.",
-    link: "#",
+      "CGPA - 8.5  Dayananda sagar college of Engineeing  Bengaluru",
+    link: "https://docs.google.com/document/d/1QjrcRxxFIcbXDU_ig183W7Jeud_3yybY3aeWLlu2x5I/edit",
     latest: true,
   },
   {
-    title: "Flowbite Figma v1.3.0",
-    date: "Released on December 7th, 2021",
+    title: "Intermediate",
+    date: "2020-2022",
     description:
-      "All of the pages and components are first designed in Figma and we keep a parity between the two versions even as we update the project.",
+      "Chinmaya Vidyalaya Bokaro steel city , Jharkhand",
   },
   {
-    title: "Flowbite Library v1.2.2",
-    date: "Released on December 2nd, 2021",
+    title: "Matriculation",
+    date: "2019-2020",
     description:
-      "Get started with dozens of web components and interactive elements built on top of Tailwind CSS.",
+      "94% , Sacred Heart School , Jharkhand",
   },
 ];
 

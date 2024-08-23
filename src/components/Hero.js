@@ -69,9 +69,9 @@ const Hero = () => {
                 whileInView={{ x:0, opacity: 1 }}
                 transition={{ delay: 2.8, duration: 0.8 }}
                 viewport={{ once: true }}
-                className="absolute lg:top-20 max-lg:top-10 lg:left-20 -top-16 -left- bg-white w-20 h-10 flex items-center justify-center text-xs rounded-lg shadow-lg z-40"
+                className="absolute lg:top-20 max-lg:top-10 lg:left-16 -top-20   backdrop-blur-sm bg-white/30  text-white cursor-pointer hover:scale-105 duration-700 w-44 h-10 flex items-center justify-center text-s rounded-lg shadow-lg z-40"
               >
-                Web Developer
+                👨‍💻 Web Developer
               </motion.div>
 
               <motion.div
@@ -79,13 +79,13 @@ const Hero = () => {
                 whileInView={{ x:0, opacity: 1 }}
                 transition={{ delay: 2.8, duration: 0.8 }}
                 viewport={{ once: true }}
-                className="absolute max-sm:text-xs lg:bottom-16 max-lg:top-44 lg:-right-0 -bottom-10 -right-8 bg-white w-30 h-12 flex items-center justify-center text-xs p-2 rounded-lg shadow-lg z-40"
+                className="absolute max-sm:text-xs lg:bottom-16 max-lg:top-44 lg:-right-0 -bottom-10 -right-8 backdrop-blur-sm bg-white/30  text-white cursor-pointer hover:scale-105 duration-700 w-30 h-12 flex items-center justify-center text-s max-sm:top-48 p-2 rounded-lg shadow-lg z-40"
               >
-                Competitive Programmer
+                🥇 Competitive Programmer
               </motion.div>
               {/* VEC1 and VEC2 behind the logo */}
-              <img className='absolute -z-10 top-16 left-10' src={VEC1} />
-              <img className='absolute -z-10 top-20 left-10' src={VEC2} />
+              <img className='absolute -z-10 top-16 left-10 max-sm:left-0' src={VEC1} />
+              <img className='absolute -z-10 top-20 left-10 max-sm:left-0 max-sm:top-12' src={VEC2} />
               <motion.div className='bg-bluish top-20 right-0 z-0 blur-3xl w-48 h-48 absolute ' 
               initial={{ x: '0',   opacity: 0.3 }}  // Initial position
               animate={{ x: ['100px', '0px', '100px'], opacity: 0.5 }}  // To and fro in Y direction

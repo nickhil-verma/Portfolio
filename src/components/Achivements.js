@@ -2,7 +2,7 @@ import React from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-
+import CF from "../img/CF_Handle.png"
 const Achievements = () => {
   const settings = {
     dots: true,
@@ -38,7 +38,7 @@ const Achievements = () => {
     {
       title: "Achievement 1",
       description: "This is a short description for Achievement 1.",
-      img: "https://via.placeholder.com/150", // Replace with actual image URLs
+      img: CF, // Replace with actual image URLs
     },
     {
       title: "Achievement 2",
