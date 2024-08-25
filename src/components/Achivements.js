@@ -37,7 +37,7 @@ const Achievements = () => {
   const items = [
     {
       title: "Achievement 1",
-      description: "This is a short description for Achievement 1.",
+      description: "Achived 100+ user on GenCV webpage",
       img: CF, // Replace with actual image URLs
     },
     {
@@ -53,7 +53,7 @@ const Achievements = () => {
       <h1 className="text-gray-800 duration-700 max-sm:text-s dark:text-gray-200 text-3xl font-bold text-center mb-8">Achievements</h1>
       <Slider {...settings}>
         {items.map((item, index) => (
-          <div key={index} className="p-4">
+          <div key={index} className="p-4 duration-700">
             <div
               className="bg-white dark:bg-lessdark px-3 py-3 rounded-lg shadow-lg overflow-hidden transition-colors duration-700"
               style={{

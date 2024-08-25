@@ -147,7 +147,7 @@ const Contact = () => {
                             name="message"
                             placeholder='Your Message'
                         ></motion.textarea>
-                         <a type='submit' onClick={handleButtonClick}><CustomButton 
+                         <a type='submit' className=' p-0 inline-block' onClick={handleButtonClick}><CustomButton 
                            
                             text="Submit" 
                         /></a>
@@ -158,7 +158,7 @@ const Contact = () => {
             </div>
             <ToastContainer
             theme='colored'/>
-            <hr className="border-gray-300" />
+            <hr className="border-gray-300 dark:border-gray-600" />
 
         </>
     );

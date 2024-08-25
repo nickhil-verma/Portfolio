@@ -93,7 +93,7 @@ const Hero = () => {
               <img className='absolute -z-10 top-20 left-10 max-sm:left-0 max-sm:top-12' src={VEC2} />
               <motion.div className='bg-bluish top-20 right-0 z-0 blur-3xl w-48 h-48 absolute ' 
               initial={{ x: '0',   opacity: 0.3 }}  // Initial position
-              animate={{ x: ['100px', '0px', '100px'], opacity: 0.5 }}  // To and fro in Y direction
+              animate={{ x: ['100px', '0px', '100px'], opacity: 0.5 ,   }}  // To and fro in Y direction
               transition={{
                 duration: 20, // Speed of the animation
                 ease: "easeInOut",  // Smooth easing function
