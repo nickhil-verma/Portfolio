@@ -151,7 +151,7 @@ const Projects = () => {
 
       {/* Tab buttons */}
       <div className="text-center mb-4">
-        <div className='border-gray-400 dark:bg-gray-500 bg-slate-100 m-auto p-0 inline-block py-2 '>
+        <div className='backdrop-blur-sm bg-white/30 rounded-md m-auto p-0 inline-block py-2 '>
           <button
             onClick={() => {
               setActiveTab('web');

@@ -26,6 +26,7 @@ module.exports = {
         bluish:'#1A89E2'  // Light text color for dark theme
       }
     },
+    
   },
   plugins: [],
 }

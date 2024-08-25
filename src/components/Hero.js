@@ -55,7 +55,7 @@ const Hero = () => {
           <div className="relative text-center p-8">
             {/* Floating boxes positioned relative to the image */}
             
-            <div className="relative z-20">
+            <div className=" hover:scale-105 duration-1000 relative z-20">
               {/* Logo Image */}
               <a href='https://www.instagram.com/nickhil_verma?igsh=MWljaDU2bW9kMmZ4dQ%3D%3D&utm_source=qr' className='cursor-pointer'>
                 <motion.img
@@ -66,7 +66,7 @@ const Hero = () => {
 
                   src={LOGO}
                   alt="Hero Image"
-                  className="rounded-full hover:scale-105  duration-1000 cursor-pointer  z-40 w-[300px] -top-10 lg:w-[500px]"
+                  className="rounded-full  duration-1000 cursor-pointer  z-40 w-[300px] -top-10 lg:w-[500px]"
                 />
               </a>
               <motion.div
@@ -74,7 +74,7 @@ const Hero = () => {
       whileInView={{ x: 0, opacity: 1 }}
       transition={{ delay: 2.8, duration: 0.8 }}
       viewport={{ once: false }}  // Trigger animation every time it comes into view
-      className="absolute lg:top-20 max-lg:top-24 lg:left-16 -top-20 backdrop-blur-sm bg-white/30 text-white cursor-pointer hover:scale-105 duration-700 w-44 h-10 flex items-center justify-center text-s rounded-lg shadow-lg z-40"
+      className="absolute lg:top-20 max-lg:top-24 lg:left-16 -top-20 backdrop-blur-sm bg-white/30 text-white cursor-pointer border border-white/30  hover:scale-105 duration-700 w-44 h-10 flex items-center justify-center text-s rounded-lg shadow-lg z-40"
     >
       👨‍💻 Web Developer
     </motion.div>
@@ -145,10 +145,10 @@ const Hero = () => {
 
             {/* Custom Buttons */}
             <div className='flex items-center justify-center space-x-4 max-sm:flex-col max-sm:space-y-4'>
-  <a href='https://docs.google.com/document/d/1QjrcRxxFIcbXDU_ig183W7Jeud_3yybY3aeWLlu2x5I/edit?usp=sharing' className='flex justify-center'>
-    <CustomButton text="Resume" className="max-sm:w-16 max-sm:h-10" />
+  <a href='https://docs.google.com/document/d/1QjrcRxxFIcbXDU_ig183W7Jeud_3yybY3aeWLlu2x5I/edit?usp=sharing' className='flex justify-center  '>
+    <CustomButton text="Resume"   />
   </a>
-  <a href="https://www.linkedin.com/in/nikhil-verma-b9ba861b0/" className='hover:scale-105 duration-1000 hover:text-yellow cursor-pointer' ><span className='dark:text-white max-sm:text-xs flex justify-center items-center '>Connect with me &nbsp; <FaExternalLinkAlt /></span></a>
+  <a href="https://www.linkedin.com/in/nikhil-verma-b9ba861b0/" className='hover:scale-105 duration-1000 hover:text-yellow cursor-pointer' ><span className='dark:text-white max-sm:text-xs flex justify-center items-center animate-pulse '>Connect with me &nbsp; <FaExternalLinkAlt /></span></a>
 </div>
 
 
@@ -156,15 +156,7 @@ const Hero = () => {
         </div>
 
         {/* Randomized Blurred Bouncing Divs */}
-        {Array.from({ length: 3 }).map((_, index) => (
-          <motion.div
-            key={index}
-            style={{ width: '300px', height: '300px', ...randomPosition() }}
-            className="absolute blur-3xl opacity-50 rounded-full bg-yellow-500 z-0"
-            animate={{ y: [0, -20, 0] }}
-            transition={{ duration: 2, repeat: Infinity, repeatType: 'loop' }}
-          />
-        ))}
+      
       </div>
     </>
   );

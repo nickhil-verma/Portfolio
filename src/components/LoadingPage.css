@@ -1,6 +1,6 @@
 #LoadingPage {
     background-color: white;
-    width: 98.8vw;
+    width: 100vw;
     animation: fadeOut 1s ease-out forwards; /* 1 second fade-out duration */
     animation-delay: 1s;
     height: 100vh;
