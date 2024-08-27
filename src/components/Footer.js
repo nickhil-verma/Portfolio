@@ -23,7 +23,7 @@ const Footer = () => {
 >
 </motion.div>
 
-          <div className="relative  shadow-xl bg-yellow hover:scale-105 duration-1000 z-50 p-5 w-4/5 md:w-7/10 max-w-5xl h-auto m-auto my-9 rounded-xl flex flex-col overflow-hidden lg:flex-row items-center lg:items-start lg:justify-between">
+          <div className="relative  shadow-xl bg-yellow hover:scale-105 duration-1000 z-20 p-5 w-4/5 md:w-7/10 max-w-5xl h-auto m-auto my-9 rounded-xl flex flex-col overflow-hidden lg:flex-row items-center lg:items-start lg:justify-between">
             {/* Motion Div */}
             
             <div className="relative flex-1 mb-4 lg:mb-0 lg:mr-4 text-center lg:text-left">

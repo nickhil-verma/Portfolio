@@ -74,7 +74,7 @@ const Hero = () => {
       whileInView={{ x: 0, opacity: 1 }}
       transition={{ delay: 2.8, duration: 0.8 }}
       viewport={{ once: false }}  // Trigger animation every time it comes into view
-      className="absolute lg:top-20 max-lg:top-24 lg:left-16 -top-20 backdrop-blur-sm bg-white/30 text-white cursor-pointer border border-white/30  hover:scale-105 duration-700 w-44 h-10 flex items-center justify-center text-s rounded-lg shadow-lg z-40"
+      className="absolute lg:top-20 max-lg:top-24 lg:left-16 -top-20 backdrop-blur-sm bg-white/30 text-white cursor-pointer border-2 border-white/30  hover:scale-105 duration-700 w-44 h-10 flex items-center justify-center text-s rounded-lg shadow-lg z-40"
     >
       👨‍💻 Web Developer
     </motion.div>
@@ -83,8 +83,9 @@ const Hero = () => {
       initial={{ x: 100, opacity: 0 }}
       whileInView={{ x: 0, opacity: 1 }}
       transition={{ delay: 2.8, duration: 0.8 }}
-      viewport={{ once: false }}  // Trigger animation every time it comes into view
-      className="absolute max-sm:text-xs lg:bottom-16 max-lg:top-44 lg:-right-0 -bottom-10 -right-8 backdrop-blur-sm bg-white/30 text-white cursor-pointer hover:scale-105 duration-700 w-30 h-12 flex items-center justify-center text-s max-sm:top-48 p-2 rounded-lg shadow-lg z-50"
+      viewport={{ once: false }} 
+       // Trigger animation every time it comes into view
+      className="absolute max-sm:text-xs lg:bottom-16 max-lg:top-44 lg:-right-0 -bottom-10 -right-8 backdrop-blur-sm border-2  border-white/30  bg-white/30 text-white cursor-pointer hover:scale-105 duration-700 w-30 h-12 flex items-center justify-center text-s max-sm:top-48 p-2 rounded-lg shadow-lg z-50"
     >
       🥇 Competitive Programmer
     </motion.div>

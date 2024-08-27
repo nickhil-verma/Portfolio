@@ -144,20 +144,20 @@ const Projects = () => {
           repeatType: "mirror",
         }}
         style={{ width: "300px", height: "300px" }}
-        className="overflow-hidden blur-3xl absolute opacity-55 left-0 rounded-full bg-yellow z-10"
+        className="overflow-hidden blur-3xl absolute opacity-55 left-0 rounded-full bg-yellow z-0"
       />
 
       <h2 className="text-4xl max-sm:text-s font-bold z-10 text-center mb-8 dark:text-white">Projects</h2>
 
       {/* Tab buttons */}
-      <div className="text-center mb-4">
-        <div className='backdrop-blur-sm bg-white/30 rounded-md m-auto p-0 inline-block py-2 '>
+      <div className="text-center   z-30 mb-4">
+        <div className='backdrop-blur-sm  bg-white/30 rounded-md m-auto p-0 inline-block py-2 '>
           <button
             onClick={() => {
               setActiveTab('web');
               setVisibleProjects(3);
             }}
-            className={`px-4 py-2 mx-2 rounded ${activeTab === 'web' ? 'bg-yellow text-white' : 'bg-gray-200 text-black'}`}
+            className={`px-4 py-2 duration-500  mx-2 rounded ${activeTab === 'web' ? 'bg-yellow text-white' : 'bg-gray-200 text-black'}`}
           >
             Web Development
           </button>
@@ -166,7 +166,7 @@ const Projects = () => {
               setActiveTab('ai');
               setVisibleProjects(3);
             }}
-            className={`px-4 py-2 mx-2 rounded ${activeTab === 'ai' ? 'bg-yellow text-white' : 'bg-gray-200 text-black'}`}
+            className={`px-4 py-2 mx-2 duration-700 rounded ${activeTab === 'ai' ? 'bg-yellow text-white' : 'bg-gray-200 text-black'}`}
           >
             AI/ML Projects
           </button>
