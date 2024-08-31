@@ -197,15 +197,15 @@ const Projects = () => {
                 {project.description}
               </p>
               <div className='flex text-center justify-center space-x-9'>
-                <a href={project.github} target="_blank" rel="noopener noreferrer" className="dark:text-white duration-700">
+                <a href={project.github} target="_blank" rel="noopener noreferrer" className="dark:text-white hover:scale-105 duration-200">
                   <FaGithub className="text-2xl" />
                 </a>
                 {project.link && (
-                  <a href={project.link} target="_blank" rel="noopener noreferrer" className="cursor-pointer text-bluish duration-700">
+                  <a href={project.link} target="_blank" rel="noopener noreferrer" className="cursor-pointer hover:scale-105  text-bluish duration-200">
                     <FaExternalLinkAlt className="text-2xl" />
                   </a>
                 )}
-                <a href={project.link} target="_blank" rel="noopener noreferrer" className="cursor-pointer text-red-500 duration-700">
+                <a href={project.link} target="_blank" rel="noopener noreferrer" className="cursor-pointer hover:scale-105 text-red-500 duration-200">
                   <FaYoutube className="text-2xl" />
                 </a>
               </div>

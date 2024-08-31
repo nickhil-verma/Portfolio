@@ -59,7 +59,7 @@ const Footer = () => {
             className='max-sm:text-xs'>
               
               Made With ❤️ by Nikhil</p>
-            <div className='flex items-center justify-center text-center text-s'>
+            <div className='flex items-center justify-center text-center text-s '>
               Using &nbsp; <span className='text-yellow'><FaReact /></span> &nbsp; <span className='text-bluish'>x</span> &nbsp; <span className='text-yellow'><RiTailwindCssFill /></span>
             </div>
           </div>

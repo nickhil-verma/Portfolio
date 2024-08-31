@@ -136,7 +136,7 @@ const Hero = () => {
                 wrapper="span"
                 cursor={true}
                 repeat={Infinity}
-                style={{ fontSize: '1em', duration: '700', display: 'inline-block', color: 'inherit' }}
+                style={{ fontSize: '1em', backgroundColor:'transparent', duration: '700', display: 'inline-block', color: 'inherit' }}
               />
             </h1>
 
