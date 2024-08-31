@@ -7,6 +7,7 @@ import { FaYoutube } from "react-icons/fa";
 import { FaExternalLinkAlt } from "react-icons/fa";
 import PROJ2 from '../img/proj2.png';
 import PROJ3 from '../img/thumbnailfooter.png';
+import AIPROJ1 from "../img/AIPROJ1.jpg"
 
 const Projects = () => {
   const [visibleProjects, setVisibleProjects] = useState(3);
@@ -76,9 +77,9 @@ const Projects = () => {
   const aiProjects = [
     {
       id: 7,
-      title: "AI Project One",
-      description: "A description for AI project one.",
-      image: "https://via.placeholder.com/600x400",
+      title: "Sign Language to Text and Voice in real time",
+      description: "Enables hard heard community to interact. Compatible across all devices -(SIH Theme)",
+      image: AIPROJ1,
       github: "https://github.com/ai-project-one",
     },
     {
@@ -159,7 +160,7 @@ const Projects = () => {
             }}
             className={`px-4 py-2 duration-500  mx-2 rounded ${activeTab === 'web' ? 'bg-yellow text-white' : 'bg-gray-200 text-black'}`}
           >
-            Web Development
+            Web-Dev Projects
           </button>
           <button
             onClick={() => {
