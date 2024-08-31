@@ -76,7 +76,7 @@ const Education = () => {
 // Experience Component
 const Experience = () => {
   return (
-    <div className="w-full max-w-3xl mx-auto p-6">
+    <div className="w-full max-w-3xl     border-3 dmx-auto p-6">
       <ol className="relative border-l border-gray-200 dark:border-gray-700">
         {experienceData.map((item, index) => (
           <li key={index} className="mb-10 ml-6">
@@ -131,10 +131,20 @@ const TimelineTabs = () => {
 
   return (
     <div className="relative w-full  rounded-lg max-w-3xl mx-auto p-6">
+      <motion.div
+        initial={{ y: '0', x: '0', opacity: 0.5,backgroundColor: '#FFC727' }}
+        animate={{ y: ['300px', '0px', '300px'], x: ['30px', '0px', '30px'],opacity: 0.3, backgroundColor: '#1A89E2' }}
+        transition={{
+          duration: 10,
+          ease: "easeInOut",
+          repeat: Infinity,
+          repeatType: "mirror",
+        }}
+      className='w-[400px] h-[350px] left-0  top-40 bg-yellow blur-3xl   duration-1000 absolute z-0'></motion.div>
       <div className="absolute inset-0 -z-10">
-        <div className="blurred-divbox w-full h-full bg-yellow blur-3xl opacity-15"></div>
+        
       </div>
-      <h1 className='dark:text-white max-sm:text-2xl text-5xl text-center font-semibold mt-10 mb-10'>Career Journey</h1>
+      <h1 className='dark:text-white max-sm:text-2xl text-5xl text-center font-semibold mt-10 z-10 mb-10'>Career Journey</h1>
       <div className="flex items-center justify-center mb-4 relative z-10">
         <button
           onClick={() => handleTabChange(0)}
