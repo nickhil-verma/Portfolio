@@ -34,7 +34,7 @@ const LoadingPage = () => {
         initial={{ y: 0, opacity: 1, rotateY: 0, backgroundColor: 'black' }}
         animate={{ y: -1200, opacity: 0, rotateY: 25, backgroundColor: bgColor }}
         transition={{ delay: 5, duration: 2 }} // Longer duration to include color transition
-        className="Loading-page dark:bg-dark text-white dark:text-white w-screen overflow-hidden"
+        className="Loading-page dark:bg-dark text-white dark:text-white w-screen "
       >
         
 

@@ -9,13 +9,13 @@ import LoadingPage from './components/LoadingPage';
 import Navbar from './components/navbar/Navbar';
 import Projects from './components/Projects';
  import Skills from './components/Skills';
- import React, { useState } from 'react';
- import { AnimatePresence, motion } from 'framer-motion';
+ import React from 'react';
+ 
 
 function App() {
-  const [isLoading, setIsLoading] = useState(true);
+ 
   return (
-     <div className=' bg-light dark:bg-dark overflow-hidden duration-700'>
+     <div className='   bg-light dark:bg-dark overflow-hidden duration-700'>
     <LoadingPage/>
      <Navbar/>
       <Hero/>

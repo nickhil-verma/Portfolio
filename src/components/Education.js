@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { BsStars } from "react-icons/bs";
 // Education Component
 const Education = () => {
   return (
@@ -30,8 +31,8 @@ const Education = () => {
              className="flex  max-sm:text-xs items-center mb-1 text-lg font-semibold text-gray-900 dark:text-white">
               {item.title}
               {item.latest && (
-                <span className="bg-blue-100 text-blue-800 text-sm font-medium ml-3 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
-                  Latest
+                <span className="bg-blue-100 flex items-center text-blue-800 text-sm font-medium ml-3 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
+                  Latest &nbsp; <BsStars />
                 </span>
               )}
             </motion.h3>
