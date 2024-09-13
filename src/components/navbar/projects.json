@@ -1,0 +1,102 @@
+[
+    {
+      "id": 1,
+      "name": "GenCV | AI Resume Builder",
+      "description": "Gen CV is an online resume builder platform targeting enhancement of ATS score using Google Gemini API.",
+      "image": "http://localhost:3000/static/media/proj1.e66870ac824e38311f74.png", 
+      "github": "https://github.com/project-one",
+      "link": "https://gen-cv-ai-resumebuilder-frontend.vercel.app/login",
+      "category": "web"
+    },
+    {
+      "id": 2,
+      "name": "TradeWage | Stock Management App",
+      "description": "Built a MERN stack app for real-time stock trading, with React.js, Mongoose, Axios, Chart.js, and secure authentication.",
+      "image": "http://localhost:3000/static/media/proj2.2546668b9835cd3c3f5b.png",
+      "github": "https://github.com/nickhil-verma/Trade-wage-frontend",
+      "link": "https://trade-wage-frontend.vercel.app/",
+      "category": "web"
+    },
+    {
+      "id": 3,
+      "name": "Portfolio Website",
+      "description": "A work showcasing website made using ReactJs, Tailwind, EmailJs.",
+      "image": "PROJ3",
+      "github": "https://github.com/nickhil-verma/Portfolio",
+      "link": "https://portfolio-eight-xi-99.vercel.app/",
+      "category": "web"
+    },
+    {
+      "id": 4,
+      "name": "Project Four",
+      "description": "A short description of Project Four.",
+      "image": "https://via.placeholder.com/600x400",
+      "github": "https://github.com/project-four",
+      "category": "web"
+    },
+    {
+      "id": 5,
+      "name": "Project Five",
+      "description": "A short description of Project Five.",
+      "image": "https://via.placeholder.com/600x400",
+      "github": "https://github.com/project-five",
+      "category": "web"
+    },
+    {
+      "id": 6,
+      "name": "Project Six",
+      "description": "A short description of Project Six.",
+      "image": "https://via.placeholder.com/600x400",
+      "github": "https://github.com/project-six",
+      "category": "web"
+    },
+    {
+      "id": 7,
+      "name": "Sign Language to Text and Voice in Real Time",
+      "description": "Enables hard-heard community to interact. Compatible across all devices.",
+      "image": "AIPROJ1",
+      "github": "https://github.com/ai-project-one",
+      "category": "ai"
+    },
+    {
+      "id": 8,
+      "name": "AI Project Two",
+      "description": "A description for AI project two.",
+      "image": "https://via.placeholder.com/600x400",
+      "github": "https://github.com/ai-project-two",
+      "category": "ai"
+    },
+    {
+      "id": 9,
+      "name": "AI Project Three",
+      "description": "A description for AI project three.",
+      "image": "https://via.placeholder.com/600x400",
+      "github": "https://github.com/ai-project-three",
+      "category": "ai"
+    },
+    {
+      "id": 10,
+      "name": "AI Project Four",
+      "description": "A description for AI project four.",
+      "image": "https://via.placeholder.com/600x400",
+      "github": "https://github.com/ai-project-four",
+      "category": "ai"
+    },
+    {
+      "id": 11,
+      "name": "AI Project Five",
+      "description": "A description for AI project five.",
+      "image": "https://via.placeholder.com/600x400",
+      "github": "https://github.com/ai-project-five",
+      "category": "ai"
+    },
+    {
+      "id": 12,
+      "name": "AI Project Six",
+      "description": "A description for AI project six.",
+      "image": "https://via.placeholder.com/600x400",
+      "github": "https://github.com/ai-project-six",
+      "category": "ai"
+    }
+  ]
+  

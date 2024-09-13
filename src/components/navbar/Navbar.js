@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { FaMoon } from 'react-icons/fa';
+import { FaMoon, FaSearch, FaTimes } from 'react-icons/fa';
 import { IoSunny } from 'react-icons/io5';
-import { FaSearch } from "react-icons/fa";
 import LOGO from '../../../src/logo.svg';
 import DARKLOGO from '../../../src/logoDARK.svg';
+import projectsData from './projects.json';
 
 const Navbar = () => {
   const [theme, setTheme] = useState('light');
   const [searchQuery, setSearchQuery] = useState('');
-  const [repos, setRepos] = useState([]);
+  const [filteredProjects, setFilteredProjects] = useState([]);
+  const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -24,10 +25,23 @@ const Navbar = () => {
 
   const logoSrc = theme === 'dark' ? DARKLOGO : LOGO;
 
+  // Filter projects based on the search query
   const handleSearch = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
-    setRepos([]); // Clear the list if no input
+
+    const filtered = projectsData.filter((project) =>
+      project.name.toLowerCase().includes(query.toLowerCase()) ||
+      project.description.toLowerCase().includes(query.toLowerCase())
+    );
+
+    setFilteredProjects(filtered);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setFilteredProjects([]);
+    setIsFocused(false);
   };
 
   return (
@@ -37,29 +51,52 @@ const Navbar = () => {
           <img src={logoSrc} className="w-11 fill-current text-green-600 duration-700" alt="Logo" />
         </a>
         <ul className="hidden dark:text-white duration-700 md:flex md:space-x-8 md:items-center flex-grow justify-center">
-          <li className="text-lg hover:cursor-pointer hover:scale-105 duration-200"><a className='hover:bor' href='#projects'>Projects</a></li>
-          <li className="text-lg hover:cursor-pointer hover:scale-105 duration-200"><a href='#achievements'>Achievements</a></li>
-          <li className="text-lg hover:cursor-pointer hover:scale-105 duration-200"><a href='#contact'>Contact</a></li>
+          <li className="text-lg hover:cursor-pointer hover:scale-105 duration-200">
+            <a href='#projects'>Projects</a>
+          </li>
+          <li className="text-lg hover:cursor-pointer hover:scale-105 duration-200">
+            <a href='#achievements'>Achievements</a>
+          </li>
+          <li className="text-lg hover:cursor-pointer hover:scale-105 duration-200">
+            <a href='#contact'>Contact</a>
+          </li>
           {/* Search bar */}
-          <li className="relative text-lg">
+          <li className=" max-lg:hidden w-[400px] relative text-lg">
             <input
               type="text"
               placeholder="Search Projects ... "
               value={searchQuery}
               onChange={handleSearch}
-              className="focus:border-yellow-500 border-[1px] bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white p-2 rounded-md font-mono tracking-tighter	 max-lg:hidden focus:outline-none transition-colors duration-200"
-            /> 
-            <FaSearch className="absolute top-1/2 right-3 max-lg:hidden transform -translate-y-1/2 text-gray-500 dark:text-gray-400" />
-            {/* Display repo list if there are search results */}
-            {repos.length > 0 && (
-              <div className="absolute z-40 bg-white/10 backdrop-blur-md dark:bg-black/10 p-4 max-h-64 w-full overflow-y-auto rounded-sm shadow-lg">
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+              className="focus:border-yellow-500 border-[1px] bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white p-2 rounded-md font-mono tracking-tighter w-[100%]  focus:outline-none transition-colors duration-200"
+            />
+            {isFocused && searchQuery && (
+              <FaTimes
+                className="absolute top-1/2 right-3 max-lg:hidden transform -translate-y-1/2 text-gray-500 dark:text-gray-400 cursor-pointer"
+                onClick={clearSearch}
+              />
+            )}
+            {!isFocused && !searchQuery && (
+              <FaSearch className="absolute top-1/2 right-3 max-lg:hidden transform -translate-y-1/2 text-gray-500 dark:text-gray-400" />
+            )}
+            {/* Display project list if there are search results */}
+            {(isFocused || searchQuery) && filteredProjects.length > 0 && (
+              <div className="absolute z-40 bg-white/10 backdrop-blur-md dark:bg-black/10 p-4 w-full rounded-sm shadow-lg border border-gray-300 dark:border-gray-700">
                 <ul>
-                  {repos.map(repo => (
-                    <li key={repo.id} className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg mb-2">
-                      <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400">
-                        {repo.name}
-                      </a>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">{repo.description}</p>
+                  {filteredProjects.map((project) => (
+                    <li key={project.id} className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg mb-2 flex items-center">
+                      <img
+                        src={project.image.includes('http') ? project.image : `./images/${project.image}.jpg`} // Check if image URL is valid
+                        alt={project.name}
+                        className="w-12 h-12 rounded mr-3"
+                      />
+                      <div>
+                        <a href={project.github} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 font-semibold">
+                          {project.name}
+                        </a>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">{project.description}</p>
+                      </div>
                     </li>
                   ))}
                 </ul>
