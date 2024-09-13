@@ -118,7 +118,7 @@ const Navbar = () => {
         </ul>
 
         {/* Search icon for smaller screens */}
-        <button className="md:hidden  fixed top-4 right-12 max-lg:right-36 z-40 bg-white dark:bg-gray-800 p-2 rounded-full shadow-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" onClick={openSearchModal} ><FaSearch
+        <button className="lg:hidden  fixed top-4 right-12 max-lg:right-36 z-40 bg-white dark:bg-gray-800 p-2 rounded-full shadow-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" onClick={openSearchModal} ><FaSearch
           className="    text-dark-800 dark:text-white cursor-pointer"
           
         /></button>
