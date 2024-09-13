@@ -9,7 +9,9 @@
     @apply bg-gray-900 text-white;
   }
 }
-
+body{
+  overflow-x: hidden;
+}
 * {
   scroll-behavior: smooth;
    
@@ -23,3 +25,25 @@
   box-shadow: 2.5px 5px #c2c2c2;
 } */
 
+/* WebKit browsers */
+::-webkit-scrollbar {
+  width: 7.5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 1px rgba(255, 0, 0, 0.065); 
+  border-radius: 10px;
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #ffc527af, #e21a1a8f);   
+
+  border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #FFC727, #e21a1a);   
+}

@@ -5,24 +5,49 @@ import "slick-carousel/slick/slick-theme.css";
 import CF from "../img/CF_Handle.png";
 
 const Achievements = () => {
-  const [codeforcesRating, setCodeforcesRating] = useState(null);
+  const [codeforcesData, setCodeforcesData] = useState({
+    rating: null,
+    maxRating: null,
+    problemsSolved: null,
+  });
 
   useEffect(() => {
-    // Fetch Codeforces rating
-    const fetchCodeforcesRating = async () => {
+    const fetchCodeforcesData = async () => {
       try {
-        const response = await fetch('https://codeforces.com/api/user.rating?handle=nickhilverma');
-        const data = await response.json();
-        if (data.status === 'OK') {
-          const recentContest = data.result[data.result.length - 1]; // Get the most recent contest
-          setCodeforcesRating(recentContest.newRating); // Set the new rating
+        // Fetch user rating history
+        const ratingResponse = await fetch('https://codeforces.com/api/user.rating?handle=nickhilverma');
+        const ratingData = await ratingResponse.json();
+
+        let recentRating = null;
+        let maxRating = null;
+
+        if (ratingData.status === 'OK' && ratingData.result.length > 0) {
+          const recentContest = ratingData.result[ratingData.result.length - 1]; // Get the most recent contest
+          recentRating = recentContest.newRating; // Set the new rating
+          maxRating = Math.max(...ratingData.result.map(contest => contest.newRating)); // Find the max rating
         }
+
+        // Fetch user info (problems solved)
+        const userInfoResponse = await fetch('https://codeforces.com/api/user.info?handles=nickhilverma');
+        const userInfoData = await userInfoResponse.json();
+
+        let problemsSolved = null;
+        if (userInfoData.status === 'OK' && userInfoData.result.length > 0) {
+          problemsSolved = userInfoData.result[0].maxSolvedProblems; // Assuming the data has solved problem count, otherwise adjust
+        }
+
+        // Set both ratings and problems solved to state
+        setCodeforcesData({
+          rating: recentRating,
+          maxRating: maxRating,
+          problemsSolved: problemsSolved,
+        });
       } catch (error) {
-        console.error("Error fetching Codeforces rating:", error);
+        console.error("Error fetching Codeforces data:", error);
       }
     };
 
-    fetchCodeforcesRating();
+    fetchCodeforcesData();
   }, []);
 
   const settings = {
@@ -58,9 +83,9 @@ const Achievements = () => {
   const items = [
     {
       title: "CP Career",
-      description: codeforcesRating
-      ? `Current Codeforces Rating: ${codeforcesRating}`
-      : "Loading Codeforces rating...",
+      description: codeforcesData.rating
+        ? `Current Codeforces Rating: ${codeforcesData.rating}, Max Rating: ${codeforcesData.maxRating}, Problems Solved: ${codeforcesData.problemsSolved || 'Loading...'}`
+        : "Loading Codeforces data...",
       img: CF, // Replace with actual image URLs
     },
     {

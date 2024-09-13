@@ -10,6 +10,7 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [isFocused, setIsFocused] = useState(false);
+  const [showModal, setShowModal] = useState(false); // State to control the modal
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -25,7 +26,6 @@ const Navbar = () => {
 
   const logoSrc = theme === 'dark' ? DARKLOGO : LOGO;
 
-  // Filter projects based on the search query
   const handleSearch = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
@@ -44,23 +44,35 @@ const Navbar = () => {
     setIsFocused(false);
   };
 
+  const openSearchModal = () => {
+    setShowModal(true);
+    setIsFocused(true);
+  };
+
+  const closeSearchModal = () => {
+    setShowModal(false);
+    setSearchQuery('');
+    setFilteredProjects([]);
+    setIsFocused(false);
+  };
+
   return (
     <>
       <nav className="fixed w-screen top-0 p-2 z-40 flex justify-between items-center bg-light dark:bg-dark shadow-md transition-colors duration-500">
-        <a href='#'>
+        <a href="#">
           <img src={logoSrc} className="w-11 fill-current text-green-600 duration-700" alt="Logo" />
         </a>
         <ul className="hidden dark:text-white duration-700 md:flex md:space-x-8 md:items-center flex-grow justify-center">
           <li className="text-lg hover:cursor-pointer hover:scale-105 duration-200">
-            <a href='#projects'>Projects</a>
+            <a href="#projects">Projects</a>
           </li>
           <li className="text-lg hover:cursor-pointer hover:scale-105 duration-200">
-            <a href='#achievements'>Achievements</a>
+            <a href="#achievements">Achievements</a>
           </li>
           <li className="text-lg hover:cursor-pointer hover:scale-105 duration-200">
-            <a href='#contact'>Contact</a>
+            <a href="#contact">Contact</a>
           </li>
-          {/* Search bar */}
+          {/* Regular search bar for larger screens */}
           <li className=" max-lg:hidden w-[400px] relative text-lg">
             <input
               type="text"
@@ -87,7 +99,7 @@ const Navbar = () => {
                   {filteredProjects.map((project) => (
                     <li key={project.id} className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg mb-2 flex items-center">
                       <img
-                        src={project.image.includes('http') ? project.image : `./images/${project.image}.jpg`} // Check if image URL is valid
+                        src={project.image.includes('http') ? project.image : `./images/${project.image}.jpg`}
                         alt={project.name}
                         className="w-12 h-12 rounded mr-3"
                       />
@@ -104,7 +116,53 @@ const Navbar = () => {
             )}
           </li>
         </ul>
+
+        {/* Search icon for smaller screens */}
+        <button className="md:hidden  fixed top-4 right-12 max-lg:right-36 z-40 bg-white dark:bg-gray-800 p-2 rounded-full shadow-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" onClick={openSearchModal} ><FaSearch
+          className="    text-dark-800 dark:text-white cursor-pointer"
+          
+        /></button>
       </nav>
+
+      {/* Search Modal for smaller screens */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex justify-center items-start pt-10">
+          <div className="w-[90%] max-w-lg bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg">
+            <div className="flex justify-between items-center mb-4">
+              <input
+                type="text"
+                placeholder="Search Projects ..."
+                value={searchQuery}
+                onChange={handleSearch}
+                className="focus:border-yellow-500 border-[1px] bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white p-2 rounded-md font-mono tracking-tighter w-full focus:outline-none transition-colors duration-200"
+              />
+              <FaTimes className=" m-2 text-gray-500 dark:text-white cursor-pointer" onClick={closeSearchModal} />
+            </div>
+            {filteredProjects.length > 0 ? (
+              <ul>
+                {filteredProjects.map((project) => (
+                  <li key={project.id} className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg mb-2 flex items-center">
+                    <img
+                      src={project.image.includes('http') ? project.image : `./images/${project.image}.jpg`}
+                      alt={project.name}
+                      className="w-12 h-12 rounded mr-3"
+                    />
+                    <div>
+                      <a href={project.github} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 font-semibold">
+                        {project.name}
+                      </a>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{project.description}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-center text-gray-500 dark:text-gray-400">No projects found</p>
+            )}
+          </div>
+        </div>
+      )}
+
       <button
         className="fixed top-4 right-4 max-lg:right-20 z-40 bg-white dark:bg-gray-800 p-2 rounded-full shadow-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
         onClick={changeTheme}
