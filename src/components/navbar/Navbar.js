@@ -62,7 +62,7 @@ const Navbar = () => {
         <a href="#">
           <img src={logoSrc} className="w-11 fill-current text-green-600 duration-700" alt="Logo" />
         </a>
-        <ul className="hidden dark:text-white duration-700 md:flex md:space-x-8 md:items-center flex-grow justify-center">
+        <ul className="hidden dark:text-white duration-700 lg:flex md:space-x-8 md:items-center flex-grow justify-center">
           <li className="text-lg hover:cursor-pointer hover:scale-105 duration-200">
             <a href="#projects">Projects</a>
           </li>
