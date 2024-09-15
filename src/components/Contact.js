@@ -81,13 +81,13 @@ const Contact = () => {
                             <FaGithub className='text-2xl' />
                         </a>
                         <a 
-                            href="https://www.linkedin.com/in/nikhil-kumar-b9ba861b0/" 
+                            href="https://www.linkedin.com/in/nikhil-verma-banglore" 
                             className='text-black dark:text-white hover:scale-125 transition-transform duration-500 mx-2 hover:text-yellow'
                         >
                             <FaLinkedin className='text-2xl' />
                         </a>
                         <a 
-                            href="https://www.instagram.com/nikkhiil_verma/" 
+                            href="https://www.instagram.com/nickhil_verma/?igsh=MWljaDU2bW9kMmZ4dQ%3D%3D&utm_source=qr" 
                             className='text-black dark:text-white hover:scale-125 transition-transform duration-500 mx-2 hover:text-yellow'
                         >
                             <AiFillInstagram className='text-2xl' />

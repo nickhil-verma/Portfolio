@@ -141,7 +141,7 @@ const TimelineTabs = () => {
           repeat: Infinity,
           repeatType: "mirror",
         }}
-      className='w-[400px] h-[350px] left-0  top-40 bg-yellow blur-3xl   duration-1000 absolute z-0'></motion.div>
+      className='w-[99%] h-[250px] left-0  top-40 bg-yellow blur-3xl   duration-1000 absolute z-0'></motion.div>
       <div className="absolute inset-0 -z-10">
         
       </div>

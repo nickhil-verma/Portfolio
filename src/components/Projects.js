@@ -185,7 +185,7 @@ const Projects = () => {
           {projects.slice(0, visibleProjects).map((project) => (
             <motion.div
               key={project.id}
-              className="bg-white z-20 dark:bg-lessdark p-6 rounded-lg flex flex-col duration-700 items-center"
+              className="bg-white  z-20  dark:bg-lessdark p-6 rounded-lg flex flex-col duration-700 items-center"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
