@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import CustomButton from './CustomButton';
 import PROJ1 from "../img/proj1.png";
 import { FaYoutube } from "react-icons/fa";
+import CEDA from "../img/Ceda.png"
 import { FaExternalLinkAlt } from "react-icons/fa";
 import PROJ2 from '../img/proj2.png';
 import PROJ3 from '../img/thumbnailfooter.png';
@@ -52,10 +53,11 @@ const Projects = () => {
     },
     {
       id: 4,
-      title: "Project Four",
-      description: "A short description of Project Four.",
-      image: "https://via.placeholder.com/600x400",
-      github: "https://github.com/project-four",
+      title: "IEEE CEDA Official Website ",
+      description: "Made Official website for IEEE CEDA society in Our college whhich Deals with 500+ active subscribers",
+      image: CEDA,
+      github: "https://github.com/nickhil-verma/CEDAXDSU",
+      link: "https://dsuieeeceda.vercel.app/",
     },
     {
       id: 5,
