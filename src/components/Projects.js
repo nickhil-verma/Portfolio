@@ -54,7 +54,7 @@ const Projects = () => {
     {
       id: 4,
       title: "IEEE CEDA Official Website ",
-      description: "Made Official website for IEEE CEDA society in Our college whhich Deals with 500+ active subscribers",
+      description: "Made Official website for IEEE CEDA society in Our college which Deals with 500+ active subscribers",
       image: CEDA,
       github: "https://github.com/nickhil-verma/CEDAXDSU",
       link: "https://dsuieeeceda.vercel.app/",
