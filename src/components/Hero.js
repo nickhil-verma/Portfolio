@@ -7,6 +7,8 @@ import LOGO from '../img/CF_DP.png';
 import VEC1 from '../img/Vector1.png';
 import VEC2 from '../img/Vector2.png';
 import { FaExternalLinkAlt } from "react-icons/fa";
+import { GoArrowRight } from "react-icons/go";
+
 
 const Hero = () => {
   const [menuOpen, setMenuOpen] = useState(false);

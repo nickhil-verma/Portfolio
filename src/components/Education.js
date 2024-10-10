@@ -194,10 +194,10 @@ const educationData = [
 
 const experienceData = [
   {
-    title: "Front-end Developer at Company X",
-    date: "June 2020 - Present",
+    title: "WEB MASTER @ IEEE CEDA",
+    date: "SEPT 2024 - Present",
     description:
-      "Worked on various front-end projects using React and Tailwind CSS. Collaborated with designers and back-end developers to create seamless user experiences.",
+      "Worked on micro services. Integrated Admin panel with Secured Backend API'S Grabbed 500+ Active subscribers and engineered a broadcasting Panel for admins for direct integration of CEDA society with their Subscribers ",
   },
   {
     title: "Intern at Company Y",
