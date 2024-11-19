@@ -3,6 +3,7 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import CF from "../img/CF_Handle.png";
+import SIH from "../img/SIH.png"
 
 const Achievements = () => {
   const [codeforcesData, setCodeforcesData] = useState({
@@ -82,17 +83,18 @@ const Achievements = () => {
 
   const items = [
     {
+      title: "Smart India Hackathon - 2024 Finalist",//
+      description: "Team ZEPHYR1 shortlisted for SIH Grand Finale (PS ID 1719) for developing a 'Smart Monitoring System for Classrooms' project.",
+      img: SIH, // Replace with actual image URLs
+    },
+    {
       title: "CP Career",
       description: codeforcesData.rating
         ? `Current Codeforces Rating: ${codeforcesData.rating}, Max Rating: ${codeforcesData.maxRating}, Problems Solved: ${codeforcesData.problemsSolved || 'Loading...'}`
         : "Loading Codeforces data...",
       img: CF, // Replace with actual image URLs
     },
-    {
-      title: "Active users gained on GenCV",//
-      description: "Achieved 100+ users on GenCV webpage",
-      img: "https://via.placeholder.com/150", // Replace with actual image URLs
-    },
+    
   ];
 
   return (
@@ -116,7 +118,7 @@ const Achievements = () => {
                 },
               }}
             >
-              <img src={item.img} alt={item.title} className="w-full h-48 object-cover" />
+              <img src={item.img} alt={item.title} className="w-full h-48 object-fit" />
               <div className="p-4">
                 <h3 className="text-lg dark:text-white font-semibold mb-2 duration-700">{item.title}</h3>
                 <p className="text-gray-600 dark:text-gray-400 duration-700">{item.description}</p>
