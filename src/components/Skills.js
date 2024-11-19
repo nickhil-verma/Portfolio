@@ -22,25 +22,25 @@ import VSCODE from "../img/vscode.png";
 
 const Skills = () => {
   const skills = [
-    { img: HTML, name: "HTML", level: "90%" },
-    { img: CSS, name: "CSS", level: "85%" },
-    { img: JS, name: "JavaScript", level: "50%" },
-    { img: DOCKER, name: "Docker", level: "30%" },
-    { img: NODE, name: "Node.js", level: "30%" },
-    { img: GIT, name: "Git", level: "90%" },
-    { img: REACT, name: "ReactJS", level: "80%" },
-    { img: PREMEIRE, name: "ADPP", level: "70%" },
-    { img: PHOTOSHOP, name: "Photoshop", level: "85%" },
-    { img: MUI, name: "Material UI", level: "90%" },
-    { img: C, name: "C", level: "95%" },
-    { img: BOOTSTRAP, name: "Bootstrap", level: "95%" },
-    { img: GITLAB, name: "Gitlab", level: "90%" },
-    { img: OBS, name: "OBS", level: "85%" },
-    { img: AUDITION, name: "Adobe Audition", level: "50%" },
-    { img: PYTHON, name: "Python", level: "60%" },
-    { img: VSCODE, name: "VS Code", level: "90%" },
-    { img: CPP, name: "C++", level: "90%" },
-    { img: MONGODB, name: "MongoDB", level: "10%" },
+    { img: HTML, name: "HTML" },
+    { img: CSS, name: "CSS" },
+    { img: JS, name: "JavaScript" },
+    { img: DOCKER, name: "Docker" },
+    { img: NODE, name: "Node.js" },
+    { img: GIT, name: "Git" },
+    { img: REACT, name: "ReactJS" },
+    { img: PREMEIRE, name: "ADPP" },
+    { img: PHOTOSHOP, name: "Photoshop" },
+    { img: MUI, name: "Material UI" },
+    { img: C, name: "C" },
+    { img: BOOTSTRAP, name: "Bootstrap" },
+    { img: GITLAB, name: "Gitlab" },
+    { img: OBS, name: "OBS" },
+    { img: AUDITION, name: "Adobe Audition" },
+    { img: PYTHON, name: "Python" },
+    { img: VSCODE, name: "VS Code" },
+    { img: CPP, name: "C++" },
+    { img: MONGODB, name: "MongoDB" },
   ];
 
   return (
@@ -59,16 +59,9 @@ const Skills = () => {
             viewport={{ once: true }}
             className="flex flex-col items-center"
           >
-            <div className="flex flex-col items-center bg-white dark:bg-lessdark duration-700 p-4 rounded-lg shadow-lg w-full max-w-[150px]">
+            <div className="flex flex-col items-center bg-white dark:bg-lessdark duration-700 p-4 rounded-lg shadow-lg w-full max-w-[150px] h-[150px] justify-center">
               <img src={skill.img} alt={skill.name} className="w-12 h-12 md:w-16 md:h-16 mb-4" />
-              <h3 className="text-sm md:text-lg font-semibold mb-2">{skill.name}</h3>
-              <p className="text-gray-600 dark:text-gray-400">{skill.level}</p>
-              <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2 mt-2">
-                <div
-                  className={`bg-blue-500 dark:bg-blue-400 h-2 rounded-full`}
-                  style={{ width: skill.level }}
-                ></div>
-              </div>
+              <h3 className="text-sm md:text-lg font-semibold">{skill.name}</h3>
             </div>
           </motion.div>
         ))}
