@@ -4,6 +4,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import CF from "../img/CF_Handle.png";
 import SIH from "../img/SIH.png"
+import AVINYA from "../img/Avinya.png"
 
 const Achievements = () => {
   const [codeforcesData, setCodeforcesData] = useState({
@@ -84,8 +85,13 @@ const Achievements = () => {
   const items = [
     {
       title: "Smart India Hackathon - 2024 Finalist",//
-      description: "Team ZEPHYR1 shortlisted for SIH Grand Finale (PS ID 1719) for developing a 'Smart Monitoring System for Classrooms' project.",
+      description: "Leader of Team ZEPHYR1 shortlisted for SIH Grand Finale (PS ID 1719) for developing a 'Smart Monitoring System for Classrooms' project.",
       img: SIH, // Replace with actual image URLs
+    },
+    {
+      title: "2nd Prize - National Intercollegiate Hackathon (IEEE Bangalore)",
+      description:" Secured 2nd place in AVINYA-2K24, a national hackathon by SJICT & IEEE Bangalore. Developed a software-hardware device for optimal microgreens growth.",
+      img: AVINYA, // Replace with actual image URLs
     },
     {
       title: "CP Career",
