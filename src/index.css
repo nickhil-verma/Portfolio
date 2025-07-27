@@ -26,24 +26,4 @@ body{
 } */
 
 /* WebKit browsers */
-::-webkit-scrollbar {
-  width: 3.5px;
-}
-
-/* Track */
-::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 1px rgba(128, 128, 128, 0.065); 
-  border-radius: 10px;
-}
  
-/* Handle */
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #FFC727, #e21a1a8f);   
-
-  border-radius: 10px;
-}
-
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #FFC727, #e21a1a);   
-}

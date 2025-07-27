@@ -10,13 +10,13 @@ import Navbar from './components/navbar/Navbar';
 import Projects from './components/Projects';
  import Skills from './components/Skills';
  import React from 'react';
- 
+ import SinglePage from "./components/SinglePage"
 
 function App() {
  
   return (
      <div className='   bg-light dark:bg-dark overflow-hidden duration-700'>
-    <LoadingPage/>
+    {/* <LoadingPage/>
      <Navbar/>
       <Hero/>
       <Education/>
@@ -24,8 +24,8 @@ function App() {
       <Skills/>
       <Achivements/>
       <Contact/>
-      <Footer/>
-     
+      <Footer/> */}
+      <SinglePage/>
      </div>
   );
 }
