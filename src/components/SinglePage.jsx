@@ -93,10 +93,22 @@ export default function Portfolio() {
       tech: ["React", "Node.js", "Gemma 3B", "MongoDB"],
     },
     {
+    title: "Eternalan",
+    description: "Frontend for concert booking platform tailored for Chinese and US audiences.",
+    link: "https://github.com/nickhil-verma/eternalan",
+    tech: ["React", "Tailwind CSS", "JavaScript"]
+  },
+    {
       title: "Plant Disease Detection",
       description: "95% accuracy CNN model for 15 leaf diseases",
       link: "https://github.com/nickhil-verma/Plant-disease-detection-model",
       tech: ["TensorFlow", "Keras", "NumPy", "HuggingFace"],
+    },
+    {
+      title: "CEDAXDSU Club webpage",
+      description: "IEEE Bangalore Chapter × DSU – Frontend Portal",
+      link: "https://dsuieeeceda.vercel.app/",
+      tech: ["React", "Tailwind css", "framer-motion", "REST API","Node js","Express JS","MongoDb"],
     },
   ];
 
