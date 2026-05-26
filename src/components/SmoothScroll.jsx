@@ -1,11 +1,18 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Lenis from "lenis";
 
 export default function SmoothScroll({ children }) {
+  const pathname = usePathname();
+
   useEffect(() => {
-    // Initialize Lenis smooth scroll engine
+    // Bypass smooth scrolling on admin routes to prevent conflicts with dashboard inner scrolling elements
+    if (pathname && pathname.startsWith("/admin")) {
+      return;
+    }
+
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // smooth easeOutExpo curve
@@ -26,7 +33,7 @@ export default function SmoothScroll({ children }) {
       cancelAnimationFrame(frameId);
       lenis.destroy();
     };
-  }, []);
+  }, [pathname]);
 
   return <>{children}</>;
 }

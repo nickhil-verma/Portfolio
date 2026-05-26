@@ -574,11 +574,24 @@ export default function Portfolio() {
                   Nikhil Verma
                 </h1>
                 <p className={`text-xs sm:text-sm font-semibold mb-3 tracking-wide uppercase ${isDark ? "text-red-400" : "text-red-600"}`}>
-                  Full Stack Developer
+                  Software Developer
                 </p>
-                <p className={`text-xs sm:text-sm leading-relaxed max-w-sm mb-5 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+                <p className={`text-xs leading-relaxed max-w-sm mb-3 ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>
                   Passionate about scalable apps, AI engines, and crafting developer-first user experiences with absolute performance precision.
                 </p>
+
+                {/* Stats Banner Tagline */}
+                <div className={`mb-5 px-3 py-2 rounded-xl border text-[10px] sm:text-xs font-mono tracking-wide w-full flex items-center justify-around gap-2 ${
+                  isDark ? "bg-[#09090b]/80 border-white/5 text-red-400" : "bg-black/[0.02] border-black/5 text-red-600 shadow-sm"
+                }`}>
+                  <span className="font-bold flex items-center gap-1">🏆 4x Hacks</span>
+                  <span className="opacity-30">|</span>
+                  <span className="font-bold flex items-center gap-1">🚀 30+ Projs</span>
+                  <span className="opacity-30">|</span>
+                  <span className="font-bold flex items-center gap-1">🌍 10 Deployed</span>
+                  <span className="opacity-30">|</span>
+                  <span className="font-bold flex items-center gap-1">💻 1500+ LeetCode</span>
+                </div>
 
                 {/* Email and Resume Button Area */}
                 <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-center">
@@ -987,11 +1000,24 @@ export default function Portfolio() {
                 Nikhil Verma
               </h1>
               <p className={`text-sm font-semibold mb-3 tracking-wide uppercase ${isDark ? "text-red-400" : "text-red-600"}`}>
-                Full Stack Developer
+                Software Developer
               </p>
-              <p className={`text-xs leading-relaxed max-w-sm mb-5 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+              <p className={`text-xs leading-relaxed max-w-sm mb-3 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
                 Passionate about scalable apps, AI engines, and crafting developer-first user experiences with absolute performance precision.
               </p>
+
+              {/* Stats Banner Tagline */}
+              <div className={`mb-5 px-3 py-2 rounded-xl border text-[10px] sm:text-xs font-mono tracking-wide w-full flex items-center justify-around gap-2 ${
+                isDark ? "bg-[#09090b]/80 border-white/5 text-red-400" : "bg-black/[0.02] border-black/5 text-red-600 shadow-sm"
+              }`}>
+                <span className="font-bold flex items-center gap-1">🏆 4x Hacks</span>
+                <span className="opacity-30">|</span>
+                <span className="font-bold flex items-center gap-1">🚀 30+ Projs</span>
+                <span className="opacity-30">|</span>
+                <span className="font-bold flex items-center gap-1">🌍 10 Deployed</span>
+                <span className="opacity-30">|</span>
+                <span className="font-bold flex items-center gap-1">💻 1500+ LeetCode</span>
+              </div>
 
               {/* Email and Resume Button Area */}
               <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-center">
