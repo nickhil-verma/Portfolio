@@ -130,7 +130,7 @@ const fallbackBlogs = [
     category: "AI & Search",
     likes: 18,
     excerpt: "An in-depth exploration of vector databases, similarity indexing, and building blazingly fast semantic search architectures...",
-    created_at: new Date()
+    created_at: new Date("2024-01-01")
   },
   {
     _id: "fb2",
@@ -138,7 +138,7 @@ const fallbackBlogs = [
     category: "Web Engineering",
     likes: 24,
     excerpt: "Demystifying connection pools, route compiler trees, force-dynamic exports, and securing serverless executions under modern Vercel constraints...",
-    created_at: new Date()
+    created_at: new Date("2024-01-02")
   }
 ];
 
@@ -794,9 +794,9 @@ export default function Portfolio() {
                                 <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 fill-current" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
                                 <span>Code</span>
                               </a>
-                              {(project.deployedLink || project.liveLink) && (
+                              {(project.deployedUrl || project.deployedLink || project.liveLink) && (
                                 <a
-                                  href={project.deployedLink || project.liveLink}
+                                  href={project.deployedUrl || project.deployedLink || project.liveLink}
                                   className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-[10px] font-semibold tracking-wide transition-all ${
                                     isDark 
                                       ? "bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20" 
@@ -1055,7 +1055,7 @@ export default function Portfolio() {
               <div className={`mb-5 px-3 py-2 rounded-xl border text-[10px] sm:text-xs font-mono tracking-wide w-full flex items-center justify-around gap-2 ${
                 isDark ? "bg-[#09090b]/80 border-white/5 text-red-400" : "bg-black/[0.02] border-black/5 text-red-600 shadow-sm"
               }`}>
-                <span className="font-bold flex items-center gap-1">🏆 4x Hacks</span>
+                <span className="font-bold flex items-center gap-1">🏆 8x Hacks</span>
                 <span className="opacity-30">|</span>
                 <span className="font-bold flex items-center gap-1">🚀 30+ Projs</span>
                 <span className="opacity-30">|</span>
@@ -1227,9 +1227,9 @@ export default function Portfolio() {
                             <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
                             <span>Code</span>
                           </a>
-                          {(project.deployedLink || project.liveLink) && (
+                          {(project.deployedUrl || project.deployedLink || project.liveLink) && (
                             <a
-                              href={project.deployedLink || project.liveLink}
+                              href={project.deployedUrl || project.deployedLink || project.liveLink}
                               className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                                 isDark ? "bg-red-500/10 text-red-400 hover:bg-red-500/20" : "bg-red-50 text-red-600 hover:bg-red-100"
                               }`}
