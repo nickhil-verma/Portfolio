@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -15,7 +16,7 @@
   scroll-behavior: smooth;
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 200ms;
+  transition-duration: 0ms;
 }
 
 /* Premium Custom Scrollbar */
@@ -44,7 +45,7 @@
 @layer utilities {
   /* Translucent Glassmorphism Card Style */
   .glass-card {
-    @apply backdrop-blur-xl transition-all duration-200 border border-white/5;
+    @apply backdrop-blur-xl transition-all duration-0 border border-white/5;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
     box-shadow: 
       0 4px 30px rgba(0, 0, 0, 0.4),
@@ -52,7 +53,7 @@
   }
 
   .glass-card-light {
-    @apply backdrop-blur-xl transition-all duration-200 border border-black/5;
+    @apply backdrop-blur-xl transition-all duration-0 border border-black/5;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.6) 100%);
     box-shadow: 
       0 4px 30px rgba(0, 0, 0, 0.03),

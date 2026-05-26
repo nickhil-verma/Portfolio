@@ -86,7 +86,7 @@ const SpotlightCard = ({ children, isDark, className = "", style = {} }) => {
       onMouseLeave={() => setIsHovered(false)}
       className={`relative overflow-hidden rounded-[24px] flex flex-col ${
         isDark ? "glass-card hover:border-white/10" : "glass-card-light hover:border-black/10"
-      } hover:-translate-y-1 transition-all duration-200 shadow-lg hover:shadow-2xl ${gridClasses}`}
+      } hover:-translate-y-1 transition-all duration-0 shadow-lg hover:shadow-2xl ${gridClasses}`}
       style={style}
     >
       {/* Reflective top highlight */}
@@ -508,7 +508,7 @@ export default function Portfolio() {
 
   return (
     <div
-      className={`min-h-screen p-4 sm:p-6 lg:p-8 transition-colors duration-200 relative overflow-hidden select-none font-sans ${
+      className={`min-h-screen p-4 sm:p-6 lg:p-8 transition-colors duration-0 relative overflow-hidden select-none font-sans ${
         isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f8f9fa] text-[#1c1c1e]"
       }`}
     >
@@ -570,7 +570,10 @@ export default function Portfolio() {
                   />
                 </div>
 
-                <h1 className={`text-2xl sm:text-3xl font-extrabold font-outfit tracking-tight mb-1.5 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                <h1 
+                  style={{ fontFamily: "'Instrument Serif', cursive" }}
+                  className={`text-4xl sm:text-5xl font-normal italic tracking-wide mb-1.5 ${isDark ? "text-white" : "text-zinc-900"}`}
+                >
                   Nikhil Verma
                 </h1>
                 <p className={`text-xs sm:text-sm font-semibold mb-3 tracking-wide uppercase ${isDark ? "text-red-400" : "text-red-600"}`}>
@@ -627,8 +630,8 @@ export default function Portfolio() {
                   </h2>
                 </div>
 
-                {/* Timeline Container - Height locked to prevent parent card jitter, scrollbar enabled */}
-                <div className="relative pl-8 pr-2 space-y-5 overflow-y-auto h-[260px] sm:h-[300px]">
+                {/* Timeline Container - Height dynamic using flexbox to fit available space perfectly */}
+                <div data-lenis-prevent className="relative pl-8 pr-2 space-y-5 overflow-y-auto flex-1 min-h-0" onWheel={(e) => e.stopPropagation()}>
                   {/* Vertical Timeline Track Line - Mathematically aligned at center = 16px */}
                   <div className={`absolute left-[15px] top-3 bottom-3 w-0.5 ${isDark ? "bg-zinc-800" : "bg-zinc-200"}`} />
 
@@ -722,8 +725,8 @@ export default function Portfolio() {
                   </Link>
                 </div>
 
-                {/* Fixed height scrollable projects container with visible premium custom scrollbar */}
-                <div className="overflow-y-auto pr-2 h-[260px] sm:h-[300px]">
+                {/* Scrollable projects container sized dynamically with flexbox */}
+                <div data-lenis-prevent className="overflow-y-auto pr-2 flex-1 min-h-0" onWheel={(e) => e.stopPropagation()}>
                   <div className="grid grid-cols-3 gap-4 pb-2">
                     {combinedProjects.map((project, index) => (
                       <div
@@ -829,7 +832,7 @@ export default function Portfolio() {
                     Achievements
                   </h2>
                 </div>
-                <div className="space-y-1.5 overflow-y-auto pr-1 flex-1 hide-scrollbar">
+                <div data-lenis-prevent className="space-y-1.5 overflow-y-auto pr-1 flex-1 hide-scrollbar" onWheel={(e) => e.stopPropagation()}>
                   {achievements.map((achievement, index) => (
                     <div key={index} className="flex items-start space-x-2">
                       <span className={`w-1 h-1 rounded-full mt-1.5 flex-shrink-0 ${isDark ? "bg-red-400" : "bg-red-600"}`} />
@@ -936,7 +939,7 @@ export default function Portfolio() {
                   </Link>
                 </div>
 
-                <div className="space-y-4 overflow-y-auto pr-1 flex-1 hide-scrollbar max-h-[300px]">
+                <div data-lenis-prevent className="space-y-4 overflow-y-auto pr-1 flex-1 hide-scrollbar max-h-[300px]" onWheel={(e) => e.stopPropagation()}>
                   {combinedBlogs.slice(0, 2).map((blog, idx) => (
                     <div
                       key={idx}
@@ -996,7 +999,10 @@ export default function Portfolio() {
                 />
               </div>
 
-              <h1 className={`text-2xl font-extrabold font-outfit tracking-tight mb-1.5 ${isDark ? "text-white" : "text-zinc-900"}`}>
+              <h1 
+                style={{ fontFamily: "'Instrument Serif', cursive" }}
+                className={`text-4xl font-normal italic tracking-wide mb-1.5 ${isDark ? "text-white" : "text-zinc-900"}`}
+              >
                 Nikhil Verma
               </h1>
               <p className={`text-sm font-semibold mb-3 tracking-wide uppercase ${isDark ? "text-red-400" : "text-red-600"}`}>

@@ -30,7 +30,7 @@ const ProjectSpotlightCard = ({ children, isDark, className = "" }) => {
       onMouseLeave={() => setIsHovered(false)}
       className={`relative overflow-hidden rounded-[24px] ${
         isDark ? "glass-card hover:border-white/10" : "glass-card-light hover:border-black/10"
-      } hover:-translate-y-1.5 transition-all duration-200 shadow-xl ${className}`}
+      } hover:-translate-y-1.5 transition-all duration-0 shadow-xl ${className}`}
     >
       {/* Reflective top highlight */}
       <div className={`absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent ${
@@ -247,7 +247,7 @@ export default function ProjectsPage() {
   });
 
   return (
-    <div className={`min-h-screen transition-colors duration-200 noise-overlay relative overflow-hidden p-6 sm:p-10 lg:p-16 ${
+    <div className={`min-h-screen transition-colors duration-0 noise-overlay relative overflow-hidden p-6 sm:p-10 lg:p-16 ${
       isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f8f9fa] text-[#1c1c1e]"
     }`}>
       {/* Grid Mesh Texture */}
