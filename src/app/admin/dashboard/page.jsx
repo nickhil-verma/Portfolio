@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, LayoutDashboard, FolderKanban, BookHeart, LogOut, 
   Plus, Trash2, Users, Cpu, FileText, CheckCircle2, Globe, Monitor, Smartphone, Tablet,
-  Github, X
+  Github, X, MessageSquare
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -305,10 +305,30 @@ export default function AdminDashboard() {
   const triggerToast = (message, type = "success") => {
     setToast({ message, type, key: Date.now() });
   };
+
+  const handleDeleteComment = async (id) => {
+    if (!window.confirm("Are you sure you want to permanently delete this anonymous reflection?")) return;
+    try {
+      const res = await fetch(`/api/blogs/comments?id=${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast("Reflection deleted successfully! 🗑️", "success");
+        fetchData();
+      } else {
+        triggerToast(data.error || "Failed to delete reflection", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error deleting reflection", "error");
+    }
+  };
   
   // Dynamic states loaded from APIs
   const [dashboardProjects, setDashboardProjects] = useState([]);
   const [dashboardBlogs, setDashboardBlogs] = useState([]);
+  const [dashboardComments, setDashboardComments] = useState([]);
   
   // Traffic analytics state
   const [analytics, setAnalytics] = useState({
@@ -362,6 +382,17 @@ export default function AdminDashboard() {
       const blogData = await blogRes.json();
       if (Array.isArray(blogData)) {
         setDashboardBlogs(blogData);
+      }
+
+      // Fetch dynamic anonymous comments
+      try {
+        const commentsRes = await fetch("/api/blogs/comments");
+        const commentsData = await commentsRes.json();
+        if (Array.isArray(commentsData)) {
+          setDashboardComments(commentsData);
+        }
+      } catch (e) {
+        console.error("Failed to load comments:", e);
       }
 
       // Fetch dynamic traffic analytics
@@ -612,6 +643,7 @@ export default function AdminDashboard() {
               { id: "overview", label: "Overview & Analytics", icon: LayoutDashboard },
               { id: "projects", label: "Manage Projects", icon: FolderKanban },
               { id: "blogs", label: "Markdown Blogs", icon: BookHeart },
+              { id: "comments", label: "Visitor Reflections", icon: MessageSquare },
             ].map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -654,7 +686,7 @@ export default function AdminDashboard() {
             <span className="font-bold text-xs tracking-tight text-white">Nikhil Console</span>
           </div>
           <div className="flex space-x-1">
-            {["overview", "projects", "blogs"].map((tab) => (
+            {["overview", "projects", "blogs", "comments"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -662,7 +694,7 @@ export default function AdminDashboard() {
                   activeTab === tab ? "bg-red-500/20 text-red-400" : "text-zinc-400"
                 }`}
               >
-                {tab === "overview" ? "Views" : tab}
+                {tab === "overview" ? "Views" : tab === "comments" ? "Reflections" : tab}
               </button>
             ))}
           </div>
@@ -675,6 +707,7 @@ export default function AdminDashboard() {
               {activeTab === "overview" && "Analytics Overview"}
               {activeTab === "projects" && "Projects Manager"}
               {activeTab === "blogs" && "Blogging Dashboard"}
+              {activeTab === "comments" && "Anonymous Comments"}
             </h1>
             <p className="text-xs text-zinc-400">
               Manage database assets and monitor traffic geocoding telemetry.
@@ -1023,6 +1056,69 @@ export default function AdminDashboard() {
                           </button>
                         </div>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* COMMENTS TAB */}
+        {activeTab === "comments" && (
+          <div className="space-y-6">
+            <div className="glass-card rounded-[24px] border border-white/5 p-6 sm:p-8 relative overflow-hidden">
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/20 to-transparent pointer-events-none" />
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-2.5">
+                  <MessageSquare className="w-5 h-5 text-red-400" />
+                  <h2 className="text-base sm:text-lg font-bold font-outfit tracking-tight text-white animate-pulse">
+                    Visitor Reflections ({dashboardComments.length})
+                  </h2>
+                </div>
+              </div>
+
+              {dashboardComments.length === 0 ? (
+                <p className="text-xs text-zinc-500 italic text-center py-20">
+                  No anonymous reflections have been shared yet.
+                </p>
+              ) : (
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1 hide-scrollbar">
+                  {dashboardComments.map((comment) => (
+                    <div
+                      key={comment._id}
+                      className="p-5 rounded-2xl bg-white/[0.01] hover:bg-white/[0.02] border border-white/5 flex justify-between items-start gap-4 transition-all"
+                    >
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
+                            Anonymous
+                          </span>
+                          <span className="text-[10px] text-zinc-400 font-medium">
+                            on {comment.blogTitle}
+                          </span>
+                          <span className="text-[9px] text-zinc-500 font-mono">
+                            {new Date(comment.created_at).toLocaleString("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-300 leading-relaxed select-text pr-4">
+                          {comment.content}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => handleDeleteComment(comment._id)}
+                        className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-all flex-shrink-0"
+                        title="Delete reflection"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   ))}
                 </div>

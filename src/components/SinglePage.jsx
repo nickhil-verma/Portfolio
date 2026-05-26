@@ -559,13 +559,6 @@ export default function Portfolio() {
               
               {/* Card 1: About / Hero - Flexible Padding and Aspect Ratio */}
               <SpotlightCard isDark={isDark} className="col-span-5 row-span-4 p-6 sm:p-8 flex flex-col justify-center items-center text-center">
-                {/* Floating Status Badge */}
-                <div className={`mb-4 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide flex items-center space-x-1.5 ${
-                  isDark ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-emerald-50 text-emerald-600 border border-emerald-100"
-                }`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>Available for collaborations</span>
-                </div>
 
                 {/* Avatar with Ambient Glow - Width and height locked on parent to ensure absolute centering */}
                 <div className="relative mb-4 w-20 h-20 sm:w-24 sm:h-24 group">
@@ -854,7 +847,7 @@ export default function Portfolio() {
                     {/* Track 1: Left-to-Right Scrolling Marquee */}
                     <div className="relative w-full overflow-hidden" style={{ maskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)" }}>
                       <motion.div
-                        animate={{ x: [0, "-33.33%"] }}
+                        animate={{ x: ["0%", "-50%"] }}
                         transition={{
                           ease: "linear",
                           duration: 25,
@@ -862,7 +855,7 @@ export default function Portfolio() {
                         }}
                         className="flex space-x-3 w-max"
                       >
-                        {[...skillset[0].items, ...skillset[1].items, ...skillset[0].items, ...skillset[1].items, ...skillset[0].items, ...skillset[1].items].map((item, idx) => (
+                        {[...skillset[0].items, ...skillset[1].items, ...skillset[0].items, ...skillset[1].items].map((item, idx) => (
                           <span
                             key={idx}
                             className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
@@ -880,7 +873,7 @@ export default function Portfolio() {
                     {/* Track 2: Right-to-Left Scrolling Marquee */}
                     <div className="relative w-full overflow-hidden" style={{ maskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)" }}>
                       <motion.div
-                        animate={{ x: ["-33.33%", 0] }}
+                        animate={{ x: ["-50%", "0%"] }}
                         transition={{
                           ease: "linear",
                           duration: 28,
@@ -888,7 +881,7 @@ export default function Portfolio() {
                         }}
                         className="flex space-x-3 w-max"
                       >
-                        {[...skillset[2].items, ...skillset[3].items, ...skillset[4].items, ...skillset[2].items, ...skillset[3].items, ...skillset[4].items, ...skillset[2].items, ...skillset[3].items, ...skillset[4].items].map((item, idx) => (
+                        {[...skillset[2].items, ...skillset[3].items, ...skillset[4].items, ...skillset[2].items, ...skillset[3].items, ...skillset[4].items].map((item, idx) => (
                           <span
                             key={idx}
                             className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
@@ -979,12 +972,6 @@ export default function Portfolio() {
             
             {/* About (Mobile) */}
             <SpotlightCard isDark={isDark} className="p-6 flex flex-col justify-center items-center text-center">
-              <div className={`mb-4 px-3 py-0.5 rounded-full text-[10px] font-semibold tracking-wide flex items-center space-x-1.5 ${
-                isDark ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-emerald-50 text-emerald-600 border border-emerald-100"
-              }`}>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Available for collaborations</span>
-              </div>
 
               {/* Avatar with Ambient Glow - Width and height locked on parent to ensure absolute centering */}
               <div className="relative mb-4 w-20 h-20 group">
@@ -1252,7 +1239,7 @@ export default function Portfolio() {
                 {/* Track 1 */}
                 <div className="relative w-full overflow-hidden" style={{ maskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)" }}>
                   <motion.div
-                    animate={{ x: [0, "-33.33%"] }}
+                    animate={{ x: ["0%", "-50%"] }}
                     transition={{
                       ease: "linear",
                       duration: 20,
@@ -1260,7 +1247,7 @@ export default function Portfolio() {
                     }}
                     className="flex space-x-2.5 w-max"
                   >
-                    {[...skillset[0].items, ...skillset[1].items, ...skillset[0].items, ...skillset[1].items, ...skillset[0].items, ...skillset[1].items].map((item, idx) => (
+                    {[...skillset[0].items, ...skillset[1].items, ...skillset[0].items, ...skillset[1].items].map((item, idx) => (
                       <span
                         key={idx}
                         className={`px-3 py-1 rounded-xl text-[10px] font-semibold tracking-wide ${
@@ -1278,7 +1265,7 @@ export default function Portfolio() {
                 {/* Track 2 */}
                 <div className="relative w-full overflow-hidden" style={{ maskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)" }}>
                   <motion.div
-                    animate={{ x: ["-33.33%", 0] }}
+                    animate={{ x: ["-50%", "0%"] }}
                     transition={{
                       ease: "linear",
                       duration: 23,
@@ -1286,7 +1273,7 @@ export default function Portfolio() {
                     }}
                     className="flex space-x-2.5 w-max"
                   >
-                    {[...skillset[2].items, ...skillset[3].items, ...skillset[4].items, ...skillset[2].items, ...skillset[3].items, ...skillset[4].items, ...skillset[2].items, ...skillset[3].items, ...skillset[4].items].map((item, idx) => (
+                    {[...skillset[2].items, ...skillset[3].items, ...skillset[4].items, ...skillset[2].items, ...skillset[3].items, ...skillset[4].items].map((item, idx) => (
                       <span
                         key={idx}
                         className={`px-3 py-1 rounded-xl text-[10px] font-semibold tracking-wide ${
@@ -1393,7 +1380,7 @@ export default function Portfolio() {
           isDark
             ? "bg-[#09090b]/80 border-white/5 shadow-2xl shadow-black/80"
             : "bg-white/85 border-black/5 shadow-xl shadow-zinc-200/50"
-        } backdrop-blur-xl rounded-[24px] px-3.5 py-2 border flex items-center space-x-1.5 overflow-x-auto max-w-[95vw] hide-scrollbar`}
+        } backdrop-blur-xl rounded-[24px] px-3.5 py-2 border flex items-center space-x-1.5 overflow-x-auto lg:overflow-visible max-w-[95vw] hide-scrollbar`}
       >
         {/* Dock Border Spotlight Light Source */}
         {isDockHovered && (

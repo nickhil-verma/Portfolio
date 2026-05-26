@@ -84,4 +84,13 @@
   .ambient-blob {
     @apply absolute rounded-full filter blur-[120px] mix-blend-screen opacity-20 pointer-events-none;
   }
+
+  /* Robust Scrollbar Hiding Utility */
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
 }

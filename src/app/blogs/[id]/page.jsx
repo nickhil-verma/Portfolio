@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Clock, Calendar } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, Share2, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import BlogLikeButton from "../../../components/BlogLikeButton";
+import CustomToast from "../../../components/CustomToast";
 
 // Custom Spotlight wrapper supporting isDark and premium white coordinator glow
 const DetailSpotlightCard = ({ children, isDark, className = "" }) => {
@@ -406,6 +407,61 @@ export default function BlogDetailPage() {
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isDark, setIsDark] = useState(true);
+  const [toast, setToast] = useState({ message: "", type: "success", key: 0 });
+  const [commentText, setCommentText] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: blog?.title || "Nikhil's Insight",
+          text: blog?.excerpt || "",
+          url: url,
+        });
+      } catch (err) {
+        console.error("Error sharing:", err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        setToast({ message: "Link copied to clipboard! 📋", type: "success", key: Date.now() });
+      } catch (err) {
+        console.error("Clipboard copy failed:", err);
+      }
+    }
+  };
+
+  const handleSubmitComment = async (e) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+
+    setSubmittingComment(true);
+    try {
+      const res = await fetch("/api/blogs/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          blogId: id,
+          blogTitle: blog?.title || "Unknown Article",
+          content: commentText
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCommentText("");
+        setToast({ message: "Thank you! Your reflection was shared anonymously. 💬", type: "success", key: Date.now() });
+      } else {
+        setToast({ message: data.error || "Failed to submit reflection", type: "error", key: Date.now() });
+      }
+    } catch (err) {
+      console.error("Comment submission failed:", err);
+      setToast({ message: "Error submitting anonymous reflection", type: "error", key: Date.now() });
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
 
   // Webpage-wide theme state synchronization
   useEffect(() => {
@@ -516,8 +572,20 @@ export default function BlogDetailPage() {
             </motion.button>
           </Link>
 
-          {/* Dynamic Heart Likes Mini button */}
-          <BlogLikeButton blogId={id} initialLikes={blog.likes || 0} isDark={isDark} mini={true} />
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={handleShare}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
+                isDark 
+                  ? "bg-white/5 text-zinc-400 hover:text-white border-white/5" 
+                  : "bg-black/5 text-zinc-600 hover:text-zinc-950 border-black/5"
+              }`}
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>Share</span>
+            </button>
+            <BlogLikeButton blogId={id} initialLikes={blog.likes || 0} isDark={isDark} mini={true} />
+          </div>
         </div>
 
         {/* Detailed Layout Card Container */}
@@ -574,12 +642,66 @@ export default function BlogDetailPage() {
                 Liked this write-up?
               </span>
               <span className={`text-xs ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                Show your appreciation with a heart.
+                Show your appreciation with a heart or share it.
               </span>
             </div>
             
-            <BlogLikeButton blogId={id} initialLikes={blog.likes || 0} isDark={isDark} />
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={handleShare}
+                className={`flex items-center space-x-2 px-5 py-2.5 rounded-2xl border text-sm font-semibold transition-all ${
+                  isDark
+                    ? "bg-white/5 text-zinc-400 hover:text-white border-white/5"
+                    : "bg-black/5 text-zinc-600 hover:text-zinc-950 border-black/5"
+                }`}
+              >
+                <Share2 className="w-4 h-4" />
+                <span>Share</span>
+              </button>
+              <BlogLikeButton blogId={id} initialLikes={blog.likes || 0} isDark={isDark} />
+            </div>
           </div>
+        </DetailSpotlightCard>
+
+        {/* Leaving anonymous reflection card */}
+        <DetailSpotlightCard isDark={isDark} className="p-8 sm:p-10 mt-8">
+          <div className="flex items-center space-x-2.5 mb-5">
+            <MessageSquare className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+            <h2 className={`text-base sm:text-lg font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+              Anonymous Reflection
+            </h2>
+          </div>
+          <p className={`text-xs mb-6 leading-relaxed ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+            Leave an anonymous thought, question, or reflection on this write-up. Your submission is completely anonymous and will only be visible to the author on the dashboard.
+          </p>
+
+          <form onSubmit={handleSubmitComment} className="space-y-4">
+            <textarea
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Type your reflection here..."
+              rows={4}
+              maxLength={1000}
+              className={`w-full border rounded-xl py-3 px-4 text-xs focus:outline-none transition-all backdrop-blur-md font-sans ${
+                isDark 
+                  ? "bg-[#121214]/60 border-white/5 focus:border-white/10 text-white" 
+                  : "bg-white border-black/10 focus:border-black/20 text-zinc-900 shadow-sm"
+              }`}
+            />
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={submittingComment || !commentText.trim()}
+                className={`px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-zinc-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold tracking-wide transition-all shadow-lg shadow-red-500/10 flex items-center space-x-2`}
+              >
+                {submittingComment ? (
+                  <span>Submitting...</span>
+                ) : (
+                  <span>Submit Reflection</span>
+                )}
+              </button>
+            </div>
+          </form>
         </DetailSpotlightCard>
 
         {/* Global Footer component with Admin Portal Link */}
@@ -593,6 +715,16 @@ export default function BlogDetailPage() {
         </footer>
 
       </div>
+
+      {toast.message && (
+        <CustomToast
+          key={toast.key}
+          message={toast.message}
+          type={toast.type}
+          isDark={isDark}
+          onClose={() => setToast({ message: "", type: "success", key: 0 })}
+        />
+      )}
     </div>
   );
 }
