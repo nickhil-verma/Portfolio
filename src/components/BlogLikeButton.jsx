@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
-import { toast } from "react-toastify";
+import CustomToast from "./CustomToast";
 
 export default function BlogLikeButton({ blogId, initialLikes, isDark, mini = false }) {
   const [likedBlogIds, setLikedBlogIds] = useState([]);
   const [likesCount, setLikesCount] = useState(initialLikes);
+  const [toast, setToast] = useState({ message: "", type: "success", key: 0 });
 
   // Sync with client-side localStorage on mount
   useEffect(() => {
@@ -34,7 +35,7 @@ export default function BlogLikeButton({ blogId, initialLikes, isDark, mini = fa
       nextLiked = likedBlogIds.filter(x => x !== blogId);
     } else {
       nextLiked = [...likedBlogIds, blogId];
-      toast.success("Thank you for liking! ❤️");
+      setToast({ message: "Thank you for liking! ❤️", type: "like", key: Date.now() });
     }
     setLikedBlogIds(nextLiked);
     localStorage.setItem("liked_blogs", JSON.stringify(nextLiked));
@@ -59,41 +60,51 @@ export default function BlogLikeButton({ blogId, initialLikes, isDark, mini = fa
 
   const isLiked = likedBlogIds.includes(blogId);
 
-  if (mini) {
-    return (
-      <button
-        onClick={handleToggleLike}
-        className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border transition-all ${
-          isLiked
-            ? isDark
-              ? "bg-red-500/10 text-red-400 border-red-500/30 shadow-lg shadow-red-500/5"
-              : "bg-red-500/5 text-red-600 border-red-500/20 shadow-sm"
-            : isDark
-              ? "bg-white/5 text-zinc-500 hover:text-white border-white/5"
-              : "bg-black/5 text-zinc-400 hover:text-zinc-900 border-black/5"
-        }`}
-      >
-        <Heart className={`w-3.5 h-3.5 transition-colors ${isLiked ? "fill-current text-red-500" : ""}`} />
-        <span className="font-bold text-xs">{likesCount}</span>
-      </button>
-    );
-  }
-
   return (
-    <button
-      onClick={handleToggleLike}
-      className={`flex items-center space-x-2 px-5 py-2.5 rounded-2xl border transition-all ${
-        isLiked
-          ? isDark
-            ? "bg-red-500/10 text-red-400 border-red-500/30 shadow-lg shadow-red-500/10"
-            : "bg-red-500/5 text-red-600 border-red-500/20 shadow-sm"
-          : isDark
-            ? "bg-white/5 text-zinc-500 hover:text-white border-white/5"
-            : "bg-black/5 text-zinc-400 hover:text-zinc-900 border-black/5"
-      }`}
-    >
-      <Heart className={`w-4 h-4 transition-colors ${isLiked ? "fill-current text-red-500" : ""}`} />
-      <span className="font-bold text-sm">{likesCount}</span>
-    </button>
+    <>
+      {mini ? (
+        <button
+          onClick={handleToggleLike}
+          className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border transition-all ${
+            isLiked
+              ? isDark
+                ? "bg-red-500/10 text-red-400 border-red-500/30 shadow-lg shadow-red-500/5"
+                : "bg-red-500/5 text-red-600 border-red-500/20 shadow-sm"
+              : isDark
+                ? "bg-white/5 text-zinc-500 hover:text-white border-white/5"
+                : "bg-black/5 text-zinc-400 hover:text-zinc-900 border-black/5"
+          }`}
+        >
+          <Heart className={`w-3.5 h-3.5 transition-colors ${isLiked ? "fill-current text-red-500" : ""}`} />
+          <span className="font-bold text-xs">{likesCount}</span>
+        </button>
+      ) : (
+        <button
+          onClick={handleToggleLike}
+          className={`flex items-center space-x-2 px-5 py-2.5 rounded-2xl border transition-all ${
+            isLiked
+              ? isDark
+                ? "bg-red-500/10 text-red-400 border-red-500/30 shadow-lg shadow-red-500/10"
+                : "bg-red-500/5 text-red-600 border-red-500/20 shadow-sm"
+              : isDark
+                ? "bg-white/5 text-zinc-500 hover:text-white border-white/5"
+                : "bg-black/5 text-zinc-400 hover:text-zinc-900 border-black/5"
+          }`}
+        >
+          <Heart className={`w-4 h-4 transition-colors ${isLiked ? "fill-current text-red-500" : ""}`} />
+          <span className="font-bold text-sm">{likesCount}</span>
+        </button>
+      )}
+
+      {toast.message && (
+        <CustomToast
+          key={toast.key}
+          message={toast.message}
+          type={toast.type}
+          isDark={isDark}
+          onClose={() => setToast({ message: "", type: "success", key: 0 })}
+        />
+      )}
+    </>
   );
 }

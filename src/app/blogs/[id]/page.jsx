@@ -491,7 +491,7 @@ export default function BlogDetailPage() {
   }
 
   return (
-    <div className={`min-h-screen transition-colors duration-700 noise-overlay relative overflow-hidden p-6 sm:p-10 lg:p-16 ${
+    <div className={`min-h-screen transition-colors duration-200 noise-overlay relative overflow-hidden p-6 sm:p-10 lg:p-16 ${
       isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f8f9fa] text-[#1c1c1e]"
     }`}>
       {/* Grid Mesh Texture */}
@@ -583,21 +583,12 @@ export default function BlogDetailPage() {
         </DetailSpotlightCard>
 
         {/* Global Footer component with Admin Portal Link */}
-        <footer className={`border-t py-8 mt-20 text-center text-xs backdrop-blur-md relative z-10 ${
-          isDark 
-            ? "border-white/5 text-zinc-500 bg-[#050505]/40" 
-            : "border-black/5 text-zinc-500 bg-[#f8f9fa]/40"
+        <footer className={`py-6 text-center text-[10px] tracking-widest uppercase font-mono relative z-10 ${
+          isDark ? "text-zinc-600" : "text-zinc-400"
         }`}>
-          <div className="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p>© {new Date().getFullYear()} Nikhil Verma. Crafted with Next.js, Tailwind & MongoDB.</p>
-            <div className="flex items-center space-x-4">
-              <Link href="/admin" className={`font-semibold hover:underline transition-colors flex items-center gap-1.5 ${
-                isDark ? "text-zinc-400 hover:text-white" : "text-zinc-600 hover:text-zinc-950"
-              }`}>
-                <span>Admin Portal</span>
-                <span className="text-[10px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded border border-red-500/20 uppercase font-mono tracking-widest">Key</span>
-              </Link>
-            </div>
+          <div className="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span>© {new Date().getFullYear()} Nikhil Verma</span>
+            <Link href="/admin" className="hover:text-red-500 transition-colors font-bold">Admin Portal</Link>
           </div>
         </footer>
 

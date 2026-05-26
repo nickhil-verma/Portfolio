@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
+import CustomToast from "../../../components/CustomToast";
 
 // Senior-level React-based Markdown-to-HTML parser function for dynamic blog preview
 function renderMarkdownContent(md, isDark = true) {
@@ -300,6 +300,11 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [toast, setToast] = useState({ message: "", type: "success", key: 0 });
+
+  const triggerToast = (message, type = "success") => {
+    setToast({ message, type, key: Date.now() });
+  };
   
   // Dynamic states loaded from APIs
   const [dashboardProjects, setDashboardProjects] = useState([]);
@@ -390,7 +395,7 @@ export default function AdminDashboard() {
   const handleAddProject = async (e) => {
     e.preventDefault();
     if (!newProjTitle.trim() || !newProjTech.trim() || !newProjGithub.trim()) {
-      toast.warn("Please fill in all compulsory fields");
+      triggerToast("Please fill in all compulsory fields", "warn");
       return;
     }
     
@@ -417,7 +422,7 @@ export default function AdminDashboard() {
 
       const data = await res.json();
       if (data.success) {
-        toast.success(editingProjectId ? "Project updated successfully! ⭐" : "Project uploaded successfully! ⭐");
+        triggerToast(editingProjectId ? "Project updated successfully! ⭐" : "Project uploaded successfully! ⭐", "success");
         setNewProjTitle("");
         setNewProjTech("");
         setNewProjGithub("");
@@ -427,11 +432,11 @@ export default function AdminDashboard() {
         setFullscreenProjectEditor(false);
         fetchData();
       } else {
-        toast.error(data.error || "Failed to submit project data");
+        triggerToast(data.error || "Failed to submit project data", "error");
       }
     } catch (err) {
       console.error(err);
-      toast.error("Error submitting project payload");
+      triggerToast("Error submitting project payload", "error");
     }
   };
 
@@ -466,21 +471,21 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        toast.success("Project deleted successfully! 🗑️");
+        triggerToast("Project deleted successfully! 🗑️", "success");
         fetchData();
       } else {
-        toast.error(data.error || "Failed to delete project");
+        triggerToast(data.error || "Failed to delete project", "error");
       }
     } catch (err) {
       console.error(err);
-      toast.error("Error deleting project");
+      triggerToast("Error deleting project", "error");
     }
   };
 
   const handleAddBlog = async (e) => {
     e.preventDefault();
     if (!newBlogTitle.trim() || !newBlogContent.trim()) {
-      toast.warn("Please fill in all compulsory fields");
+      triggerToast("Please fill in all compulsory fields", "warn");
       return;
     }
 
@@ -507,7 +512,7 @@ export default function AdminDashboard() {
 
       const data = await res.json();
       if (data.success) {
-        toast.success(editingBlogId ? "Blog updated successfully! 📝" : "Blog post published successfully! 📝");
+        triggerToast(editingBlogId ? "Blog updated successfully! 📝" : "Blog post published successfully! 📝", "success");
         setNewBlogTitle("");
         setNewBlogExcerpt("");
         setNewBlogImage("");
@@ -517,11 +522,11 @@ export default function AdminDashboard() {
         setFullscreenBlogEditor(false);
         fetchData();
       } else {
-        toast.error(data.error || "Failed to submit blog data");
+        triggerToast(data.error || "Failed to submit blog data", "error");
       }
     } catch (err) {
       console.error(err);
-      toast.error("Error submitting blog payload");
+      triggerToast("Error submitting blog payload", "error");
     }
   };
 
@@ -556,14 +561,14 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        toast.success("Blog deleted successfully! 🗑️");
+        triggerToast("Blog deleted successfully! 🗑️", "success");
         fetchData();
       } else {
-        toast.error(data.error || "Failed to delete blog");
+        triggerToast(data.error || "Failed to delete blog", "error");
       }
     } catch (err) {
       console.error(err);
-      toast.error("Error deleting blog");
+      triggerToast("Error deleting blog", "error");
     }
   };
 
@@ -1362,6 +1367,15 @@ export default function AdminDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+      {toast.message && (
+        <CustomToast
+          key={toast.key}
+          message={toast.message}
+          type={toast.type}
+          isDark={true}
+          onClose={() => setToast({ message: "", type: "success", key: 0 })}
+        />
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { toast } from "react-toastify";
+import CustomToast from "./CustomToast";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sun,
@@ -190,6 +190,7 @@ export default function Portfolio() {
   const [liveBlogs, setLiveBlogs] = useState([]);
   const [likedBlogIds, setLikedBlogIds] = useState([]);
   const [interactions, setInteractions] = useState({});
+  const [toast, setToast] = useState({ message: "", type: "success", key: 0 });
 
   useEffect(() => {
     try {
@@ -236,7 +237,7 @@ export default function Portfolio() {
       nextStarred = starredProjectIds.filter(x => x !== id);
     } else {
       nextStarred = [...starredProjectIds, id];
-      toast.success("Thank you for liking! ⭐");
+      setToast({ message: "Thank you for liking! ⭐", type: "star", key: Date.now() });
     }
     setStarredProjectIds(nextStarred);
     localStorage.setItem("starred_projects", JSON.stringify(nextStarred));
@@ -281,7 +282,7 @@ export default function Portfolio() {
       nextLiked = likedBlogIds.filter(x => x !== id);
     } else {
       nextLiked = [...likedBlogIds, id];
-      toast.success("Thank you for liking! ❤️");
+      setToast({ message: "Thank you for liking! ❤️", type: "like", key: Date.now() });
     }
     setLikedBlogIds(nextLiked);
     localStorage.setItem("liked_blogs", JSON.stringify(nextLiked));
@@ -507,7 +508,7 @@ export default function Portfolio() {
 
   return (
     <div
-      className={`min-h-screen p-4 sm:p-6 lg:p-8 transition-colors duration-700 relative overflow-hidden select-none font-sans ${
+      className={`min-h-screen p-4 sm:p-6 lg:p-8 transition-colors duration-200 relative overflow-hidden select-none font-sans ${
         isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f8f9fa] text-[#1c1c1e]"
       }`}
     >
@@ -1371,22 +1372,12 @@ export default function Portfolio() {
 
         </div>
 
-        {/* Global Footer component with Admin Portal Link */}
-        <footer className={`border-t py-8 mt-16 text-center text-xs backdrop-blur-md relative z-10 ${
-          isDark 
-            ? "border-white/5 text-zinc-500 bg-[#050505]/40" 
-            : "border-black/5 text-zinc-500 bg-[#f8f9fa]/40"
+        <footer className={`py-6 text-center text-[10px] tracking-widest uppercase font-mono relative z-10 ${
+          isDark ? "text-zinc-600" : "text-zinc-400"
         }`}>
-          <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p>© {new Date().getFullYear()} Nikhil Verma. Crafted with Next.js, Tailwind & MongoDB.</p>
-            <div className="flex items-center space-x-4">
-              <Link href="/admin" className={`font-semibold hover:underline transition-colors flex items-center gap-1.5 ${
-                isDark ? "text-zinc-400 hover:text-white" : "text-zinc-600 hover:text-zinc-950"
-              }`}>
-                <span>Admin Portal</span>
-                <span className="text-[10px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded border border-red-500/20 uppercase font-mono tracking-widest">Key</span>
-              </Link>
-            </div>
+          <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span>© {new Date().getFullYear()} Nikhil Verma</span>
+            <Link href="/admin" className="hover:text-red-500 transition-colors font-bold">Admin Portal</Link>
           </div>
         </footer>
 
@@ -1452,6 +1443,16 @@ export default function Portfolio() {
           <Youtube className={`w-4.5 h-4.5 sm:w-5 sm:h-5 ${isDark ? "text-zinc-200" : "text-zinc-800"}`} />
         </DockItem>
       </div>
+
+      {toast.message && (
+        <CustomToast
+          key={toast.key}
+          message={toast.message}
+          type={toast.type}
+          isDark={isDark}
+          onClose={() => setToast({ message: "", type: "success", key: 0 })}
+        />
+      )}
     </div>
   );
 }
