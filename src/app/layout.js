@@ -1,4 +1,5 @@
 import '../index.css';
+import SmoothScroll from '../components/SmoothScroll';
 
 export const metadata = {
   title: "Nikhil's Portfolio",
@@ -14,9 +15,23 @@ export default function RootLayout({ children }) {
       <head>
         <link rel="icon" href="/Favicon.svg" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              var theme = localStorage.getItem('theme');
+              if (theme === 'dark' || (!theme && true)) {
+                document.documentElement.classList.add('dark');
+              } else {
+                document.documentElement.classList.remove('dark');
+              }
+            })();
+          `
+        }} />
       </head>
       <body className="antialiased font-sans">
-        {children}
+        <SmoothScroll>
+          {children}
+        </SmoothScroll>
       </body>
     </html>
   );

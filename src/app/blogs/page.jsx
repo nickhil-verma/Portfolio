@@ -28,7 +28,7 @@ const BlogSpotlightCard = ({ children, isDark, className = "" }) => {
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative overflow-hidden rounded-[24px] transition-all duration-500 shadow-xl hover:-translate-y-1 ${
+      className={`relative overflow-hidden rounded-[24px] transition-all duration-200 shadow-xl hover:-translate-y-1 ${
         isDark 
           ? "glass-card hover:border-white/10" 
           : "glass-card-light hover:border-black/10"

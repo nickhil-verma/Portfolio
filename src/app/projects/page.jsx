@@ -30,7 +30,7 @@ const ProjectSpotlightCard = ({ children, isDark, className = "" }) => {
       onMouseLeave={() => setIsHovered(false)}
       className={`relative overflow-hidden rounded-[24px] ${
         isDark ? "glass-card hover:border-white/10" : "glass-card-light hover:border-black/10"
-      } hover:-translate-y-1.5 transition-all duration-500 shadow-xl ${className}`}
+      } hover:-translate-y-1.5 transition-all duration-200 shadow-xl ${className}`}
     >
       {/* Reflective top highlight */}
       <div className={`absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent ${

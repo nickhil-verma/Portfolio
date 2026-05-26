@@ -86,7 +86,7 @@ const SpotlightCard = ({ children, isDark, className = "", style = {} }) => {
       onMouseLeave={() => setIsHovered(false)}
       className={`relative overflow-hidden rounded-[24px] flex flex-col ${
         isDark ? "glass-card hover:border-white/10" : "glass-card-light hover:border-black/10"
-      } hover:-translate-y-1 transition-all duration-500 shadow-lg hover:shadow-2xl ${gridClasses}`}
+      } hover:-translate-y-1 transition-all duration-200 shadow-lg hover:shadow-2xl ${gridClasses}`}
       style={style}
     >
       {/* Reflective top highlight */}
@@ -1387,8 +1387,8 @@ export default function Portfolio() {
           <div
             className="absolute inset-0 rounded-[24px] pointer-events-none transition-opacity duration-300 z-0"
             style={{
-              border: isDark ? "1.5px solid rgba(255, 255, 255, 0.4)" : "1.5px solid rgba(0, 0, 0, 0.15)",
-              background: `radial-gradient(80px circle at ${dockCoords.x}px ${dockCoords.y}px, ${isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.03)"}, transparent 80%)`,
+              border: isDark ? "1.5px solid rgba(239, 68, 68, 0.5)" : "1.5px solid rgba(220, 38, 38, 0.45)",
+              background: `radial-gradient(80px circle at ${dockCoords.x}px ${dockCoords.y}px, ${isDark ? "rgba(239, 68, 68, 0.08)" : "rgba(220, 38, 38, 0.04)"}, transparent 80%)`,
               maskImage: `radial-gradient(80px circle at ${dockCoords.x}px ${dockCoords.y}px, black 30%, transparent 100%)`,
               WebkitMaskImage: `radial-gradient(80px circle at ${dockCoords.x}px ${dockCoords.y}px, black 30%, transparent 100%)`,
             }}

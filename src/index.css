@@ -41,7 +41,7 @@
 @layer utilities {
   /* Translucent Glassmorphism Card Style */
   .glass-card {
-    @apply backdrop-blur-xl transition-all duration-500 border border-white/5;
+    @apply backdrop-blur-xl transition-all duration-200 border border-white/5;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
     box-shadow: 
       0 4px 30px rgba(0, 0, 0, 0.4),
@@ -49,7 +49,7 @@
   }
 
   .glass-card-light {
-    @apply backdrop-blur-xl transition-all duration-500 border border-black/5;
+    @apply backdrop-blur-xl transition-all duration-200 border border-black/5;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.6) 100%);
     box-shadow: 
       0 4px 30px rgba(0, 0, 0, 0.03),
