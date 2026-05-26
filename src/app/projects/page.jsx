@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { ArrowLeft, ExternalLink, Github, Search, Code, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
@@ -168,6 +169,7 @@ export default function ProjectsPage() {
       nextStarred = starredProjectIds.filter(x => x !== id);
     } else {
       nextStarred = [...starredProjectIds, id];
+      toast.success("Thank you for liking! ⭐");
     }
     setStarredProjectIds(nextStarred);
     localStorage.setItem("starred_projects", JSON.stringify(nextStarred));
@@ -419,6 +421,25 @@ export default function ProjectsPage() {
             </ProjectSpotlightCard>
           ))}
         </div>
+        {/* Global Footer component with Admin Portal Link */}
+        <footer className={`border-t py-8 mt-20 text-center text-xs backdrop-blur-md relative z-10 ${
+          isDark 
+            ? "border-white/5 text-zinc-500 bg-[#050505]/40" 
+            : "border-black/5 text-zinc-500 bg-[#f8f9fa]/40"
+        }`}>
+          <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p>© {new Date().getFullYear()} Nikhil Verma. Crafted with Next.js, Tailwind & MongoDB.</p>
+            <div className="flex items-center space-x-4">
+              <Link href="/admin" className={`font-semibold hover:underline transition-colors flex items-center gap-1.5 ${
+                isDark ? "text-zinc-400 hover:text-white" : "text-zinc-600 hover:text-zinc-950"
+              }`}>
+                <span>Admin Portal</span>
+                <span className="text-[10px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded border border-red-500/20 uppercase font-mono tracking-widest">Key</span>
+              </Link>
+            </div>
+          </div>
+        </footer>
+
       </div>
     </div>
   );

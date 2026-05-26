@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 // Senior-level React-based Markdown-to-HTML parser function for dynamic blog preview
 function renderMarkdownContent(md, isDark = true) {
@@ -389,7 +390,7 @@ export default function AdminDashboard() {
   const handleAddProject = async (e) => {
     e.preventDefault();
     if (!newProjTitle.trim() || !newProjTech.trim() || !newProjGithub.trim()) {
-      setProjMsg("Please fill in all compulsory fields");
+      toast.warn("Please fill in all compulsory fields");
       return;
     }
     
@@ -416,7 +417,7 @@ export default function AdminDashboard() {
 
       const data = await res.json();
       if (data.success) {
-        setProjMsg(editingProjectId ? "Project updated successfully!" : "Project uploaded successfully!");
+        toast.success(editingProjectId ? "Project updated successfully! ⭐" : "Project uploaded successfully! ⭐");
         setNewProjTitle("");
         setNewProjTech("");
         setNewProjGithub("");
@@ -426,11 +427,11 @@ export default function AdminDashboard() {
         setFullscreenProjectEditor(false);
         fetchData();
       } else {
-        setProjMsg(data.error || "Failed to submit project data");
+        toast.error(data.error || "Failed to submit project data");
       }
     } catch (err) {
       console.error(err);
-      setProjMsg("Error submitting project payload");
+      toast.error("Error submitting project payload");
     }
   };
 
@@ -465,21 +466,21 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        setProjMsg("Project deleted successfully!");
+        toast.success("Project deleted successfully! 🗑️");
         fetchData();
       } else {
-        setProjMsg(data.error || "Failed to delete project");
+        toast.error(data.error || "Failed to delete project");
       }
     } catch (err) {
       console.error(err);
-      setProjMsg("Error deleting project");
+      toast.error("Error deleting project");
     }
   };
 
   const handleAddBlog = async (e) => {
     e.preventDefault();
     if (!newBlogTitle.trim() || !newBlogContent.trim()) {
-      setBlogMsg("Please fill in all compulsory fields");
+      toast.warn("Please fill in all compulsory fields");
       return;
     }
 
@@ -506,7 +507,7 @@ export default function AdminDashboard() {
 
       const data = await res.json();
       if (data.success) {
-        setBlogMsg(editingBlogId ? "Blog updated successfully!" : "Blog post published successfully!");
+        toast.success(editingBlogId ? "Blog updated successfully! 📝" : "Blog post published successfully! 📝");
         setNewBlogTitle("");
         setNewBlogExcerpt("");
         setNewBlogImage("");
@@ -516,11 +517,11 @@ export default function AdminDashboard() {
         setFullscreenBlogEditor(false);
         fetchData();
       } else {
-        setBlogMsg(data.error || "Failed to submit blog data");
+        toast.error(data.error || "Failed to submit blog data");
       }
     } catch (err) {
       console.error(err);
-      setBlogMsg("Error submitting blog payload");
+      toast.error("Error submitting blog payload");
     }
   };
 
@@ -555,14 +556,14 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        setBlogMsg("Blog deleted successfully!");
+        toast.success("Blog deleted successfully! 🗑️");
         fetchData();
       } else {
-        setBlogMsg(data.error || "Failed to delete blog");
+        toast.error(data.error || "Failed to delete blog");
       }
     } catch (err) {
       console.error(err);
-      setBlogMsg("Error deleting blog");
+      toast.error("Error deleting blog");
     }
   };
 

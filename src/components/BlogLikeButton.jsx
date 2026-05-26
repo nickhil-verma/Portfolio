@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
+import { toast } from "react-toastify";
 
 export default function BlogLikeButton({ blogId, initialLikes, isDark, mini = false }) {
   const [likedBlogIds, setLikedBlogIds] = useState([]);
@@ -33,6 +34,7 @@ export default function BlogLikeButton({ blogId, initialLikes, isDark, mini = fa
       nextLiked = likedBlogIds.filter(x => x !== blogId);
     } else {
       nextLiked = [...likedBlogIds, blogId];
+      toast.success("Thank you for liking! ❤️");
     }
     setLikedBlogIds(nextLiked);
     localStorage.setItem("liked_blogs", JSON.stringify(nextLiked));

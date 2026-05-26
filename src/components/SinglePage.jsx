@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sun,
@@ -235,6 +236,7 @@ export default function Portfolio() {
       nextStarred = starredProjectIds.filter(x => x !== id);
     } else {
       nextStarred = [...starredProjectIds, id];
+      toast.success("Thank you for liking! ⭐");
     }
     setStarredProjectIds(nextStarred);
     localStorage.setItem("starred_projects", JSON.stringify(nextStarred));
@@ -279,6 +281,7 @@ export default function Portfolio() {
       nextLiked = likedBlogIds.filter(x => x !== id);
     } else {
       nextLiked = [...likedBlogIds, id];
+      toast.success("Thank you for liking! ❤️");
     }
     setLikedBlogIds(nextLiked);
     localStorage.setItem("liked_blogs", JSON.stringify(nextLiked));
@@ -450,23 +453,6 @@ export default function Portfolio() {
   }, []);
 
   const handleThemeChange = (val) => {
-    // Disable transitions temporarily to prevent jitter
-    const css = document.createElement("style");
-    css.type = "text/css";
-    css.appendChild(
-      document.createTextNode(
-        `* {
-           -webkit-transition: none !important;
-           -moz-transition: none !important;
-           -o-transition: none !important;
-           -ms-transition: none !important;
-           transition: none !important;
-         }`
-      )
-    );
-    document.head.appendChild(css);
-
-    // Apply theme changes
     setIsDark(val);
     localStorage.setItem("theme", val ? "dark" : "light");
     if (val) {
@@ -474,14 +460,6 @@ export default function Portfolio() {
     } else {
       document.documentElement.classList.remove("dark");
     }
-
-    // Force reflow
-    const _ = window.getComputedStyle(document.body);
-
-    // Re-enable transitions
-    setTimeout(() => {
-      document.head.removeChild(css);
-    }, 150);
   };
 
   const combinedProjects = [...liveProjects, ...staticFallbackProjects];
@@ -1392,6 +1370,26 @@ export default function Portfolio() {
           </div>
 
         </div>
+
+        {/* Global Footer component with Admin Portal Link */}
+        <footer className={`border-t py-8 mt-16 text-center text-xs backdrop-blur-md relative z-10 ${
+          isDark 
+            ? "border-white/5 text-zinc-500 bg-[#050505]/40" 
+            : "border-black/5 text-zinc-500 bg-[#f8f9fa]/40"
+        }`}>
+          <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p>© {new Date().getFullYear()} Nikhil Verma. Crafted with Next.js, Tailwind & MongoDB.</p>
+            <div className="flex items-center space-x-4">
+              <Link href="/admin" className={`font-semibold hover:underline transition-colors flex items-center gap-1.5 ${
+                isDark ? "text-zinc-400 hover:text-white" : "text-zinc-600 hover:text-zinc-950"
+              }`}>
+                <span>Admin Portal</span>
+                <span className="text-[10px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded border border-red-500/20 uppercase font-mono tracking-widest">Key</span>
+              </Link>
+            </div>
+          </div>
+        </footer>
+
       </div>
 
       {/* Floating macOS-inspired Dock */}

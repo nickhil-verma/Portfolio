@@ -1,4 +1,6 @@
 import '../index.css';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export const metadata = {
   title: "Nikhil's Portfolio",
@@ -17,6 +19,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="antialiased font-sans">
         {children}
+        <ToastContainer theme="dark" position="bottom-right" autoClose={3000} />
       </body>
     </html>
   );
