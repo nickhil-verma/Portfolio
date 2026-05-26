@@ -1,29 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-/* Optional Custom Dark Mode Styles */
-@layer components {
-  .dark .custom-component {
-    @apply bg-gray-900 text-white;
+@layer base {
+  body {
+    @apply bg-[#050505] text-[#ededed] overflow-x-hidden selection:bg-red-500/20 selection:text-white;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 }
-body{
-  overflow-x: hidden;
-}
+
 * {
   scroll-behavior: smooth;
-   
 }
 
-/* button {
-  border: solid black 1.5px;
-  padding: 5px 10px 5px 10px;
-  border-radius: 20px;
-  margin: 5px;
-  box-shadow: 2.5px 5px #c2c2c2;
-} */
+/* Premium Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
 
-/* WebKit browsers */
- 
+::-webkit-scrollbar-track {
+  background: rgba(5, 5, 5, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(239, 68, 68, 0.12);
+  border-radius: 9999px;
+  border: 2px solid rgba(5, 5, 5, 0.5);
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+/* Premium Design System Utilities */
+@layer utilities {
+  /* Translucent Glassmorphism Card Style */
+  .glass-card {
+    @apply backdrop-blur-xl transition-all duration-500 border border-white/5;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+    box-shadow: 
+      0 4px 30px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-card-light {
+    @apply backdrop-blur-xl transition-all duration-500 border border-black/5;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.6) 100%);
+    box-shadow: 
+      0 4px 30px rgba(0, 0, 0, 0.03),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  /* Grid mesh background style */
+  .grid-mesh {
+    background-size: 60px 60px;
+    background-image: 
+      linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+
+  .grid-mesh-light {
+    background-size: 60px 60px;
+    background-image: 
+      linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+
+  /* Noise Overlay */
+  .noise-overlay {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.015'/%3E%3C/svg%3E");
+  }
+
+  /* Soft Ambient blobs */
+  .ambient-blob {
+    @apply absolute rounded-full filter blur-[120px] mix-blend-screen opacity-20 pointer-events-none;
+  }
+}

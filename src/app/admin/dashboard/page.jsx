@@ -1,0 +1,911 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  ArrowLeft, LayoutDashboard, FolderKanban, BookHeart, LogOut, 
+  Plus, Trash2, Users, Cpu, FileText, CheckCircle2, Globe, Monitor, Smartphone, Tablet
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+// Senior-level React-based Markdown-to-HTML parser function for dynamic blog preview
+function renderMarkdownContent(md) {
+  if (!md) return "";
+  const lines = md.split("\n");
+  return lines.map((line, idx) => {
+    const text = line.trim();
+
+    // Headers
+    if (text.startsWith("### ")) {
+      return <h4 key={idx} className="text-xs sm:text-sm font-bold font-outfit text-white mt-4 mb-2">{text.substring(4)}</h4>;
+    }
+    if (text.startsWith("## ")) {
+      return <h3 key={idx} className="text-sm sm:text-base font-bold font-outfit text-white mt-5 mb-2.5">{text.substring(3)}</h3>;
+    }
+    if (text.startsWith("# ")) {
+      return <h2 key={idx} className="text-base sm:text-lg font-extrabold font-outfit text-white mt-6 mb-3">{text.substring(2)}</h2>;
+    }
+
+    // Bullet lists
+    if (text.startsWith("- ") || text.startsWith("* ")) {
+      return <li key={idx} className="list-disc pl-1 ml-4 text-[10px] sm:text-xs text-zinc-300 mb-1">{text.substring(2)}</li>;
+    }
+
+    // Blockquote
+    if (text.startsWith("> ")) {
+      return (
+        <blockquote key={idx} className="border-l border-red-500 pl-3 py-1 my-3 text-[10px] sm:text-xs text-zinc-400 italic bg-white/5 rounded-r-md">
+          {text.substring(2)}
+        </blockquote>
+      );
+    }
+
+    // Code blocks markers
+    if (text.startsWith("```")) {
+      return null;
+    }
+
+    // Empty lines
+    if (text === "") {
+      return <div key={idx} className="h-2" />;
+    }
+
+    // Paragraph with inline bold **text** parsing
+    const boldRegex = /\*\*(.*?)\*\*/g;
+    let parts = [];
+    let lastIndex = 0;
+    let match;
+    while ((match = boldRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      parts.push(<strong key={match.index} className="font-bold text-white">{match[1]}</strong>);
+      lastIndex = boldRegex.lastIndex;
+    }
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return <p key={idx} className="text-[10px] sm:text-xs text-zinc-300 leading-relaxed mb-2">{parts}</p>;
+  });
+}
+
+export default function AdminDashboard() {
+  const router = useRouter();
+  const [authorized, setAuthorized] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+  
+  // Dynamic states loaded from APIs
+  const [dashboardProjects, setDashboardProjects] = useState([]);
+  const [dashboardBlogs, setDashboardBlogs] = useState([]);
+  
+  // Traffic analytics state
+  const [analytics, setAnalytics] = useState({
+    totalViews: 0,
+    uniqueViews: 0,
+    logs: [],
+  });
+
+  const [loading, setLoading] = useState(true);
+
+  // Form states - Projects
+  const [newProjTitle, setNewProjTitle] = useState("");
+  const [newProjTech, setNewProjTech] = useState("");
+  const [newProjGithub, setNewProjGithub] = useState("");
+  const [newProjDeployed, setNewProjDeployed] = useState("");
+  const [newProjDesc, setNewProjDesc] = useState("");
+  const [newProjCat, setNewProjCat] = useState("web");
+  const [projMsg, setProjMsg] = useState("");
+
+  // Form states - Blogs
+  const [newBlogTitle, setNewBlogTitle] = useState("");
+  const [newBlogExcerpt, setNewBlogExcerpt] = useState("");
+  const [newBlogImage, setNewBlogImage] = useState("");
+  const [newBlogBanner, setNewBlogBanner] = useState("");
+  const [newBlogCat, setNewBlogCat] = useState("Tech");
+  const [newBlogContent, setNewBlogContent] = useState("");
+  const [blogMsg, setBlogMsg] = useState("");
+
+  // Edit / Preview control states
+  const [editingProjectId, setEditingProjectId] = useState(null);
+  const [editingBlogId, setEditingBlogId] = useState(null);
+  const [blogWriteMode, setBlogWriteMode] = useState("write");
+
+  // Fetch all live data on tab change or mount
+  const fetchData = async () => {
+    try {
+      // Fetch dynamic projects
+      const projRes = await fetch("/api/projects");
+      const projData = await projRes.json();
+      if (Array.isArray(projData)) {
+        setDashboardProjects(projData);
+      }
+
+      // Fetch dynamic blogs
+      const blogRes = await fetch("/api/blogs");
+      const blogData = await blogRes.json();
+      if (Array.isArray(blogData)) {
+        setDashboardBlogs(blogData);
+      }
+
+      // Fetch dynamic traffic analytics
+      const analyticsRes = await fetch("/api/analytics");
+      const analyticsData = await analyticsRes.json();
+      if (analyticsData && !analyticsData.error) {
+        setAnalytics(analyticsData);
+      }
+    } catch (err) {
+      console.error("Failed to load active data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem("admin_logged_in");
+    if (isLoggedIn !== "true") {
+      router.push("/admin");
+    } else {
+      setAuthorized(true);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (authorized) {
+      fetchData();
+    }
+  }, [activeTab, authorized]);
+
+  const handleAddProject = async (e) => {
+    e.preventDefault();
+    if (!newProjTitle.trim() || !newProjTech.trim() || !newProjGithub.trim()) {
+      setProjMsg("Please fill in all compulsory fields");
+      return;
+    }
+    
+    try {
+      const url = "/api/projects";
+      const method = editingProjectId ? "PUT" : "POST";
+      const payload = {
+        title: newProjTitle,
+        tech: newProjTech,
+        githubUrl: newProjGithub,
+        deployedUrl: newProjDeployed,
+        description: newProjDesc,
+        category: newProjCat,
+      };
+      if (editingProjectId) {
+        payload.id = editingProjectId;
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setProjMsg(editingProjectId ? "Project updated successfully!" : "Project uploaded successfully!");
+        setNewProjTitle("");
+        setNewProjTech("");
+        setNewProjGithub("");
+        setNewProjDeployed("");
+        setNewProjDesc("");
+        setEditingProjectId(null);
+        fetchData();
+      } else {
+        setProjMsg(data.error || "Failed to submit project data");
+      }
+    } catch (err) {
+      console.error(err);
+      setProjMsg("Error submitting project payload");
+    }
+  };
+
+  const startEditProject = (p) => {
+    setEditingProjectId(p._id);
+    setNewProjTitle(p.title);
+    setNewProjTech(p.tech.join(", "));
+    setNewProjGithub(p.link);
+    setNewProjDeployed(p.deployedUrl || "");
+    setNewProjDesc(p.description);
+    setNewProjCat(p.category);
+    setProjMsg("");
+  };
+
+  const cancelEditProject = () => {
+    setEditingProjectId(null);
+    setNewProjTitle("");
+    setNewProjTech("");
+    setNewProjGithub("");
+    setNewProjDeployed("");
+    setNewProjDesc("");
+    setProjMsg("");
+  };
+
+  const handleDeleteProject = async (id) => {
+    if (!window.confirm("Are you sure you want to permanently delete this project from the database?")) return;
+    try {
+      const res = await fetch(`/api/projects?id=${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setProjMsg("Project deleted successfully!");
+        fetchData();
+      } else {
+        setProjMsg(data.error || "Failed to delete project");
+      }
+    } catch (err) {
+      console.error(err);
+      setProjMsg("Error deleting project");
+    }
+  };
+
+  const handleAddBlog = async (e) => {
+    e.preventDefault();
+    if (!newBlogTitle.trim() || !newBlogContent.trim()) {
+      setBlogMsg("Please fill in all compulsory fields");
+      return;
+    }
+
+    try {
+      const url = "/api/blogs";
+      const method = editingBlogId ? "PUT" : "POST";
+      const payload = {
+        title: newBlogTitle,
+        excerpt: newBlogExcerpt,
+        imageUrl: newBlogImage,
+        bannerUrl: newBlogBanner,
+        category: newBlogCat,
+        content: newBlogContent,
+      };
+      if (editingBlogId) {
+        payload.id = editingBlogId;
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setBlogMsg(editingBlogId ? "Blog updated successfully!" : "Blog post published successfully!");
+        setNewBlogTitle("");
+        setNewBlogExcerpt("");
+        setNewBlogImage("");
+        setNewBlogBanner("");
+        setNewBlogContent("");
+        setEditingBlogId(null);
+        fetchData();
+      } else {
+        setBlogMsg(data.error || "Failed to submit blog data");
+      }
+    } catch (err) {
+      console.error(err);
+      setBlogMsg("Error submitting blog payload");
+    }
+  };
+
+  const startEditBlog = (b) => {
+    setEditingBlogId(b._id);
+    setNewBlogTitle(b.title);
+    setNewBlogExcerpt(b.excerpt || "");
+    setNewBlogImage(b.imageUrl || "");
+    setNewBlogBanner(b.bannerUrl || "");
+    setNewBlogCat(b.category);
+    setNewBlogContent(b.content);
+    setBlogMsg("");
+  };
+
+  const cancelEditBlog = () => {
+    setEditingBlogId(null);
+    setNewBlogTitle("");
+    setNewBlogExcerpt("");
+    setNewBlogImage("");
+    setNewBlogBanner("");
+    setNewBlogContent("");
+    setBlogMsg("");
+  };
+
+  const handleDeleteBlog = async (id) => {
+    if (!window.confirm("Are you sure you want to permanently delete this blog post?")) return;
+    try {
+      const res = await fetch(`/api/blogs?id=${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBlogMsg("Blog deleted successfully!");
+        fetchData();
+      } else {
+        setBlogMsg(data.error || "Failed to delete blog");
+      }
+    } catch (err) {
+      console.error(err);
+      setBlogMsg("Error deleting blog");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("admin_logged_in");
+    router.push("/admin");
+  };
+
+  if (!authorized) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-[#ededed] noise-overlay relative overflow-hidden flex flex-col justify-center items-center p-6">
+        <div className="absolute inset-0 z-0 grid-mesh pointer-events-none" />
+        <div className="text-center z-10">
+          <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 mx-auto flex items-center justify-center mb-4 animate-pulse">
+            <Cpu className="w-5 h-5 text-red-400" />
+          </div>
+          <p className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Verifying Session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#050505] text-[#ededed] noise-overlay relative overflow-hidden flex font-sans">
+      <div className="absolute inset-0 z-0 grid-mesh pointer-events-none" />
+
+      {/* Sidebar Navigation */}
+      <aside className="w-64 border-r border-white/5 bg-[#09090b]/80 backdrop-blur-xl z-10 p-6 flex flex-col justify-between hidden md:flex">
+        <div>
+          {/* Logo Heading */}
+          <div className="flex items-center space-x-3 mb-10">
+            <div className="w-8 h-8 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+              <Cpu className="w-4 h-4 text-red-400" />
+            </div>
+            <span className="font-extrabold font-outfit text-base tracking-tight text-white">Nikhil Console</span>
+          </div>
+
+          {/* Menu Items */}
+          <nav className="space-y-1.5">
+            {[
+              { id: "overview", label: "Overview & Analytics", icon: LayoutDashboard },
+              { id: "projects", label: "Manage Projects", icon: FolderKanban },
+              { id: "blogs", label: "Markdown Blogs", icon: BookHeart },
+            ].map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
+                    isActive 
+                      ? "bg-red-500/20 text-red-400 border border-red-500/20 shadow-lg shadow-red-500/5" 
+                      : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
+                  }`}
+                >
+                  <Icon className="w-4.5 h-4.5" />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Quick LogOut */}
+        <div className="space-y-3.5">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wide text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent transition-all"
+          >
+            <LogOut className="w-4.5 h-4.5" />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 z-10 p-6 sm:p-10 overflow-y-auto max-h-screen">
+        {/* Mobile menu bar */}
+        <div className="flex md:hidden items-center justify-between p-4 mb-6 glass-card rounded-2xl">
+          <div className="flex items-center space-x-2">
+            <Cpu className="w-4.5 h-4.5 text-red-400" />
+            <span className="font-bold text-xs tracking-tight text-white">Nikhil Console</span>
+          </div>
+          <div className="flex space-x-1">
+            {["overview", "projects", "blogs"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase ${
+                  activeTab === tab ? "bg-red-500/20 text-red-400" : "text-zinc-400"
+                }`}
+              >
+                {tab === "overview" ? "Views" : tab}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Header bar */}
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-10">
+          <div>
+            <h1 className="text-3xl font-extrabold font-outfit tracking-tight text-white flex items-center gap-2">
+              {activeTab === "overview" && "Analytics Overview"}
+              {activeTab === "projects" && "Projects Manager"}
+              {activeTab === "blogs" && "Blogging Dashboard"}
+            </h1>
+            <p className="text-xs text-zinc-400">
+              Manage database assets and monitor traffic geocoding telemetry.
+            </p>
+          </div>
+
+          <Link href="/">
+            <button className="flex items-center space-x-2 text-xs font-semibold tracking-wide text-zinc-400 hover:text-white transition-all py-2 px-3 bg-white/5 border border-white/5 rounded-xl">
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Portfolio</span>
+            </button>
+          </Link>
+        </div>
+
+        {/* OVERVIEW TAB */}
+        {activeTab === "overview" && (
+          <div className="space-y-8">
+            {/* Quick Metrics Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {[
+                { label: "Total Page Views", value: analytics.totalViews, icon: Globe, color: "bg-red-500/10 text-red-400 border-red-500/20" },
+                { label: "Unique Visitors", value: analytics.uniqueViews, icon: Users, color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+                { label: "Projects count", value: dashboardProjects.length, icon: FolderKanban, color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+                { label: "Blogging Posts", value: dashboardBlogs.length, icon: FileText, color: "bg-red-500/10 text-red-400 border-red-500/20" },
+              ].map((metric, idx) => {
+                const Icon = metric.icon;
+                return (
+                  <div key={idx} className="p-5 rounded-2xl glass-card relative overflow-hidden">
+                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/10 to-transparent pointer-events-none" />
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">{metric.label}</span>
+                      <div className={`p-2 rounded-xl border flex items-center justify-center ${metric.color}`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <p className="text-2xl font-extrabold font-outfit text-white tracking-tight">{metric.value}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Geolocation visitor logs table */}
+            <div className="p-6 rounded-[24px] glass-card relative">
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none" />
+              <div className="flex justify-between items-center mb-5">
+                <h3 className="text-lg font-bold font-outfit text-white">Live Visitor Geolocation Telemetry</h3>
+                <span className="text-[10px] font-bold uppercase bg-white/5 border border-white/5 px-2.5 py-1 rounded-md text-zinc-400">
+                  Real-time Database Logs
+                </span>
+              </div>
+
+              {analytics.logs.length === 0 ? (
+                <div className="py-10 text-center text-xs text-zinc-500">
+                  No visitor logs logged yet. Set MONGODB_URI in environment to log traffic logs in real-time.
+                </div>
+              ) : (
+                <div className="overflow-x-auto pr-1">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-white/5 text-zinc-400 uppercase font-bold tracking-wider text-[9px]">
+                        <th className="pb-3.5 pl-2">Device profile</th>
+                        <th className="pb-3.5">IP Address</th>
+                        <th className="pb-3.5">Geocoded Location</th>
+                        <th className="pb-3.5">Timestamp</th>
+                        <th className="pb-3.5 pr-2 text-right">System Agent</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {analytics.logs.map((log, index) => (
+                        <tr key={index} className="hover:bg-white/[0.01] transition-colors">
+                          <td className="py-3 pl-2 flex items-center space-x-2 text-zinc-200">
+                            {log.device === "Mobile" ? (
+                              <Smartphone className="w-4 h-4 text-red-400 flex-shrink-0" />
+                            ) : log.device === "Tablet" ? (
+                              <Tablet className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                            ) : (
+                              <Monitor className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                            )}
+                            <span className="font-semibold">{log.device || "Desktop"}</span>
+                          </td>
+                          <td className="py-3 text-zinc-300 font-mono">{log.ip}</td>
+                          <td className="py-3 text-zinc-200 font-medium">
+                            <span className="inline-flex items-center gap-1.5">
+                              <Globe className="w-3.5 h-3.5 text-zinc-500" />
+                              <span>{log.location || "Unknown"}</span>
+                            </span>
+                          </td>
+                          <td className="py-3 text-zinc-400 font-mono text-[10px]">
+                            {new Date(log.timestamp).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              second: "2-digit",
+                            })}
+                          </td>
+                          <td className="py-3 text-zinc-400 pr-2 text-right text-[10px] font-medium">
+                            {log.browser} / {log.os}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* PROJECTS TAB */}
+        {activeTab === "projects" && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Add Project Form */}
+            <div className="col-span-1 p-6 rounded-[24px] glass-card h-fit relative">
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/20 to-transparent pointer-events-none" />
+              <h3 className="text-lg font-bold font-outfit text-white mb-4">Upload Project</h3>
+              
+              {projMsg && (
+                <div className={`mb-4 p-3 rounded-xl text-xs font-semibold text-center border ${
+                  projMsg.includes("success") 
+                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
+                    : "bg-red-500/10 border-red-500/20 text-red-400"
+                }`}>
+                  {projMsg}
+                </div>
+              )}
+
+              <form onSubmit={handleAddProject} className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
+                    Project Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="E.g. Hireonova RAG Engine"
+                    value={newProjTitle}
+                    onChange={(e) => { setNewProjTitle(e.target.value); setProjMsg(""); }}
+                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
+                    Tech Stack (Comma Separated) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="React, Python, Tailwind, FAISS"
+                    value={newProjTech}
+                    onChange={(e) => { setNewProjTech(e.target.value); setProjMsg(""); }}
+                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
+                    GitHub Link <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://github.com/..."
+                    value={newProjGithub}
+                    onChange={(e) => { setNewProjGithub(e.target.value); setProjMsg(""); }}
+                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
+                    Deployed URL (Optional)
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    value={newProjDeployed}
+                    onChange={(e) => { setNewProjDeployed(e.target.value); setProjMsg(""); }}
+                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
+                    Short Description
+                  </label>
+                  <textarea
+                    placeholder="Provide a quick detailed summary of the codebase parameters..."
+                    value={newProjDesc}
+                    onChange={(e) => setNewProjDesc(e.target.value)}
+                    className="w-full h-20 bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">Category</label>
+                  <select
+                    value={newProjCat}
+                    onChange={(e) => setNewProjCat(e.target.value)}
+                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-zinc-400 font-sans"
+                  >
+                    <option value="web">Web & Systems</option>
+                    <option value="ai">AI / NLP / Chatbots</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center justify-center space-x-2 shadow-lg shadow-red-500/20"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{editingProjectId ? "Update Project" : "Upload Project to DB"}</span>
+                  </button>
+                  {editingProjectId && (
+                    <button
+                      type="button"
+                      onClick={cancelEditProject}
+                      className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5 rounded-xl text-xs font-semibold transition-all"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+
+            {/* Projects list management */}
+            <div className="col-span-2 p-6 rounded-[24px] glass-card relative h-fit">
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/10 to-transparent pointer-events-none" />
+              <h3 className="text-lg font-bold font-outfit text-white mb-4">Existing dynamic uploaded projects</h3>
+              
+              {dashboardProjects.length === 0 ? (
+                <div className="py-20 text-center text-xs text-zinc-500">
+                  No dynamic database uploads recorded yet. Local fallback assets are displayed on main pages.
+                </div>
+              ) : (
+                <div className="space-y-3 overflow-y-auto max-h-[580px] pr-2">
+                  {dashboardProjects.map((p, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-4 bg-[#121214]/50 border border-white/5 rounded-2xl">
+                      <div>
+                        <h4 className="text-xs font-bold text-white">{p.title}</h4>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {p.tech.map((t, tIdx) => (
+                            <span key={tIdx} className="text-[8px] bg-white/5 text-zinc-400 px-1.5 py-0.5 rounded-md uppercase font-semibold">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3.5">
+                        <span className="text-[9px] font-bold bg-red-500/10 border border-red-500/20 text-red-400 px-2.5 py-0.5 rounded-md uppercase tracking-wider">
+                          {p.category}
+                        </span>
+                        <div className="flex items-center space-x-1.5">
+                          <button
+                            onClick={() => startEditProject(p)}
+                            className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg border border-transparent hover:border-white/5 transition-all"
+                            title="Edit Project"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProject(p._id)}
+                            className="p-1.5 text-rose-500/80 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg border border-transparent hover:border-rose-500/10 transition-all"
+                            title="Delete Project"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* BLOGS TAB */}
+        {activeTab === "blogs" && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Add Blog Form */}
+            <div className="col-span-1 p-6 rounded-[24px] glass-card h-fit relative">
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/20 to-transparent pointer-events-none" />
+              <h3 className="text-lg font-bold font-outfit text-white mb-4">Write Blog post</h3>
+              
+              {blogMsg && (
+                <div className={`mb-4 p-3 rounded-xl text-xs font-semibold text-center border ${
+                  blogMsg.includes("success") 
+                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
+                    : "bg-red-500/10 border-red-500/20 text-red-400"
+                }`}>
+                  {blogMsg}
+                </div>
+              )}
+
+              <form onSubmit={handleAddBlog} className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
+                    Blog Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="E.g. Dynamic RAG Pipelines"
+                    value={newBlogTitle}
+                    onChange={(e) => { setNewBlogTitle(e.target.value); setBlogMsg(""); }}
+                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
+                    Blog Thumbnail Image URL
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://images.unsplash.com/..."
+                    value={newBlogImage}
+                    onChange={(e) => setNewBlogImage(e.target.value)}
+                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
+                    Blog Banner Image URL
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://images.unsplash.com/..."
+                    value={newBlogBanner}
+                    onChange={(e) => setNewBlogBanner(e.target.value)}
+                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">Short Excerpt Summary</label>
+                  <input
+                    type="text"
+                    placeholder="A quick overview of what the reader will explore..."
+                    value={newBlogExcerpt}
+                    onChange={(e) => setNewBlogExcerpt(e.target.value)}
+                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">Category Tag</label>
+                  <input
+                    type="text"
+                    placeholder="AI & NLP, Systems, Web Dev"
+                    value={newBlogCat}
+                    onChange={(e) => setNewBlogCat(e.target.value)}
+                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                      Blog Body Content (Markdown Supported) <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex bg-white/5 border border-white/5 p-0.5 rounded-lg">
+                      <button
+                        type="button"
+                        onClick={() => setBlogWriteMode("write")}
+                        className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider transition-all ${
+                          blogWriteMode === "write" ? "bg-red-500/20 text-red-400" : "text-zinc-500"
+                        }`}
+                      >
+                        Write
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBlogWriteMode("preview")}
+                        className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider transition-all ${
+                          blogWriteMode === "preview" ? "bg-red-500/20 text-red-400" : "text-zinc-500"
+                        }`}
+                      >
+                        Preview README
+                      </button>
+                    </div>
+                  </div>
+
+                  {blogWriteMode === "write" ? (
+                    <textarea
+                      required
+                      placeholder="# Article Header&#10;&#10;Write blog content in **Markdown format** (like README.md). Support headings, bullets, blockquotes, bold text..."
+                      value={newBlogContent}
+                      onChange={(e) => { setNewBlogContent(e.target.value); setBlogMsg(""); }}
+                      className="w-full h-44 bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-mono resize-none"
+                    />
+                  ) : (
+                    <div className="w-full h-44 overflow-y-auto bg-[#121214]/60 border border-white/5 rounded-xl py-2.5 px-4 text-[10px] font-sans text-left text-zinc-300 select-text">
+                      {newBlogContent.trim() ? renderMarkdownContent(newBlogContent) : <p className="text-zinc-500 italic text-center py-16">No markdown written yet.</p>}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center justify-center space-x-2 shadow-lg shadow-red-500/20"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{editingBlogId ? "Update Blog Post" : "Publish Blog post"}</span>
+                  </button>
+                  {editingBlogId && (
+                    <button
+                      type="button"
+                      onClick={cancelEditBlog}
+                      className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5 rounded-xl text-xs font-semibold transition-all"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+
+            {/* Blogs list management */}
+            <div className="col-span-2 p-6 rounded-[24px] glass-card relative h-fit">
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/10 to-transparent pointer-events-none" />
+              <h3 className="text-lg font-bold font-outfit text-white mb-4">Published dynamic database blogs</h3>
+              
+              {dashboardBlogs.length === 0 ? (
+                <div className="py-20 text-center text-xs text-zinc-500">
+                  No dynamic database blog uploads recorded yet. Local fallback mock articles are displayed.
+                </div>
+              ) : (
+                <div className="space-y-3 overflow-y-auto max-h-[580px] pr-2">
+                  {dashboardBlogs.map((b, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-4 bg-[#121214]/50 border border-white/5 rounded-2xl">
+                      <div>
+                        <h4 className="text-xs font-bold text-white">{b.title}</h4>
+                        <p className="text-[9px] text-zinc-500 mt-1">
+                          Published: {new Date(b.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-3.5">
+                        <span className="text-[9px] font-bold bg-red-500/10 border border-red-500/20 text-red-400 px-2.5 py-0.5 rounded-md uppercase tracking-wider">
+                          {b.category}
+                        </span>
+                        <div className="flex items-center space-x-1.5">
+                          <button
+                            onClick={() => startEditBlog(b)}
+                            className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg border border-transparent hover:border-white/5 transition-all"
+                            title="Edit Blog"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteBlog(b._id)}
+                            className="p-1.5 text-rose-500/80 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg border border-transparent hover:border-rose-500/10 transition-all"
+                            title="Delete Blog"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}

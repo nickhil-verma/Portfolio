@@ -1,0 +1,1 @@
+self.__REACT_LOADABLE_MANIFEST="{\"app\\\\page.js -> ../components/SinglePage\":{\"id\":\"app\\\\page.js -> ../components/SinglePage\",\"files\":[\"static/chunks/_app-pages-browser_src_components_SinglePage_jsx.js\"]}}"

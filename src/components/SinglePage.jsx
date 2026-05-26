@@ -1,27 +1,180 @@
-import React, { useState, useEffect } from "react";
+"use client";
+
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Sun,
   Moon,
-  User,
   ExternalLink,
   Github,
   Linkedin,
   Mail,
-  Award,
   Twitter,
   Youtube,
-  GitBranch,
+  Briefcase,
+  GraduationCap,
+  Award,
+  ChevronRight,
+  FolderKanban,
   Star,
-  Users,
-  Calendar,
-  Code, // Added Code icon
 } from "lucide-react";
 import { SiLeetcode, SiCodeforces } from "react-icons/si";
+import Link from "next/link";
+
+// macOS-like Spring Dock Item Wrapper
+const DockItem = ({ href, target, rel, children, isDark }) => {
+  return (
+    <motion.a
+      href={href}
+      target={target}
+      rel={rel}
+      className={`p-2.5 sm:p-3 rounded-xl transition-colors duration-300 flex items-center justify-center relative group z-10`}
+      whileHover={{ 
+        scale: 1.25, 
+        y: -10,
+        backgroundColor: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)"
+      }}
+      transition={{ type: "spring", stiffness: 450, damping: 20 }}
+    >
+      {children}
+      {/* Tooltip */}
+      <span className={`absolute -top-10 scale-0 group-hover:scale-100 transition-all duration-200 text-xs px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 font-sans tracking-tight ${
+        isDark ? "bg-zinc-800 text-zinc-200 border border-zinc-700" : "bg-white text-zinc-800 border border-zinc-200 shadow-md"
+      }`}>
+        {href.includes("github") ? "GitHub" :
+         href.includes("linkedin") ? "LinkedIn" :
+         href.includes("mailto") ? "Email" :
+         href.includes("x.com") ? "Twitter" :
+         href.includes("leetcode") ? "LeetCode" :
+         href.includes("codeforces") ? "Codeforces" :
+         href.includes("youtube") ? "YouTube" : "Theme"}
+      </span>
+    </motion.a>
+  );
+};
+
+// Interactive Spotlight Card Component
+const SpotlightCard = ({ children, isDark, className = "", style = {} }) => {
+  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+  const cardRef = useRef(null);
+
+  const handleMouseMove = (e) => {
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      setCoords({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
+    }
+  };
+
+  const classesList = className.split(/\s+/).filter(Boolean);
+  const gridClasses = classesList.filter(c => c.startsWith("col-span-") || c.startsWith("row-span-")).join(" ");
+  const innerClasses = classesList.filter(c => !c.startsWith("col-span-") && !c.startsWith("row-span-")).join(" ");
+
+  return (
+    <div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={`relative overflow-hidden rounded-[24px] flex flex-col ${
+        isDark ? "glass-card hover:border-white/10" : "glass-card-light hover:border-black/10"
+      } hover:-translate-y-1 transition-all duration-500 shadow-lg hover:shadow-2xl ${gridClasses}`}
+      style={style}
+    >
+      {/* Reflective top highlight */}
+      <div className={`absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent ${
+        isDark ? "via-white/10" : "via-black/5"
+      } to-transparent pointer-events-none`} />
+
+      {/* Mouse spotlight light effect */}
+      <div
+        className="absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none"
+        style={{
+          opacity: isHovered ? 1 : 0,
+          background: `radial-gradient(400px circle at ${coords.x}px ${coords.y}px, ${
+            isDark ? "rgba(255, 255, 255, 0.04)" : "rgba(0, 0, 0, 0.025)"
+          }, transparent 80%)`,
+        }}
+      />
+      
+      <div className={`relative z-10 w-full h-full flex flex-col ${innerClasses}`}>{children}</div>
+    </div>
+  );
+};
 
 export default function Portfolio() {
   const [isDark, setIsDark] = useState(true);
   const [githubStats, setGithubStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [expandedExperience, setExpandedExperience] = useState(0); // Index 0 expanded by default
+  const [liveProjects, setLiveProjects] = useState([]);
+  const [starredProjectIds, setStarredProjectIds] = useState([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("starred_projects");
+      if (stored) {
+        setStarredProjectIds(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error("Failed to load starred projects:", e);
+    }
+  }, []);
+
+  const handleToggleStarProject = async (project) => {
+    const isStarred = starredProjectIds.includes(project._id || project.title);
+    const action = isStarred ? "unstar" : "star";
+    
+    // Toggle locally for instant responsive UI feedback
+    let nextStarred;
+    if (isStarred) {
+      nextStarred = starredProjectIds.filter(id => id !== (project._id || project.title));
+      project.stars = Math.max(0, (project.stars || 0) - 1);
+    } else {
+      nextStarred = [...starredProjectIds, project._id || project.title];
+      project.stars = (project.stars || 0) + 1;
+    }
+    setStarredProjectIds(nextStarred);
+    localStorage.setItem("starred_projects", JSON.stringify(nextStarred));
+
+    // If it is a database project, trigger API update
+    if (project._id) {
+      try {
+        const res = await fetch(`/api/projects?id=${project._id}&action=${action}`, {
+          method: "PATCH",
+        });
+        const data = await res.json();
+        if (data.success) {
+          setLiveProjects(prev => prev.map(p => {
+            if (p._id === project._id) {
+              return { ...p, stars: data.stars };
+            }
+            return p;
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to update stars in database:", err);
+      }
+    }
+  };
+
+  // Dock spotlight variables
+  const [dockCoords, setDockCoords] = useState({ x: 0, y: 0 });
+  const [isDockHovered, setIsDockHovered] = useState(false);
+  const dockRef = useRef(null);
+
+  const handleDockMouseMove = (e) => {
+    if (dockRef.current) {
+      const rect = dockRef.current.getBoundingClientRect();
+      setDockCoords({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
+    }
+  };
 
   const toggleTheme = () => setIsDark(!isDark);
 
@@ -49,16 +202,15 @@ export default function Portfolio() {
         );
 
         setGithubStats({
-          publicRepos: userData.public_repos,
-          followers: userData.followers,
-          following: userData.following,
-          totalStars,
-          totalForks,
-          createdAt: new Date(userData.created_at).getFullYear(),
+          publicRepos: userData.public_repos || 25,
+          followers: userData.followers || 12,
+          following: userData.following || 18,
+          totalStars: totalStars || 45,
+          totalForks: totalForks || 8,
+          createdAt: userData.created_at ? new Date(userData.created_at).getFullYear() : 2021,
         });
       } catch (error) {
         console.error("Error fetching GitHub stats:", error);
-        // Fallback stats
         setGithubStats({
           publicRepos: 25,
           followers: 12,
@@ -75,9 +227,52 @@ export default function Portfolio() {
     fetchGitHubStats();
   }, []);
 
-  const dockBtnStyle = `p-2 sm:p-3 rounded-xl transition-all duration-300 hover:scale-110 ${
-    isDark ? "hover:bg-zinc-700" : "hover:bg-zinc-300"
-  }`;
+  // Log visit and fetch dynamic projects on mount
+  useEffect(() => {
+    const logVisitAndFetchProjects = async () => {
+      try {
+        await fetch("/api/analytics", { method: "POST" });
+      } catch (err) {
+        console.error("Failed to log analytics visit:", err);
+      }
+
+      try {
+        const res = await fetch("/api/projects");
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setLiveProjects(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch live projects from MongoDB:", err);
+      }
+    };
+    logVisitAndFetchProjects();
+  }, []);
+
+  // Theme Sync with standard class modifiers
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) {
+      setIsDark(savedTheme === "dark");
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    } else {
+      document.documentElement.classList.add("dark");
+    }
+  }, []);
+
+  const handleThemeChange = (val) => {
+    setIsDark(val);
+    localStorage.setItem("theme", val ? "dark" : "light");
+    if (val) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  };
 
   const projects = [
     {
@@ -87,17 +282,17 @@ export default function Portfolio() {
       tech: ["Python", "Playwright", "MERN", "NLP"],
     },
     {
-      title: "MOSDAC RAG Chatbot – ISRO Hackathon",
+      title: "MOSDAC ISRO Chatbot",
       description: "FAISS + Gemma 3B based chatbot for ISRO queries",
       link: "https://github.com/nickhil-verma/MOSDAC_PARENT_REPO/tree/main",
       tech: ["React", "Node.js", "Gemma 3B", "MongoDB"],
     },
     {
-    title: "Eternalan",
-    description: "Frontend for concert booking platform tailored for Chinese and US audiences.",
-    link: "https://github.com/nickhil-verma/eternalan",
-    tech: ["React", "Tailwind CSS", "JavaScript"]
-  },
+      title: "Eternalan Concerts",
+      description: "Concert booking platform tailored for Chinese and US audiences.",
+      link: "https://github.com/nickhil-verma/eternalan",
+      tech: ["React", "Tailwind CSS", "JavaScript"],
+    },
     {
       title: "Plant Disease Detection",
       description: "95% accuracy CNN model for 15 leaf diseases",
@@ -105,12 +300,14 @@ export default function Portfolio() {
       tech: ["TensorFlow", "Keras", "NumPy", "HuggingFace"],
     },
     {
-      title: "CEDAXDSU Club webpage",
+      title: "CEDAXDSU Club Website",
       description: "IEEE Bangalore Chapter × DSU – Frontend Portal",
       link: "https://dsuieeeceda.vercel.app/",
-      tech: ["React", "Tailwind css", "framer-motion", "REST API","Node js","Express JS","MongoDb"],
+      tech: ["React", "Tailwind CSS", "framer-motion", "Node js"],
     },
   ];
+
+  const combinedProjects = [...liveProjects, ...projects];
 
   const experiences = [
     {
@@ -118,10 +315,10 @@ export default function Portfolio() {
       company: "Donald Hans, LA (Remote)",
       period: "Jun 2025 – Present",
       description: [
-        "Improved SEO from 71% to 94% using schema, sitemaps.",
-        "Built a chatbot MVP with Google Gemini API.",
-        "Reduced form latency by 30% using optimized Express.",
-        "Set up CI/CD pipelines with GitHub Actions + Vercel.",
+        "Improved SEO from 71% to 94% using schema and sitemaps.",
+        "Built a chatbot MVP integrated with Google Gemini API.",
+        "Reduced form latency by 30% using optimized Express structures.",
+        "Set up automated CI/CD pipelines with GitHub Actions and Vercel.",
       ],
     },
     {
@@ -129,9 +326,9 @@ export default function Portfolio() {
       company: "Ultra TV Ads, Thailand (Remote)",
       period: "Feb 2025 – Apr 2025",
       description: [
-        "Migrated from WordPress to React stack, reduced load time by 40%.",
-        "Implemented Twilio re-subscribe alerts via n8n + NodeMailer.",
-        "Managed DevOps + RBAC with GitHub Actions and JWT.",
+        "Migrated WordPress site to React, reducing page load times by 40%.",
+        "Implemented Twilio re-subscribe alerts via n8n automation + NodeMailer.",
+        "Managed DevOps setups and role-based access control (RBAC) with JWT.",
       ],
     },
   ];
@@ -144,560 +341,666 @@ export default function Portfolio() {
     "1700+ LeetCode rating, 300+ problems solved",
   ];
 
-  const StatCard = ({ icon: Icon, label, value, color }) => (
-    <div
-      className={`p-4 sm:p-6 rounded-2xl ${
-        isDark ? "bg-zinc-700/50" : "bg-zinc-200/50"
-      } backdrop-blur-sm border ${
-        isDark ? "border-zinc-600" : "border-zinc-300"
-      } hover:scale-105 transition-all duration-300`}
-    >
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-2 sm:p-3 rounded-xl ${color}`}>
-          <Icon className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-        </div>
-        <div className="text-right">
-          <p className="text-xl sm:text-3xl font-bold">{value}</p>
-        </div>
-      </div>
-      <p
-        className={`text-xs sm:text-sm font-medium ${
-          isDark ? "text-zinc-300" : "text-zinc-700"
-        }`}
-      >
-        {label}
-      </p>
-    </div>
-  );
-
   return (
     <div
-      className={`min-h-screen p-2 sm:p-4 lg:p-6 transition-colors duration-300 ${
-        isDark ? "bg-zinc-900 text-zinc-100" : "bg-zinc-50 text-zinc-900"
+      className={`min-h-screen p-4 sm:p-6 lg:p-8 transition-colors duration-700 relative overflow-hidden select-none font-sans ${
+        isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f8f9fa] text-[#1c1c1e]"
       }`}
     >
-      {/* Custom scrollbar styles */}
-      <style jsx>{`
-        .hide-scrollbar {
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
+      {/* Background static noise and texture overlay */}
+      <div className="absolute inset-0 z-0 noise-overlay pointer-events-none" />
 
-      {/* Mesh Grid Background */}
-      <div className="fixed inset-0 z-0">
-        <div
-          className={`absolute inset-0 ${
-            isDark ? "bg-zinc-900" : "bg-zinc-50"
-          }`}
-        >
-          <div
-            className="absolute inset-0 opacity-20"
-            style={{
-              backgroundImage: `linear-gradient(${
-                isDark ? "#71717a" : "#a1a1aa"
-              } 1px, transparent 1px), linear-gradient(90deg, ${
-                isDark ? "#71717a" : "#a1a1aa"
-              } 1px, transparent 1px)`,
-              backgroundSize: "60px 60px",
-              maskImage:
-                "radial-gradient(ellipse at center, black 40%, transparent 70%)",
-              WebkitMaskImage:
-                "radial-gradient(ellipse at center, black 40%, transparent 70%)",
-            }}
-          />
-        </div>
+      {/* Grid Mesh Texture */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className={`absolute inset-0 ${isDark ? "grid-mesh" : "grid-mesh-light"}`} />
       </div>
 
-      {/* Floating Dock */}
-      <div
-        className={`fixed bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-50 ${
-          isDark ? "bg-zinc-800/80" : "bg-zinc-200/80"
-        } backdrop-blur-md rounded-2xl px-2 sm:px-3 py-2 border flex items-center space-x-1 sm:space-x-2 ${
-          isDark ? "border-zinc-700" : "border-zinc-300"
-        } overflow-x-auto hide-scrollbar`}
-      >
-        <button onClick={toggleTheme} className={dockBtnStyle}>
-          {isDark ? <Sun className="w-4 h-4 sm:w-5 sm:h-5" /> : <Moon className="w-4 h-4 sm:w-5 sm:h-5" />}
-        </button>
-        <a
-          href="https://github.com/nickhil-verma"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={dockBtnStyle}
-        >
-          <Github className="w-4 h-4 sm:w-5 sm:h-5" />
-        </a>
-        <a
-          href="https://linkedin.com/in/nikhil-verma-b9ba861b0"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={dockBtnStyle}
-        >
-          <Linkedin className="w-4 h-4 sm:w-5 sm:h-5" />
-        </a>
-        <a href="mailto:vermanick75@gmail.com" className={dockBtnStyle}>
-          <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
-        </a>
-        <a
-          href="https://x.com/0xnickhilverma"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={dockBtnStyle}
-        >
-          <Twitter className="w-4 h-4 sm:w-5 sm:h-5" />
-        </a>
-        <a
-          href="https://leetcode.com/u/nickhil_verma/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={dockBtnStyle}
-        >
-          <SiLeetcode className="w-4 h-4 sm:w-5 sm:h-5" /> {/* Replaced SiLeetcode with Code */}
-        </a>
-        <a
-          href="https://codeforces.com/profile/nickhilverma"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={dockBtnStyle}
-        >
-          <SiCodeforces className="w-4 h-4 sm:w-5 sm:h-5" /> {/* Replaced SiCodeforces with Code */}
-        </a>
-        <a
-          href="https://www.youtube.com/watch?v=oXbNl3tMYuc"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={dockBtnStyle}
-        >
-          <Youtube className="w-4 h-4 sm:w-5 sm:h-5" />
-        </a>
+      {/* Soft Ambient Floating Blurred Gradient Blobs */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <motion.div
+          animate={{
+            x: [0, 40, -20, 0],
+            y: [0, -50, 30, 0],
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          className="absolute -top-[10%] left-[10%] w-[300px] sm:w-[450px] h-[300px] sm:h-[450px] bg-red-500/10 rounded-full blur-[140px] pointer-events-none"
+        />
+        <motion.div
+          animate={{
+            x: [0, -50, 40, 0],
+            y: [0, 30, -50, 0],
+          }}
+          transition={{
+            duration: 30,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          className="absolute -bottom-[10%] right-[15%] w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-red-500/5 rounded-full blur-[150px] pointer-events-none"
+        />
       </div>
 
-      {/* Main Content */}
-      <div className="relative z-10">
-        <div className="max-w-7xl mx-auto">
-          {/* Desktop Grid Layout (lg and above) */}
+
+
+      {/* Main Content Container */}
+      <div className="relative z-10 w-full">
+        <div className="max-w-7xl mx-auto w-full">
+          {/* Desktop Grid Layout (Bento Grid) - Height is dynamic to prevent clipping distortion */}
           <div className="hidden lg:block">
-            <div className="grid grid-cols-12 grid-rows-8 gap-4 h-screen">
-              {/* About */}
-              <div
-                className={`col-span-5 row-span-4 p-6 rounded-2xl ${
-                  isDark ? "bg-zinc-800/50" : "bg-zinc-100/50"
-                } backdrop-blur-sm border ${
-                  isDark ? "border-zinc-700" : "border-zinc-300"
-                } flex flex-col justify-center items-center text-center`}
-              >
-                <div
-                  className={`w-20 h-20 rounded-full mb-4 ${
-                    isDark ? "bg-zinc-700" : "bg-zinc-300"
-                  } flex items-center justify-center`}
-                >
+            <div className="grid grid-cols-12 grid-rows-8 gap-5 min-h-[820px]">
+              
+              {/* Card 1: About / Hero - Flexible Padding and Aspect Ratio */}
+              <SpotlightCard isDark={isDark} className="col-span-5 row-span-4 p-6 sm:p-8 flex flex-col justify-center items-center text-center">
+                {/* Floating Status Badge */}
+                <div className={`mb-4 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide flex items-center space-x-1.5 ${
+                  isDark ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-emerald-50 text-emerald-600 border border-emerald-100"
+                }`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Available for collaborations</span>
+                </div>
+
+                {/* Avatar with Ambient Glow - Width and height locked on parent to ensure absolute centering */}
+                <div className="relative mb-4 w-20 h-20 sm:w-24 sm:h-24 group">
+                  <div className="absolute inset-0 rounded-full bg-red-500/20 blur-md group-hover:bg-red-500/35 transition-colors duration-500" />
                   <img
-                    className="w-20 h-20 rounded-full"
+                    className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-white/10 group-hover:scale-105 transition-transform duration-500 object-cover shadow-xl"
                     src="https://i.pinimg.com/736x/00/51/9a/00519ae0e89f8b1252d33ab1eeb337fc.jpg"
-                    alt="User Avatar"
+                    alt="Nikhil Verma"
                   />
                 </div>
-                <h1 className="text-3xl font-bold mb-2">Nikhil Verma</h1>
-                <p
-                  className={`text-lg mb-3 ${
-                    isDark ? "text-zinc-400" : "text-zinc-600"
-                  }`}
-                >
+
+                <h1 className={`text-2xl sm:text-3xl font-extrabold font-outfit tracking-tight mb-1.5 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                  Nikhil Verma
+                </h1>
+                <p className={`text-xs sm:text-sm font-semibold mb-3 tracking-wide uppercase ${isDark ? "text-red-400" : "text-red-600"}`}>
                   Full Stack Developer
                 </p>
-                <p
-                  className={`text-sm leading-relaxed ${
-                    isDark ? "text-zinc-300" : "text-zinc-700"
-                  }`}
-                >
-                  Passionate about scalable apps, AI systems, and crafting
-                  developer-first user experiences.
+                <p className={`text-xs sm:text-sm leading-relaxed max-w-sm mb-5 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+                  Passionate about scalable apps, AI engines, and crafting developer-first user experiences with absolute performance precision.
                 </p>
-              </div>
 
-              {/* Experience */}
-              <div
-                className={`col-span-7 row-span-4 p-6 rounded-2xl ${
-                  isDark ? "bg-zinc-800/50" : "bg-zinc-100/50"
-                } backdrop-blur-sm border ${
-                  isDark ? "border-zinc-700" : "border-zinc-300"
-                }`}
-              >
-                <h2 className="text-2xl font-bold mb-4">Experience</h2>
-                <div className="space-y-4 overflow-y-auto h-5/6 hide-scrollbar">
-                  {experiences.map((exp, index) => (
-                    <div
-                      key={index}
-                      className={`p-4 rounded-xl ${
-                        isDark ? "bg-zinc-700/50" : "bg-zinc-200/50"
-                      }`}
-                    >
-                      <div className="flex justify-between items-start mb-2">
+                {/* Email and Resume Button Area */}
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-center">
+                  <a
+                    href="mailto:vermanick75@gmail.com"
+                    className={`inline-flex items-center justify-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-wide border transition-all ${
+                      isDark
+                        ? "bg-white/5 hover:bg-white/10 border-white/5 text-zinc-300 hover:text-white"
+                        : "bg-zinc-100 hover:bg-zinc-200 border-zinc-200 text-zinc-700 hover:text-zinc-900 shadow-sm"
+                    }`}
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>vermanick75@gmail.com</span>
+                  </a>
+
+                  <a
+                    href="https://docs.google.com/document/d/1QjrcRxxFIcbXDU_ig183W7Jeud_3yybY3aeWLlu2x5I/edit?usp=sharing"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all shadow-lg shadow-red-500/20"
+                  >
+                    <span>View Resume</span>
+                  </a>
+                </div>
+              </SpotlightCard>
+
+              {/* Card 2: Experience Card with Timeline Track & glowing nodes */}
+              <SpotlightCard isDark={isDark} className="col-span-7 row-span-4 p-6 sm:p-8 flex flex-col justify-start">
+                <div className="flex items-center space-x-3 mb-5 flex-shrink-0">
+                  <Briefcase className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                  <h2 className={`text-xl sm:text-2xl font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                    Experience
+                  </h2>
+                </div>
+
+                {/* Timeline Container - Height locked to prevent parent card jitter, scrollbar enabled */}
+                <div className="relative pl-8 pr-2 space-y-5 overflow-y-auto h-[260px] sm:h-[300px]">
+                  {/* Vertical Timeline Track Line - Mathematically aligned at center = 16px */}
+                  <div className={`absolute left-[15px] top-3 bottom-3 w-0.5 ${isDark ? "bg-zinc-800" : "bg-zinc-200"}`} />
+
+                  {experiences.map((exp, index) => {
+                    const isExpanded = expandedExperience === index;
+                    return (
+                      <div
+                        key={index}
+                        onClick={() => setExpandedExperience(isExpanded ? null : index)}
+                        className={`relative p-4 rounded-2xl transition-all duration-300 ml-2 cursor-pointer ${
+                          isDark 
+                            ? "bg-[#121214]/50 border border-white/5 hover:bg-[#18181b]/50" 
+                            : "bg-white/60 border border-black/5 hover:bg-white shadow-sm"
+                        }`}
+                      >
+                        {/* glowing Node Circle - Centered exactly at 16px */}
+                        <div className={`absolute -left-[31px] top-6 w-3.5 h-3.5 rounded-full flex items-center justify-center z-20 ${
+                          isExpanded 
+                            ? "bg-red-500 ring-4 ring-red-500/20 shadow-[0_0_12px_rgba(239,68,68,0.6)] animate-pulse" 
+                            : isDark ? "bg-zinc-700 ring-4 ring-zinc-700/20" : "bg-zinc-300 ring-4 ring-zinc-300/10"
+                        }`}>
+                          <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                        </div>
+
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className={`font-bold font-outfit text-sm sm:text-base ${isDark ? "text-white" : "text-zinc-900"}`}>
+                              {exp.title}
+                            </h3>
+                            <p className={`text-xs font-medium tracking-wide mt-0.5 ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>
+                              {exp.company}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                              isDark ? "bg-[#1e1e24] text-zinc-300 border border-white/5" : "bg-zinc-100 text-zinc-600"
+                            }`}>
+                              {exp.period}
+                            </span>
+                            <ChevronRight className={`w-3.5 h-3.5 text-zinc-400 transition-transform duration-300 ${isExpanded ? "rotate-90 text-red-500" : ""}`} />
+                          </div>
+                        </div>
+
+                        {/* Timeline Details list */}
+                        <AnimatePresence initial={index === 0}>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                              animate={{ height: "auto", opacity: 1, marginTop: 12 }}
+                              exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="overflow-hidden"
+                            >
+                              <ul className="list-disc pl-4 text-xs space-y-1.5 border-t pt-3 border-dashed border-zinc-700/30">
+                                {exp.description.map((point, idx) => (
+                                  <li key={idx} className={isDark ? "text-zinc-300" : "text-zinc-700"}>
+                                    {point}
+                                  </li>
+                                ))}
+                              </ul>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })}
+                </div>
+              </SpotlightCard>
+
+              {/* Card 3: Featured Projects with Scroll Container & styled Scrollbar */}
+              <SpotlightCard isDark={isDark} className="col-span-8 row-span-4 p-6 sm:p-8 flex flex-col justify-start">
+                <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                  <div className="flex items-center space-x-2">
+                    <h2 className={`text-xl sm:text-2xl font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                      Featured Projects
+                    </h2>
+                    <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                      isDark ? "bg-white/5 text-zinc-300" : "bg-black/5 text-zinc-600"
+                    }`}>
+                      {combinedProjects.length} Total
+                    </span>
+                  </div>
+                  <Link
+                    href="/projects"
+                    className={`text-xs font-bold transition-all hover:underline flex items-center space-x-1 ${
+                      isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"
+                    }`}
+                  >
+                    <span>View All</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+
+                {/* Fixed height scrollable projects container with visible premium custom scrollbar */}
+                <div className="overflow-y-auto pr-2 h-[260px] sm:h-[300px]">
+                  <div className="grid grid-cols-3 gap-4 pb-2">
+                    {combinedProjects.map((project, index) => (
+                      <div
+                        key={index}
+                        className={`p-4 rounded-2xl flex flex-col justify-between group transition-all duration-300 min-h-[220px] ${
+                          isDark 
+                            ? "bg-[#121214]/50 border border-white/5 hover:bg-[#18181b]/50" 
+                            : "bg-white/60 border border-black/5 hover:bg-white shadow-sm"
+                        }`}
+                      >
                         <div>
-                          <h3 className="font-bold text-lg">{exp.title}</h3>
-                          <p
-                            className={`text-sm ${
-                              isDark ? "text-zinc-400" : "text-zinc-600"
-                            }`}
-                          >
-                            {exp.company}
+                          <h3 className={`font-bold font-outfit text-xs sm:text-sm mb-1.5 group-hover:text-red-400 transition-colors ${
+                            isDark ? "text-white" : "text-zinc-900"
+                          }`}>
+                            {project.title}
+                          </h3>
+                          <p className={`text-[11px] sm:text-xs leading-relaxed mb-3 font-normal ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+                            {project.description}
                           </p>
                         </div>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs ${
-                            isDark
-                              ? "bg-zinc-600 text-zinc-300"
-                              : "bg-zinc-300 text-zinc-700"
-                          }`}
-                        >
-                          {exp.period}
-                        </span>
+
+                        <div>
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {project.tech.map((tech, idx) => (
+                              <span
+                                key={idx}
+                                className={`px-2 py-0.5 rounded-full text-[8px] font-semibold uppercase tracking-wider ${
+                                  isDark ? "bg-white/5 text-zinc-400 border border-white/5" : "bg-zinc-100 text-zinc-600"
+                                }`}
+                              >
+                                {tech}
+                              </span>
+                            ))}
+                          </div>
+
+                          <div className="flex items-center justify-between w-full mt-2">
+                            <a
+                              href={project.link}
+                              className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-xl text-[11px] font-semibold tracking-wide transition-all ${
+                                isDark 
+                                  ? "bg-white/5 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-white/5" 
+                                  : "bg-zinc-100 hover:bg-red-500/10 text-red-600 border border-zinc-200"
+                              }`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <span>Explore</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+
+                            <button
+                              onClick={() => handleToggleStarProject(project)}
+                              className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-all ${
+                                starredProjectIds.includes(project._id || project.title)
+                                  ? "bg-[#ef4444]/10 text-red-400 border-red-500/30"
+                                  : isDark
+                                    ? "bg-white/5 text-zinc-400 hover:text-white border-white/5"
+                                    : "bg-zinc-100 text-zinc-500 hover:text-zinc-800 border-zinc-200"
+                              }`}
+                            >
+                              <Star className={`w-3 h-3 ${starredProjectIds.includes(project._id || project.title) ? "fill-current" : ""}`} />
+                              <span>{project.stars || 0}</span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <ul className="list-disc ml-5 text-sm space-y-1">
-                        {exp.description.map((point, idx) => (
-                          <li
-                            key={idx}
-                            className={`${
-                              isDark ? "text-zinc-300" : "text-zinc-700"
-                            }`}
-                          >
-                            {point}
-                          </li>
-                        ))}
-                      </ul>
+                    ))}
+                  </div>
+                </div>
+              </SpotlightCard>
+
+              {/* Card 4: Education */}
+              <SpotlightCard isDark={isDark} className="col-span-4 row-span-2 p-6 flex flex-col justify-center">
+                <div className="flex items-center space-x-2.5 mb-2.5">
+                  <GraduationCap className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                  <h2 className={`text-base sm:text-lg font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                    Education
+                  </h2>
+                </div>
+                <div>
+                  <h3 className={`font-bold font-outfit text-xs sm:text-sm leading-snug mb-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                    B.Tech in Electronics and Communication
+                  </h3>
+                  <p className={`text-[11px] sm:text-xs font-medium ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>
+                    Dayananda Sagar University, Bengaluru
+                  </p>
+                  <p className={`text-[11px] sm:text-xs font-semibold mt-1 ${isDark ? "text-red-400" : "text-red-600"}`}>
+                    GPA: 8.0/10.0
+                  </p>
+                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider mt-2 ${
+                    isDark ? "bg-[#1e1e24] text-red-400 border border-white/5" : "bg-red-50 text-red-600"
+                  }`}>
+                    2023 – 2027
+                  </span>
+                </div>
+              </SpotlightCard>
+
+              {/* Card 5: Achievements */}
+              <SpotlightCard isDark={isDark} className="col-span-4 row-span-2 p-6 flex flex-col justify-center">
+                <div className="flex items-center space-x-2 mb-2.5">
+                  <Award className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                  <h2 className={`text-base sm:text-lg font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                    Achievements
+                  </h2>
+                </div>
+                <div className="space-y-1.5 overflow-y-auto pr-1 flex-1 hide-scrollbar">
+                  {achievements.map((achievement, index) => (
+                    <div key={index} className="flex items-start space-x-2">
+                      <span className={`w-1 h-1 rounded-full mt-1.5 flex-shrink-0 ${isDark ? "bg-red-400" : "bg-red-600"}`} />
+                      <span className={`text-[11px] leading-relaxed ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>
+                        {achievement}
+                      </span>
                     </div>
                   ))}
                 </div>
+              </SpotlightCard>
+
+            </div>
+          </div>
+
+          {/* Mobile and Tablet Layout */}
+          <div className="lg:hidden space-y-5 pb-24">
+            
+            {/* About (Mobile) */}
+            <SpotlightCard isDark={isDark} className="p-6 flex flex-col justify-center items-center text-center">
+              <div className={`mb-4 px-3 py-0.5 rounded-full text-[10px] font-semibold tracking-wide flex items-center space-x-1.5 ${
+                isDark ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-emerald-50 text-emerald-600 border border-emerald-100"
+              }`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Available for collaborations</span>
               </div>
 
-              {/* Projects */}
-              <div
-                className={`col-span-8 row-span-4 p-6 rounded-2xl ${
-                  isDark ? "bg-zinc-800/50" : "bg-zinc-100/50"
-                } backdrop-blur-sm border ${
-                  isDark ? "border-zinc-700" : "border-zinc-300"
-                }`}
-              >
-                <h2 className="text-2xl font-bold mb-4">Featured Projects</h2>
-                <div className="grid grid-cols-3 gap-4 overflow-y-auto h-5/6 hide-scrollbar">
-                  {projects.map((project, index) => (
+              {/* Avatar with Ambient Glow - Width and height locked on parent to ensure absolute centering */}
+              <div className="relative mb-4 w-20 h-20 group">
+                <div className="absolute inset-0 rounded-full bg-red-500/20 blur-md group-hover:bg-red-500/35 transition-colors duration-500" />
+                <img
+                  className="relative w-20 h-20 rounded-full border-2 border-white/10 group-hover:scale-105 transition-transform duration-500 object-cover shadow-lg"
+                  src="https://i.pinimg.com/736x/00/51/9a/00519ae0e89f8b1252d33ab1eeb337fc.jpg"
+                  alt="Nikhil Verma"
+                />
+              </div>
+
+              <h1 className={`text-2xl font-extrabold font-outfit tracking-tight mb-1.5 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                Nikhil Verma
+              </h1>
+              <p className={`text-sm font-semibold mb-3 tracking-wide uppercase ${isDark ? "text-red-400" : "text-red-600"}`}>
+                Full Stack Developer
+              </p>
+              <p className={`text-xs leading-relaxed max-w-sm mb-5 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+                Passionate about scalable apps, AI engines, and crafting developer-first user experiences with absolute performance precision.
+              </p>
+
+              {/* Email and Resume Button Area */}
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-center">
+                <a
+                  href="mailto:vermanick75@gmail.com"
+                  className={`inline-flex items-center justify-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-wide border transition-all ${
+                    isDark
+                      ? "bg-white/5 hover:bg-white/10 border-white/5 text-zinc-300 hover:text-white"
+                      : "bg-zinc-100 hover:bg-zinc-200 border-zinc-200 text-zinc-700 hover:text-zinc-900 shadow-sm"
+                  }`}
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>vermanick75@gmail.com</span>
+                </a>
+
+                <a
+                  href="https://docs.google.com/document/d/1QjrcRxxFIcbXDU_ig183W7Jeud_3yybY3aeWLlu2x5I/edit?usp=sharing"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all shadow-lg shadow-red-500/20"
+                >
+                  <span>View Resume</span>
+                </a>
+              </div>
+            </SpotlightCard>
+
+            {/* Experience timeline with glowing nodes (Mobile) */}
+            <SpotlightCard isDark={isDark} className="p-6">
+              <div className="flex items-center space-x-2.5 mb-5">
+                <Briefcase className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                <h2 className={`text-xl font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                  Experience
+                </h2>
+              </div>
+              
+              <div className="relative pl-6 space-y-4">
+                {/* Vertical Timeline line (Mobile) - Centered at 13px */}
+                <div className={`absolute left-[13px] top-2 bottom-2 w-0.5 ${isDark ? "bg-zinc-800" : "bg-zinc-200"}`} />
+
+                {experiences.map((exp, index) => {
+                  const isExpanded = expandedExperience === index;
+                  return (
                     <div
                       key={index}
-                      className={`p-4 rounded-xl ${
-                        isDark ? "bg-zinc-700/50" : "bg-zinc-200/50"
-                      } hover:scale-105 transition-all duration-300 flex flex-col`}
+                      onClick={() => setExpandedExperience(isExpanded ? null : index)}
+                      className={`relative p-4 rounded-2xl ml-2 cursor-pointer transition-all duration-300 ${
+                        isDark ? "bg-[#121214]/50 border border-white/5" : "bg-white/60 border border-black/5"
+                      }`}
                     >
-                      <h3 className="font-bold text-lg mb-2">{project.title}</h3>
-                      <p
-                        className={`text-sm mb-3 flex-1 ${
-                          isDark ? "text-zinc-300" : "text-zinc-700"
-                        }`}
-                      >
+                      {/* circular timeline node - Mathematically aligned at 13px */}
+                      <div className={`absolute -left-[25px] top-6 w-3 h-3 rounded-full flex items-center justify-center z-20 ${
+                        isExpanded 
+                          ? "bg-red-500 ring-4 ring-red-500/20 shadow-[0_0_12px_rgba(239,68,68,0.6)] animate-pulse" 
+                          : isDark ? "bg-zinc-700 ring-4 ring-zinc-700/20" : "bg-zinc-300 ring-4 ring-zinc-300/10"
+                      }`}>
+                        <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                      </div>
+
+                      <div className="flex justify-between items-start mb-2.5">
+                        <div>
+                          <h3 className={`font-bold font-outfit text-sm ${isDark ? "text-white" : "text-zinc-900"}`}>
+                            {exp.title}
+                          </h3>
+                          <p className={`text-[10px] font-semibold text-zinc-400 mt-0.5`}>
+                            {exp.company}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                            isDark ? "bg-white/5 text-zinc-300" : "bg-zinc-100 text-zinc-600"
+                          }`}>
+                            {exp.period}
+                          </span>
+                          <ChevronRight className={`w-3.5 h-3.5 text-zinc-400 transition-transform duration-300 ${isExpanded ? "rotate-90 text-red-500" : ""}`} />
+                        </div>
+                      </div>
+                      
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                            animate={{ height: "auto", opacity: 1, marginTop: 10 }}
+                            exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="overflow-hidden"
+                          >
+                            <ul className="list-disc pl-4 text-xs space-y-1 border-t pt-3 border-dashed border-zinc-700/30">
+                              {exp.description.map((point, idx) => (
+                                <li key={idx} className={isDark ? "text-zinc-300" : "text-zinc-700"}>
+                                  {point}
+                                </li>
+                              ))}
+                            </ul>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
+            </SpotlightCard>
+
+            {/* Featured Projects (Mobile) */}
+            <SpotlightCard isDark={isDark} className="p-6">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className={`text-xl font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                  Featured Projects
+                </h2>
+                <Link
+                  href="/projects"
+                  className={`text-xs font-bold transition-all hover:underline flex items-center space-x-1 ${
+                    isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"
+                  }`}
+                >
+                  <span>View All</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {combinedProjects.map((project, index) => (
+                  <div
+                    key={index}
+                    className={`p-4 rounded-2xl flex flex-col justify-between ${
+                      isDark ? "bg-[#121214]/50 border border-white/5" : "bg-white/60 border border-black/5"
+                    }`}
+                  >
+                    <div>
+                      <h3 className={`font-bold font-outfit text-sm mb-1.5 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                        {project.title}
+                      </h3>
+                      <p className={`text-xs leading-relaxed mb-3 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
                         {project.description}
                       </p>
-                      <div className="flex flex-wrap gap-1 mb-3">
+                    </div>
+
+                    <div>
+                      <div className="flex flex-wrap gap-1 mb-3.5">
                         {project.tech.map((tech, idx) => (
                           <span
                             key={idx}
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              isDark
-                                ? "bg-zinc-600 text-zinc-300"
-                                : "bg-zinc-300 text-zinc-700"
+                            className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider ${
+                              isDark ? "bg-white/5 text-zinc-400" : "bg-zinc-100 text-zinc-600"
                             }`}
                           >
                             {tech}
                           </span>
                         ))}
                       </div>
-                      <a
-                        href={project.link}
-                        className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition-all duration-300 self-start ${
-                          isDark
-                            ? "bg-zinc-600 hover:bg-zinc-500"
-                            : "bg-zinc-300 hover:bg-zinc-400"
-                        }`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <span>View</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
-              {/* Education */}
-              <div
-                className={`col-span-4 row-span-2 p-6 rounded-2xl ${
-                  isDark ? "bg-zinc-800/50" : "bg-zinc-100/50"
-                } backdrop-blur-sm border ${
-                  isDark ? "border-zinc-700" : "border-zinc-300"
-                } flex flex-col justify-center`}
-              >
-                <h2 className="text-xl font-bold mb-3">Education</h2>
-                <div className="text-center">
-                  <h3 className="font-bold">
+                      <div className="flex items-center justify-between w-full mt-2">
+                        <a
+                          href={project.link}
+                          className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                            isDark ? "bg-white/5 text-red-400" : "bg-zinc-100 text-red-600"
+                          }`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <span>View</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+
+                        <button
+                          onClick={() => handleToggleStarProject(project)}
+                          className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-xs font-bold border transition-all ${
+                            starredProjectIds.includes(project._id || project.title)
+                              ? "bg-[#ef4444]/10 text-red-400 border-red-500/30"
+                              : isDark
+                                ? "bg-white/5 text-zinc-400 hover:text-white border-white/5"
+                                : "bg-zinc-100 text-zinc-500 hover:text-zinc-800 border-zinc-200"
+                          }`}
+                        >
+                          <Star className={`w-3.5 h-3.5 ${starredProjectIds.includes(project._id || project.title) ? "fill-current" : ""}`} />
+                          <span>{project.stars || 0}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </SpotlightCard>
+
+            {/* Education and Achievements Row (Mobile) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              
+              {/* Education (Mobile) */}
+              <SpotlightCard isDark={isDark} className="p-6">
+                <div className="flex items-center space-x-2 mb-3">
+                  <GraduationCap className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                  <h2 className={`text-lg font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                    Education
+                  </h2>
+                </div>
+                <div>
+                  <h3 className={`font-bold font-outfit text-sm mb-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
                     B.Tech in Electronics and Communication
                   </h3>
-                  <p
-                    className={`text-sm ${
-                      isDark ? "text-zinc-400" : "text-zinc-600"
-                    }`}
-                  >
+                  <p className={`text-xs ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>
                     Dayananda Sagar University, Bengaluru
                   </p>
-                  <span
-                    className={`inline-block px-3 py-1 rounded-full text-xs mt-2 ${
-                      isDark
-                        ? "bg-zinc-700 text-zinc-300"
-                        : "bg-zinc-200 text-zinc-700"
-                    }`}
-                  >
+                  <p className={`text-xs font-semibold mt-1 ${isDark ? "text-red-400" : "text-red-600"}`}>
+                    GPA: 8.0/10.0
+                  </p>
+                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider mt-2.5 ${
+                    isDark ? "bg-[#1e1e24] text-red-400" : "bg-red-50 text-red-600"
+                  }`}>
                     2023 – 2027
                   </span>
                 </div>
-              </div>
+              </SpotlightCard>
 
-              {/* Achievements */}
-              <div
-                className={`col-span-4 row-span-2 p-6 rounded-2xl ${
-                  isDark ? "bg-zinc-800/50" : "bg-zinc-100/50"
-                } backdrop-blur-sm border ${
-                  isDark ? "border-zinc-700" : "border-zinc-300"
-                }`}
-              >
-                <h2 className="text-xl font-bold mb-3">Achievements</h2>
-                <div className="space-y-2 overflow-y-auto h-4/5 hide-scrollbar">
+              {/* Achievements (Mobile) */}
+              <SpotlightCard isDark={isDark} className="p-6">
+                <div className="flex items-center space-x-2 mb-3">
+                  <Award className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                  <h2 className={`text-lg font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                    Achievements
+                  </h2>
+                </div>
+                <div className="space-y-2">
                   {achievements.map((achievement, index) => (
                     <div key={index} className="flex items-start space-x-2">
-                      <Award
-                        className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
-                          isDark ? "text-zinc-400" : "text-zinc-600"
-                        }`}
-                      />
-                      <span className="text-sm">{achievement}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile and Tablet Layout */}
-          <div className="lg:hidden space-y-4 pb-20">
-            {/* About */}
-            <div
-              className={`p-4 sm:p-6 rounded-2xl ${
-                isDark ? "bg-zinc-800/50" : "bg-zinc-100/50"
-              } backdrop-blur-sm border ${
-                isDark ? "border-zinc-700" : "border-zinc-300"
-              } flex flex-col justify-center items-center text-center`}
-            >
-              <div
-                className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full mb-4 ${
-                  isDark ? "bg-zinc-700" : "bg-zinc-300"
-                } flex items-center justify-center`}
-              >
-                <img
-                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full"
-                  src="https://i.pinimg.com/736x/00/51/9a/00519ae0e89f8b1252d33ab1eeb337fc.jpg"
-                  alt="User Avatar"
-                />
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold mb-2">Nikhil Verma</h1>
-              <p
-                className={`text-base sm:text-lg mb-3 ${
-                  isDark ? "text-zinc-400" : "text-zinc-600"
-                }`}
-              >
-                Full Stack Developer
-              </p>
-              <p
-                className={`text-sm leading-relaxed ${
-                  isDark ? "text-zinc-300" : "text-zinc-700"
-                }`}
-              >
-                Passionate about scalable apps, AI systems, and crafting
-                developer-first user experiences.
-              </p>
-            </div>
-
-            {/* Experience */}
-            <div
-              className={`p-4 sm:p-6 rounded-2xl ${
-                isDark ? "bg-zinc-800/50" : "bg-zinc-100/50"
-              } backdrop-blur-sm border ${
-                isDark ? "border-zinc-700" : "border-zinc-300"
-              }`}
-            >
-              <h2 className="text-xl sm:text-2xl font-bold mb-4">Experience</h2>
-              <div className="space-y-4">
-                {experiences.map((exp, index) => (
-                  <div
-                    key={index}
-                    className={`p-4 rounded-xl ${
-                      isDark ? "bg-zinc-700/50" : "bg-zinc-200/50"
-                    }`}
-                  >
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2">
-                      <div className="mb-2 sm:mb-0">
-                        <h3 className="font-bold text-base sm:text-lg">{exp.title}</h3>
-                        <p
-                          className={`text-sm ${
-                            isDark ? "text-zinc-400" : "text-zinc-600"
-                          }`}
-                        >
-                          {exp.company}
-                        </p>
-                      </div>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs self-start ${
-                          isDark
-                            ? "bg-zinc-600 text-zinc-300"
-                            : "bg-zinc-300 text-zinc-700"
-                        }`}
-                      >
-                        {exp.period}
+                      <span className={`w-1 h-1 rounded-full mt-1.5 flex-shrink-0 ${isDark ? "bg-red-400" : "bg-red-600"}`} />
+                      <span className={`text-[11px] leading-relaxed ${isDark ? "text-[#ededed]" : "text-zinc-700"}`}>
+                        {achievement}
                       </span>
                     </div>
-                    <ul className="list-disc ml-5 text-sm space-y-1">
-                      {exp.description.map((point, idx) => (
-                        <li
-                          key={idx}
-                          className={`${
-                            isDark ? "text-zinc-300" : "text-zinc-700"
-                          }`}
-                        >
-                          {point}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Projects */}
-            <div
-              className={`p-4 sm:p-6 rounded-2xl ${
-                isDark ? "bg-zinc-800/50" : "bg-zinc-100/50"
-              } backdrop-blur-sm border ${
-                isDark ? "border-zinc-700" : "border-zinc-300"
-              }`}
-            >
-              <h2 className="text-xl sm:text-2xl font-bold mb-4">Featured Projects</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {projects.map((project, index) => (
-                  <div
-                    key={index}
-                    className={`p-4 rounded-xl ${
-                      isDark ? "bg-zinc-700/50" : "bg-zinc-200/50"
-                    } hover:scale-105 transition-all duration-300 flex flex-col`}
-                  >
-                    <h3 className="font-bold text-base sm:text-lg mb-2">{project.title}</h3>
-                    <p
-                      className={`text-sm mb-3 flex-1 ${
-                        isDark ? "text-zinc-300" : "text-zinc-700"
-                      }`}
-                    >
-                      {project.description}
-                    </p>
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {project.tech.map((tech, idx) => (
-                        <span
-                          key={idx}
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            isDark
-                              ? "bg-zinc-600 text-zinc-300"
-                              : "bg-zinc-300 text-zinc-700"
-                          }`}
-                        >
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-                    <a
-                      href={project.link}
-                      className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition-all duration-300 self-start ${
-                        isDark
-                          ? "bg-zinc-600 hover:bg-zinc-500"
-                          : "bg-zinc-300 hover:bg-zinc-400"
-                      }`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <span>View</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Education and Achievements Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Education */}
-              <div
-                className={`p-4 sm:p-6 rounded-2xl ${
-                  isDark ? "bg-zinc-800/50" : "bg-zinc-100/50"
-                } backdrop-blur-sm border ${
-                  isDark ? "border-zinc-700" : "border-zinc-300"
-                } flex flex-col justify-center`}
-              >
-                <h2 className="text-lg sm:text-xl font-bold mb-3">Education</h2>
-                <div className="text-center">
-                  <h3 className="font-bold text-sm sm:text-base">
-                    B.Tech in Electronics and Communication
-                  </h3>
-                  <p
-                    className={`text-xs sm:text-sm ${
-                      isDark ? "text-zinc-400" : "text-zinc-600"
-                    }`}
-                  >
-                    Dayananda Sagar University, Bengaluru
-                  </p>
-                  <span
-                    className={`inline-block px-3 py-1 rounded-full text-xs mt-2 ${
-                      isDark
-                        ? "bg-zinc-700 text-zinc-300"
-                        : "bg-zinc-200 text-zinc-700"
-                    }`}
-                  >
-                    2023 – 2027
-                  </span>
-                </div>
-              </div>
-
-              {/* Achievements */}
-              <div
-                className={`p-4 sm:p-6 rounded-2xl ${
-                  isDark ? "bg-zinc-800/50" : "bg-zinc-100/50"
-                } backdrop-blur-sm border ${
-                  isDark ? "border-zinc-700" : "border-zinc-300"
-                }`}
-              >
-                <h2 className="text-lg sm:text-xl font-bold mb-3">Achievements</h2>
-                <div className="space-y-2 max-h-48 overflow-y-auto hide-scrollbar">
-                  {achievements.map((achievement, index) => (
-                    <div key={index} className="flex items-start space-x-2">
-                      <Award
-                        className={`w-3 h-3 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0 ${
-                          isDark ? "text-zinc-400" : "text-zinc-600"
-                        }`}
-                      />
-                      <span className="text-xs sm:text-sm">{achievement}</span>
-                    </div>
                   ))}
                 </div>
-              </div>
+              </SpotlightCard>
+
             </div>
+
           </div>
+
         </div>
+      </div>
+
+      {/* Floating macOS-inspired Dock */}
+      <div
+        ref={dockRef}
+        onMouseMove={handleDockMouseMove}
+        onMouseEnter={() => setIsDockHovered(true)}
+        onMouseLeave={() => setIsDockHovered(false)}
+        className={`fixed bottom-6 top-auto left-1/2 transform -translate-x-1/2 z-50 ${
+          isDark
+            ? "bg-[#09090b]/80 border-white/5 shadow-2xl shadow-black/80"
+            : "bg-white/85 border-black/5 shadow-xl shadow-zinc-200/50"
+        } backdrop-blur-xl rounded-[24px] px-3.5 py-2 border flex items-center space-x-1.5 overflow-x-auto max-w-[95vw] hide-scrollbar`}
+      >
+        {/* Dock Border Spotlight Light Source */}
+        {isDockHovered && (
+          <div
+            className="absolute inset-0 rounded-[24px] pointer-events-none transition-opacity duration-300 z-0"
+            style={{
+              border: "1.5px solid rgba(239, 68, 68, 0.5)",
+              background: `radial-gradient(80px circle at ${dockCoords.x}px ${dockCoords.y}px, rgba(239, 68, 68, 0.1), transparent 80%)`,
+              maskImage: `radial-gradient(80px circle at ${dockCoords.x}px ${dockCoords.y}px, black 30%, transparent 100%)`,
+              WebkitMaskImage: `radial-gradient(80px circle at ${dockCoords.x}px ${dockCoords.y}px, black 30%, transparent 100%)`,
+            }}
+          />
+        )}
+
+        <button
+          onClick={() => handleThemeChange(!isDark)}
+          className={`p-2.5 sm:p-3 rounded-xl transition-colors duration-300 flex items-center justify-center relative group z-10`}
+        >
+          {isDark ? (
+            <Sun className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-amber-400 group-hover:rotate-45 transition-transform duration-300" />
+          ) : (
+            <Moon className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-red-500 group-hover:-rotate-12 transition-transform duration-300" />
+          )}
+        </button>
+
+        <div className={`w-px h-6 z-10 ${isDark ? "bg-white/10" : "bg-black/10"}`} />
+
+        <DockItem href="https://github.com/nickhil-verma" target="_blank" rel="noopener noreferrer" isDark={isDark}>
+          <Github className={`w-4.5 h-4.5 sm:w-5 sm:h-5 ${isDark ? "text-zinc-200" : "text-zinc-800"}`} />
+        </DockItem>
+        <DockItem href="https://linkedin.com/in/nikhil-verma-b9ba861b0" target="_blank" rel="noopener noreferrer" isDark={isDark}>
+          <Linkedin className={`w-4.5 h-4.5 sm:w-5 sm:h-5 ${isDark ? "text-zinc-200" : "text-zinc-800"}`} />
+        </DockItem>
+        <DockItem href="mailto:vermanick75@gmail.com" isDark={isDark}>
+          <Mail className={`w-4.5 h-4.5 sm:w-5 sm:h-5 ${isDark ? "text-zinc-200" : "text-zinc-800"}`} />
+        </DockItem>
+        <DockItem href="https://x.com/0xnickhilverma" target="_blank" rel="noopener noreferrer" isDark={isDark}>
+          <Twitter className={`w-4.5 h-4.5 sm:w-5 sm:h-5 ${isDark ? "text-zinc-200" : "text-zinc-800"}`} />
+        </DockItem>
+        <DockItem href="https://leetcode.com/u/nickhil_verma/" target="_blank" rel="noopener noreferrer" isDark={isDark}>
+          <SiLeetcode className={`w-4.5 h-4.5 sm:w-5 sm:h-5 ${isDark ? "text-zinc-200" : "text-zinc-800"}`} />
+        </DockItem>
+        <DockItem href="https://codeforces.com/profile/nickhilverma" target="_blank" rel="noopener noreferrer" isDark={isDark}>
+          <SiCodeforces className={`w-4.5 h-4.5 sm:w-5 sm:h-5 ${isDark ? "text-zinc-200" : "text-zinc-800"}`} />
+        </DockItem>
+        <DockItem href="https://www.youtube.com/watch?v=oXbNl3tMYuc" target="_blank" rel="noopener noreferrer" isDark={isDark}>
+          <Youtube className={`w-4.5 h-4.5 sm:w-5 sm:h-5 ${isDark ? "text-zinc-200" : "text-zinc-800"}`} />
+        </DockItem>
       </div>
     </div>
   );
