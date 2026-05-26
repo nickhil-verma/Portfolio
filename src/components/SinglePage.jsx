@@ -486,11 +486,11 @@ export default function Portfolio() {
       company: "Donald Hans, LA (Remote)",
       period: "Jun 2025 – Sept 2025",
       description: [
-        "Improved SEO from 71% to 94% using schema and sitemaps.",
-        "Built a chatbot MVP integrated with Google Gemini API.",
-        "Reduced form latency by 30% using optimized Express structures.",
-        "Set up automated CI/CD pipelines with GitHub Actions and Vercel.",
-      ],
+  "Advanced SEO Engineering: Architected structured microdata schematics and dynamic sitemap topologies, accelerating organic discoverability and elevating the SEO score from 71% to 94%.",
+  "Intelligent Agentic Chatbots: Engineered a high-fidelity chatbot MVP powered by the Google Gemini API, integrating a custom RAG (Retrieval-Augmented Generation) pipeline anchored by a Knowledge Graph to achieve context-aware, deterministic responses.",
+  "Latency Optimization: Restructured runtime Express middleware and request-handling topologies, yielding a 30% reduction in form processing latency.",
+  "Automated GitOps & Deployment: Orchestrated production-grade CI/CD automation blueprints utilizing GitHub Actions and Vercel to enforce seamless, zero-downtime deployment workflows."
+],
     },
     {
       title: "Software Development Intern",
@@ -625,7 +625,7 @@ export default function Portfolio() {
                   </a>
 
                   <a
-                    href="https://docs.google.com/document/d/1QjrcRxxFIcbXDU_ig183W7Jeud_3yybY3aeWLlu2x5I/edit?usp=sharing"
+                    href="https://drive.google.com/file/d/1ZgAlhK1aCL-lr9i2jp6PgQwE6tGYyr8u/view?usp=sharing"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all shadow-lg shadow-red-500/20"
