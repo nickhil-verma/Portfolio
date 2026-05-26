@@ -86,7 +86,23 @@ export async function POST(request) {
       ip = ip.split(",")[0].trim();
     }
 
-    // Resolve Geolocation from Next.js / Vercel Edge headers
+    // Skip logging entirely for localhost / local network requests
+    const isLocalhostIp =
+      ip === "127.0.0.1" ||
+      ip === "::1" ||
+      ip.startsWith("192.168.") ||
+      ip.startsWith("10.") ||
+      ip.startsWith("172.16.") ||
+      ip.startsWith("172.17.") ||
+      ip.startsWith("172.18.") ||
+      ip.startsWith("172.19.") ||
+      ip.startsWith("172.2") ||
+      ip.startsWith("172.3");
+
+    if (isLocalhostIp) {
+      return NextResponse.json({ success: false, message: "Skipped: localhost visit not logged" }, { status: 200 });
+    }
+
     const city = request.headers.get("x-vercel-ip-city") || "";
     const region = request.headers.get("x-vercel-ip-country-region") || "";
     const country = request.headers.get("x-vercel-ip-country") || "";
@@ -108,10 +124,8 @@ export async function POST(request) {
       }
     }
 
-    if (ip === "127.0.0.1" || ip === "::1" || ip.startsWith("192.168.") || ip.startsWith("10.") || ip.startsWith("172.16.")) {
-      location = "Localhost Development";
-    } else {
-      // Dynamic live geolocation lookup from public API
+    // Dynamic live geolocation lookup from public API
+    {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout
