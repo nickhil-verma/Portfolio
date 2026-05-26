@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 import { ArrowLeft, ExternalLink, Github, Search, Code, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
-// Custom Spotlight wrapper
-const ProjectSpotlightCard = ({ children, className = "" }) => {
+// Custom Spotlight wrapper supporting isDark
+const ProjectSpotlightCard = ({ children, isDark, className = "" }) => {
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef(null);
@@ -27,17 +27,23 @@ const ProjectSpotlightCard = ({ children, className = "" }) => {
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative overflow-hidden rounded-[24px] glass-card hover:border-white/10 hover:-translate-y-1.5 transition-all duration-500 shadow-xl ${className}`}
+      className={`relative overflow-hidden rounded-[24px] ${
+        isDark ? "glass-card hover:border-white/10" : "glass-card-light hover:border-black/10"
+      } hover:-translate-y-1.5 transition-all duration-500 shadow-xl ${className}`}
     >
       {/* Reflective top highlight */}
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none z-20" />
+      <div className={`absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent ${
+        isDark ? "via-white/10" : "via-black/5"
+      } to-transparent pointer-events-none z-20`} />
       
       {/* Mouse spotlight light effect */}
       <div
         className="absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none z-0"
         style={{
           opacity: isHovered ? 1 : 0,
-          background: `radial-gradient(400px circle at ${coords.x}px ${coords.y}px, rgba(255, 255, 255, 0.05), transparent 80%)`,
+          background: `radial-gradient(400px circle at ${coords.x}px ${coords.y}px, ${
+            isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.025)"
+          }, transparent 80%)`,
         }}
       />
 
@@ -46,8 +52,10 @@ const ProjectSpotlightCard = ({ children, className = "" }) => {
         <div
           className="absolute inset-0 rounded-[24px] pointer-events-none transition-opacity duration-300 z-10"
           style={{
-            border: "1.5px solid rgba(255, 255, 255, 0.4)",
-            background: `radial-gradient(150px circle at ${coords.x}px ${coords.y}px, rgba(255, 255, 255, 0.08), transparent 80%)`,
+            border: isDark ? "1.5px solid rgba(255, 255, 255, 0.4)" : "1.5px solid rgba(0, 0, 0, 0.15)",
+            background: `radial-gradient(150px circle at ${coords.x}px ${coords.y}px, ${
+              isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.03)"
+            }, transparent 80%)`,
             maskImage: `radial-gradient(150px circle at ${coords.x}px ${coords.y}px, black 30%, transparent 100%)`,
             WebkitMaskImage: `radial-gradient(150px circle at ${coords.x}px ${coords.y}px, black 30%, transparent 100%)`,
           }}
@@ -113,6 +121,22 @@ export default function ProjectsPage() {
   const [liveProjects, setLiveProjects] = useState([]);
   const [starredProjectIds, setStarredProjectIds] = useState([]);
   const [interactions, setInteractions] = useState({});
+  const [isDark, setIsDark] = useState(true);
+
+  // Webpage-wide theme state synchronization
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) {
+      setIsDark(savedTheme === "dark");
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    } else {
+      document.documentElement.classList.add("dark");
+    }
+  }, []);
 
   useEffect(() => {
     try {
@@ -220,15 +244,24 @@ export default function ProjectsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#ededed] noise-overlay relative overflow-hidden p-6 sm:p-10 lg:p-16">
-      <div className="absolute inset-0 z-0 grid-mesh pointer-events-none" />
+    <div className={`min-h-screen transition-colors duration-700 noise-overlay relative overflow-hidden p-6 sm:p-10 lg:p-16 ${
+      isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f8f9fa] text-[#1c1c1e]"
+    }`}>
+      {/* Grid Mesh Texture */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className={`absolute inset-0 ${isDark ? "grid-mesh" : "grid-mesh-light"}`} />
+      </div>
 
       {/* Back to home */}
       <div className="max-w-6xl mx-auto mb-10 z-10 relative">
         <Link href="/">
           <motion.button 
             whileHover={{ x: -4 }}
-            className="flex items-center space-x-2 text-xs font-semibold tracking-wide text-zinc-400 hover:text-white transition-colors py-2 px-3 bg-white/5 border border-white/5 rounded-xl backdrop-blur-md"
+            className={`flex items-center space-x-2 text-xs font-semibold tracking-wide transition-colors py-2 px-3 border rounded-xl backdrop-blur-md ${
+              isDark 
+                ? "text-zinc-400 hover:text-white bg-white/5 border-white/5" 
+                : "text-zinc-600 hover:text-zinc-950 bg-black/5 border-black/5"
+            }`}
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Portfolio</span>
@@ -240,23 +273,33 @@ export default function ProjectsPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 space-y-6 md:space-y-0">
           <div>
-            <h1 className="text-4xl sm:text-5xl font-extrabold font-outfit tracking-tight mb-3">
+            <h1 className={`text-4xl sm:text-5xl font-extrabold font-outfit tracking-tight mb-3 ${
+              isDark ? "text-white" : "text-zinc-900"
+            }`}>
               Projects Archive
             </h1>
-            <p className="text-sm text-zinc-400 max-w-md">
+            <p className={`text-sm max-w-md ${
+              isDark ? "text-zinc-400" : "text-zinc-600"
+            }`}>
               A comprehensive archive of engineering projects spanning artificial intelligence, full-stack web applications, and meteorological chatbots.
             </p>
           </div>
 
           {/* Search bar */}
           <div className="relative w-full md:w-80">
-            <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <Search className={`absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+              isDark ? "text-zinc-500" : "text-zinc-400"
+            }`} />
             <input
               type="text"
               placeholder="Search projects or tech..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
+              className={`w-full border rounded-xl py-2.5 pl-10 pr-4 text-xs focus:outline-none transition-colors backdrop-blur-md font-sans ${
+                isDark 
+                  ? "bg-[#121214]/60 border-white/5 focus:border-white/10 text-white" 
+                  : "bg-white/80 border-black/10 focus:border-black/20 text-zinc-900"
+              }`}
             />
           </div>
         </div>
@@ -270,7 +313,9 @@ export default function ProjectsPage() {
               className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                 activeFilter === filter 
                   ? "bg-red-500/20 text-red-400 border border-red-500/30" 
-                  : "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5"
+                  : isDark 
+                    ? "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5"
+                    : "bg-black/5 hover:bg-black/10 text-zinc-600 hover:text-zinc-950 border-black/5"
               }`}
             >
               {filter === "all" ? "All Works" : filter === "web" ? "Web & Systems" : "AI & Data Science"}
@@ -281,12 +326,14 @@ export default function ProjectsPage() {
         {/* Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredProjects.map((project, idx) => (
-            <ProjectSpotlightCard key={idx} className="p-8 flex flex-col justify-between min-h-[280px]">
+            <ProjectSpotlightCard key={idx} isDark={isDark} className="p-8 flex flex-col justify-between min-h-[280px]">
               <div>
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center space-x-2">
-                    <Code className="w-4 h-4 text-red-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-red-400">{project.category}</span>
+                    <Code className={`w-4 h-4 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                    <span className={`text-[10px] font-bold uppercase tracking-widest uppercase ${
+                      isDark ? "text-red-400" : "text-red-600"
+                    }`}>{project.category}</span>
                   </div>
                   
                   {/* Star count */}
@@ -295,7 +342,9 @@ export default function ProjectsPage() {
                     className={`flex items-center space-x-1 px-2 py-0.5 rounded-lg border transition-all ${
                       starredProjectIds.includes(project._id || project.title)
                         ? "bg-[#ef4444]/10 text-red-400 border-red-500/30"
-                        : "bg-white/5 text-zinc-500 hover:text-white border-white/5"
+                        : isDark
+                          ? "bg-white/5 text-zinc-500 hover:text-white border-white/5"
+                          : "bg-zinc-100 text-zinc-500 border-zinc-200"
                     }`}
                   >
                     <Star className={`w-3.5 h-3.5 ${starredProjectIds.includes(project._id || project.title) ? "fill-current" : ""}`} />
@@ -303,8 +352,12 @@ export default function ProjectsPage() {
                   </button>
                 </div>
 
-                <h3 className="text-xl font-bold font-outfit text-white mb-2">{project.title}</h3>
-                <p className="text-xs leading-relaxed text-zinc-400 mb-6">{project.description}</p>
+                <h3 className={`text-xl font-bold font-outfit mb-2 ${
+                  isDark ? "text-white" : "text-zinc-900"
+                }`}>{project.title}</h3>
+                <p className={`text-xs leading-relaxed mb-6 ${
+                  isDark ? "text-zinc-400" : "text-zinc-600"
+                }`}>{project.description}</p>
               </div>
 
               <div>
@@ -313,7 +366,11 @@ export default function ProjectsPage() {
                   {project.tech.map((tech, tIdx) => (
                     <span 
                       key={tIdx} 
-                      className="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/5 text-zinc-400 border border-white/5"
+                      className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
+                        isDark 
+                          ? "bg-white/5 text-zinc-400 border-white/5" 
+                          : "bg-zinc-100 text-zinc-600 border-zinc-200"
+                      }`}
                     >
                       {tech}
                     </span>
@@ -336,7 +393,11 @@ export default function ProjectsPage() {
                       href={project.deployedUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-center p-2 bg-white/5 hover:bg-white/10 text-zinc-300 border border-white/5 rounded-xl transition-all"
+                      className={`flex items-center justify-center p-2 border rounded-xl transition-all ${
+                        isDark 
+                          ? "bg-white/5 hover:bg-white/10 text-zinc-300 border-white/5" 
+                          : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border-zinc-200"
+                      }`}
                     >
                       <ExternalLink className="w-4.5 h-4.5" />
                     </a>
@@ -345,7 +406,11 @@ export default function ProjectsPage() {
                     href="https://github.com/nickhil-verma"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center p-2 bg-white/5 hover:bg-white/10 text-zinc-300 border border-white/5 rounded-xl transition-all"
+                    className={`flex items-center justify-center p-2 border rounded-xl transition-all ${
+                      isDark 
+                        ? "bg-white/5 hover:bg-white/10 text-zinc-300 border-white/5" 
+                        : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border-zinc-200"
+                    }`}
                   >
                     <Github className="w-4.5 h-4.5" />
                   </a>
