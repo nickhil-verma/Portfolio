@@ -30,7 +30,7 @@ const DetailSpotlightCard = ({ children, isDark, className = "" }) => {
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative overflow-hidden rounded-[32px] transition-all duration-0 shadow-2xl ${
+      className={`relative overflow-hidden rounded-[32px] transition-all duration-300 shadow-2xl ${
         isDark 
           ? "glass-card hover:border-white/10" 
           : "glass-card-light hover:border-black/10"
