@@ -147,6 +147,7 @@ const staticFallbackProjects = [
     title: "Hireonova – AI Job Engine",
     description: "Crawled 200K+ jobs, AI resume matcher with Ollama 3B",
     link: "https://github.com/Hireonova",
+    deployedLink: null,
     tech: ["Python", "Playwright", "MERN", "NLP"],
     stars: 12
   },
@@ -154,6 +155,7 @@ const staticFallbackProjects = [
     title: "MOSDAC ISRO Chatbot",
     description: "FAISS + Gemma 3B based chatbot for ISRO queries",
     link: "https://github.com/nickhil-verma/MOSDAC_PARENT_REPO/tree/main",
+    deployedLink: null,
     tech: ["React", "Node.js", "Gemma 3B", "MongoDB"],
     stars: 8
   },
@@ -161,6 +163,7 @@ const staticFallbackProjects = [
     title: "Eternalan Concerts",
     description: "Concert booking platform tailored for Chinese and US audiences.",
     link: "https://github.com/nickhil-verma/eternalan",
+    deployedLink: "https://eternalan.vercel.app",
     tech: ["React", "Tailwind CSS", "JavaScript"],
     stars: 15
   },
@@ -168,13 +171,15 @@ const staticFallbackProjects = [
     title: "Plant Disease Detection",
     description: "95% accuracy CNN model for 15 leaf diseases",
     link: "https://github.com/nickhil-verma/Plant-disease-detection-model",
+    deployedLink: null,
     tech: ["TensorFlow", "Keras", "NumPy", "HuggingFace"],
     stars: 9
   },
   {
     title: "CEDAXDSU Club Website",
     description: "IEEE Bangalore Chapter × DSU – Frontend Portal",
-    link: "https://dsuieeeceda.vercel.app/",
+    link: "https://github.com/nickhil-verma/CEDAXDSU",
+    deployedLink: "https://dsuieeeceda.vercel.app/",
     tech: ["React", "Tailwind CSS", "framer-motion", "Node js"],
     stars: 11
   }
@@ -479,7 +484,7 @@ export default function Portfolio() {
     {
       title: "Full Stack Intern",
       company: "Donald Hans, LA (Remote)",
-      period: "Jun 2025 – Present",
+      period: "Jun 2025 – Sept 2025",
       description: [
         "Improved SEO from 71% to 94% using schema and sitemaps.",
         "Built a chatbot MVP integrated with Google Gemini API.",
@@ -753,7 +758,9 @@ export default function Portfolio() {
                             {project.title}
                           </h3>
                           <p className={`text-[11px] sm:text-xs leading-relaxed mb-3 font-normal ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                            {project.description}
+                            {project.description && project.description.length > 60
+                              ? project.description.slice(0, 60) + "..."
+                              : project.description}
                           </p>
                         </div>
 
@@ -772,19 +779,38 @@ export default function Portfolio() {
                           </div>
 
                           <div className="flex items-center justify-between w-full mt-2">
-                            <a
-                              href={project.link}
-                              className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-xl text-[11px] font-semibold tracking-wide transition-all ${
-                                isDark 
-                                  ? "bg-white/5 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-white/5" 
-                                  : "bg-zinc-100 hover:bg-red-500/10 text-red-600 border border-zinc-200"
-                              }`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <span>Explore</span>
-                              <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
+                            <div className="flex items-center gap-1.5">
+                              <a
+                                href={project.link}
+                                className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-[10px] font-semibold tracking-wide transition-all ${
+                                  isDark 
+                                    ? "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5" 
+                                    : "bg-zinc-100 hover:bg-zinc-200 text-zinc-600 border border-zinc-200"
+                                }`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="GitHub"
+                              >
+                                <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 fill-current" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                                <span>Code</span>
+                              </a>
+                              {(project.deployedLink || project.liveLink) && (
+                                <a
+                                  href={project.deployedLink || project.liveLink}
+                                  className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-[10px] font-semibold tracking-wide transition-all ${
+                                    isDark 
+                                      ? "bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20" 
+                                      : "bg-red-50 hover:bg-red-100 text-red-600 border border-red-200"
+                                  }`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Live Demo"
+                                >
+                                  <ExternalLink className="w-2.5 h-2.5" />
+                                  <span>Live</span>
+                                </a>
+                              )}
+                            </div>
 
                             <button
                               onClick={() => handleToggleStarProject(project)}
@@ -948,12 +974,13 @@ export default function Portfolio() {
 
                 <div data-lenis-prevent className="space-y-4 overflow-y-auto pr-1 flex-1 hide-scrollbar max-h-[300px]" onWheel={(e) => e.stopPropagation()}>
                   {combinedBlogs.slice(0, 2).map((blog, idx) => (
-                    <div
+                    <Link
                       key={idx}
-                      className={`p-4 rounded-2xl flex flex-col justify-between transition-all ${
+                      href={`/blogs/${blog._id}`}
+                      className={`block p-4 rounded-2xl flex flex-col justify-between transition-all group cursor-pointer ${
                         isDark 
-                          ? "bg-[#121214]/50 border border-white/5 hover:bg-[#18181b]/50" 
-                          : "bg-white/60 border border-black/5 hover:bg-white shadow-sm"
+                          ? "bg-[#121214]/50 border border-white/5 hover:bg-[#18181b]/50 hover:border-red-500/20" 
+                          : "bg-white/60 border border-black/5 hover:bg-white hover:border-red-200 shadow-sm"
                       }`}
                     >
                       <div className="flex justify-between items-center mb-2">
@@ -963,7 +990,7 @@ export default function Portfolio() {
                           {blog.category}
                         </span>
                         <button
-                          onClick={() => handleToggleLikeBlog(blog)}
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleToggleLikeBlog(blog); }}
                           className={`flex items-center space-x-1 px-2 py-0.5 rounded-lg border transition-all ${
                             likedBlogIds.includes(blog._id || blog.title)
                               ? "bg-red-500/10 text-red-400 border-red-500/30"
@@ -976,13 +1003,18 @@ export default function Portfolio() {
                           <span className="text-[10px] font-bold">{interactions[blog._id || blog.title] !== undefined ? interactions[blog._id || blog.title] : (blog.likes || 0)}</span>
                         </button>
                       </div>
-                      <h3 className={`font-bold font-outfit text-xs sm:text-sm mb-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                      <h3 className={`font-bold font-outfit text-xs sm:text-sm mb-1 group-hover:text-red-400 transition-colors ${isDark ? "text-white" : "text-zinc-900"}`}>
                         {blog.title}
                       </h3>
                       <p className={`text-[10px] sm:text-xs leading-relaxed line-clamp-2 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
                         {blog.excerpt}
                       </p>
-                    </div>
+                      <span className={`mt-2 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 ${
+                        isDark ? "text-red-500/60 group-hover:text-red-400" : "text-red-400 group-hover:text-red-600"
+                      }`}>
+                        Read article <ChevronRight className="w-2.5 h-2.5" />
+                      </span>
+                    </Link>
                   ))}
                 </div>
               </SpotlightCard>
@@ -1153,16 +1185,18 @@ export default function Portfolio() {
                 {combinedProjects.map((project, index) => (
                   <div
                     key={index}
-                    className={`p-4 rounded-2xl flex flex-col justify-between ${
+                    className={`p-4 rounded-2xl flex flex-col justify-between group ${
                       isDark ? "bg-[#121214]/50 border border-white/5" : "bg-white/60 border border-black/5"
                     }`}
                   >
                     <div>
-                      <h3 className={`font-bold font-outfit text-sm mb-1.5 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                      <h3 className={`font-bold font-outfit text-sm mb-1.5 group-hover:text-red-400 transition-colors ${isDark ? "text-white" : "text-zinc-900"}`}>
                         {project.title}
                       </h3>
                       <p className={`text-xs leading-relaxed mb-3 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                        {project.description}
+                        {project.description && project.description.length > 70
+                          ? project.description.slice(0, 70) + "..."
+                          : project.description}
                       </p>
                     </div>
 
@@ -1181,17 +1215,32 @@ export default function Portfolio() {
                       </div>
 
                       <div className="flex items-center justify-between w-full mt-2">
-                        <a
-                          href={project.link}
-                          className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                            isDark ? "bg-white/5 text-red-400" : "bg-zinc-100 text-red-600"
-                          }`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <span>View</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={project.link}
+                            className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                              isDark ? "bg-white/5 text-zinc-400 hover:text-white" : "bg-zinc-100 text-zinc-600"
+                            }`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                            <span>Code</span>
+                          </a>
+                          {(project.deployedLink || project.liveLink) && (
+                            <a
+                              href={project.deployedLink || project.liveLink}
+                              className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                                isDark ? "bg-red-500/10 text-red-400 hover:bg-red-500/20" : "bg-red-50 text-red-600 hover:bg-red-100"
+                              }`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              <span>Live</span>
+                            </a>
+                          )}
+                        </div>
 
                         <button
                           onClick={() => handleToggleStarProject(project)}
@@ -1355,12 +1404,13 @@ export default function Portfolio() {
 
               <div className="space-y-4">
                 {combinedBlogs.slice(0, 2).map((blog, idx) => (
-                  <div
+                  <Link
                     key={idx}
-                    className={`p-4 rounded-2xl flex flex-col justify-between transition-all ${
+                    href={`/blogs/${blog._id}`}
+                    className={`block p-4 rounded-2xl flex flex-col justify-between transition-all group cursor-pointer ${
                       isDark 
-                        ? "bg-[#121214]/50 border border-white/5" 
-                        : "bg-white/60 border border-black/5"
+                        ? "bg-[#121214]/50 border border-white/5 hover:bg-[#18181b]/50 hover:border-red-500/20" 
+                        : "bg-white/60 border border-black/5 hover:bg-white hover:border-red-200 shadow-sm"
                     }`}
                   >
                     <div className="flex justify-between items-center mb-2">
@@ -1370,7 +1420,7 @@ export default function Portfolio() {
                         {blog.category}
                       </span>
                       <button
-                        onClick={() => handleToggleLikeBlog(blog)}
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleToggleLikeBlog(blog); }}
                         className={`flex items-center space-x-1 px-2 py-0.5 rounded-lg border transition-all ${
                           likedBlogIds.includes(blog._id || blog.title)
                             ? "bg-red-500/10 text-red-400 border-red-500/30"
@@ -1383,13 +1433,18 @@ export default function Portfolio() {
                         <span className="text-[10px] font-bold">{interactions[blog._id || blog.title] !== undefined ? interactions[blog._id || blog.title] : (blog.likes || 0)}</span>
                       </button>
                     </div>
-                    <h3 className={`font-bold font-outfit text-sm mb-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                    <h3 className={`font-bold font-outfit text-sm mb-1 group-hover:text-red-400 transition-colors ${isDark ? "text-white" : "text-zinc-900"}`}>
                       {blog.title}
                     </h3>
                     <p className={`text-xs leading-relaxed line-clamp-2 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
                       {blog.excerpt}
                     </p>
-                  </div>
+                    <span className={`mt-2 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 ${
+                      isDark ? "text-red-500/60 group-hover:text-red-400" : "text-red-400 group-hover:text-red-600"
+                    }`}>
+                      Read article <ChevronRight className="w-2.5 h-2.5" />
+                    </span>
+                  </Link>
                 ))}
               </div>
             </SpotlightCard>
