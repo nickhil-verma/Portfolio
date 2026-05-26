@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Clock, Calendar, Heart } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowLeft, Clock, Calendar } from "lucide-react";
 import Link from "next/link";
+import BlogLikeButton from "../../../components/BlogLikeButton";
 
 // Custom Spotlight wrapper supporting isDark and premium white coordinator glow
 const DetailSpotlightCard = ({ children, isDark, className = "" }) => {
@@ -71,99 +72,290 @@ const DetailSpotlightCard = ({ children, isDark, className = "" }) => {
 // Senior-level React-based Markdown-to-HTML parser function with dynamic dark/light colors
 function renderMarkdownContent(md, isDark) {
   if (!md) return "";
-  const lines = md.split("\n");
-  return lines.map((line, idx) => {
-    const text = line.trim();
+  
+  // Split content by newlines
+  const lines = md.split(/\r?\n/);
+  const elements = [];
+  let inCodeBlock = false;
+  let codeBlockLines = [];
+  let codeBlockLang = "";
+  let listItems = [];
+  let currentListType = null; // "bullet" or "number"
 
-    // Headers
-    if (text.startsWith("### ")) {
-      return (
-        <h4 key={idx} className={`text-base sm:text-lg font-bold font-outfit mt-6 mb-3 ${
-          isDark ? "text-white" : "text-zinc-950"
-        }`}>
-          {text.substring(4)}
-        </h4>
-      );
+  const flushList = (key) => {
+    if (listItems.length > 0) {
+      if (currentListType === "bullet") {
+        elements.push(
+          <ul key={`ul-${key}`} className={`list-disc pl-6 mb-4 space-y-1.5 ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>
+            {listItems.map((item, i) => <li key={i}>{item}</li>)}
+          </ul>
+        );
+      } else if (currentListType === "number") {
+        elements.push(
+          <ol key={`ol-${key}`} className={`list-decimal pl-6 mb-4 space-y-1.5 ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>
+            {listItems.map((item, i) => <li key={i}>{item}</li>)}
+          </ol>
+        );
+      }
+      listItems = [];
+      currentListType = null;
     }
-    if (text.startsWith("## ")) {
-      return (
-        <h3 key={idx} className={`text-lg sm:text-xl font-bold font-outfit mt-8 mb-4 ${
-          isDark ? "text-white" : "text-zinc-950"
-        }`}>
-          {text.substring(3)}
-        </h3>
-      );
-    }
-    if (text.startsWith("# ")) {
-      return (
-        <h2 key={idx} className={`text-2xl sm:text-3xl font-extrabold font-outfit mt-10 mb-6 ${
-          isDark ? "text-white" : "text-zinc-950"
-        }`}>
-          {text.substring(2)}
-        </h2>
-      );
+  };
+
+  const parseInlineStyles = (text) => {
+    if (!text) return "";
+    let parts = [text];
+    
+    // Parse inline code: `code`
+    parts = parts.flatMap((part) => {
+      if (typeof part !== "string") return part;
+      const codeRegex = /`([^`]+)`/g;
+      const subParts = [];
+      let lastIdx = 0;
+      let match;
+      while ((match = codeRegex.exec(part)) !== null) {
+        if (match.index > lastIdx) {
+          subParts.push(part.substring(lastIdx, match.index));
+        }
+        subParts.push(
+          <code key={`code-${match.index}`} className={`px-1.5 py-0.5 rounded text-[11px] font-mono ${
+            isDark ? "bg-white/10 text-red-400" : "bg-black/5 text-red-600"
+          }`}>
+            {match[1]}
+          </code>
+        );
+        lastIdx = codeRegex.lastIndex;
+      }
+      if (lastIdx < part.length) {
+        subParts.push(part.substring(lastIdx));
+      }
+      return subParts;
+    });
+
+    // Parse bold: **text**
+    parts = parts.flatMap((part) => {
+      if (typeof part !== "string") return part;
+      const boldRegex = /\*\*([^*]+)\*\*/g;
+      const subParts = [];
+      let lastIdx = 0;
+      let match;
+      while ((match = boldRegex.exec(part)) !== null) {
+        if (match.index > lastIdx) {
+          subParts.push(part.substring(lastIdx, match.index));
+        }
+        subParts.push(
+          <strong key={`bold-${match.index}`} className={`font-bold ${isDark ? "text-white" : "text-zinc-950"}`}>
+            {match[1]}
+          </strong>
+        );
+        lastIdx = boldRegex.lastIndex;
+      }
+      if (lastIdx < part.length) {
+        subParts.push(part.substring(lastIdx));
+      }
+      return subParts;
+    });
+
+    // Parse italic: *text*
+    parts = parts.flatMap((part) => {
+      if (typeof part !== "string") return part;
+      const italicRegex = /\*([^*]+)\*/g;
+      const subParts = [];
+      let lastIdx = 0;
+      let match;
+      while ((match = italicRegex.exec(part)) !== null) {
+        if (match.index > lastIdx) {
+          subParts.push(part.substring(lastIdx, match.index));
+        }
+        subParts.push(
+          <em key={`italic-${match.index}`} className="italic">
+            {match[1]}
+          </em>
+        );
+        lastIdx = italicRegex.lastIndex;
+      }
+      if (lastIdx < part.length) {
+        subParts.push(part.substring(lastIdx));
+      }
+      return subParts;
+    });
+
+    // Parse links: [text](url)
+    parts = parts.flatMap((part) => {
+      if (typeof part !== "string") return part;
+      const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+      const subParts = [];
+      let lastIdx = 0;
+      let match;
+      while ((match = linkRegex.exec(part)) !== null) {
+        if (match.index > lastIdx) {
+          subParts.push(part.substring(lastIdx, match.index));
+        }
+        subParts.push(
+          <a
+            key={`link-${match.index}`}
+            href={match[2]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`font-semibold hover:underline transition-colors ${
+              isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"
+            }`}
+          >
+            {match[1]}
+          </a>
+        );
+        lastIdx = linkRegex.lastIndex;
+      }
+      if (lastIdx < part.length) {
+        subParts.push(part.substring(lastIdx));
+      }
+      return subParts;
+    });
+
+    return parts;
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const trimmed = rawLine.trim();
+
+    // 1. Handle Code Blocks
+    if (trimmed.startsWith("```")) {
+      flushList(i);
+      if (inCodeBlock) {
+        elements.push(
+          <div key={`codeblock-${i}`} className={`p-5 rounded-2xl font-mono text-[11px] overflow-x-auto mb-4 border ${
+            isDark ? "bg-black/40 border-white/5 text-zinc-300" : "bg-zinc-100 border-black/5 text-zinc-800"
+          }`}>
+            {codeBlockLang && (
+              <div className={`text-[9px] uppercase tracking-wider font-bold mb-2 pb-1 border-b ${
+                isDark ? "text-zinc-500 border-white/5" : "text-zinc-400 border-black/5"
+              }`}>
+                {codeBlockLang}
+              </div>
+            )}
+            <pre className="leading-relaxed">{codeBlockLines.join("\n")}</pre>
+          </div>
+        );
+        codeBlockLines = [];
+        codeBlockLang = "";
+        inCodeBlock = false;
+      } else {
+        codeBlockLang = trimmed.substring(3).trim();
+        inCodeBlock = true;
+      }
+      continue;
     }
 
-    // Bullet lists
-    if (text.startsWith("- ") || text.startsWith("* ")) {
-      return (
-        <li key={idx} className={`list-disc pl-1 ml-6 text-sm mb-2 ${
-          isDark ? "text-zinc-300" : "text-zinc-700"
-        }`}>
-          {text.substring(2)}
-        </li>
-      );
+    if (inCodeBlock) {
+      codeBlockLines.push(rawLine);
+      continue;
     }
 
-    // Blockquote
-    if (text.startsWith("> ")) {
-      return (
-        <blockquote key={idx} className={`border-l-4 border-red-500 pl-4 py-2 my-6 text-sm italic rounded-r-lg ${
+    // 2. Horizontal Rules
+    if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
+      flushList(i);
+      elements.push(
+        <hr key={`hr-${i}`} className={`my-6 border-t ${isDark ? "border-white/5" : "border-black/5"}`} />
+      );
+      continue;
+    }
+
+    // 3. Headers
+    if (trimmed.startsWith("#")) {
+      flushList(i);
+      let depth = 0;
+      while (trimmed[depth] === "#") {
+        depth++;
+      }
+      const headerText = trimmed.substring(depth).trim();
+      const parsedText = parseInlineStyles(headerText);
+
+      if (depth === 1) {
+        elements.push(
+          <h2 key={`h2-${i}`} className={`text-2xl sm:text-3xl font-extrabold font-outfit mt-8 mb-4 tracking-tight leading-tight ${
+            isDark ? "text-white" : "text-zinc-950"
+          }`}>
+            {parsedText}
+          </h2>
+        );
+      } else if (depth === 2) {
+        elements.push(
+          <h3 key={`h3-${i}`} className={`text-xl sm:text-2xl font-bold font-outfit mt-6 mb-3 tracking-tight ${
+            isDark ? "text-white" : "text-zinc-950"
+          }`}>
+            {parsedText}
+          </h3>
+        );
+      } else {
+        elements.push(
+          <h4 key={`h4-${i}`} className={`text-base sm:text-lg font-bold font-outfit mt-5 mb-2.5 ${
+            isDark ? "text-white" : "text-zinc-950"
+          }`}>
+            {parsedText}
+          </h4>
+        );
+      }
+      continue;
+    }
+
+    // 4. Blockquotes
+    if (trimmed.startsWith("> ")) {
+      flushList(i);
+      const quoteText = rawLine.substring(rawLine.indexOf(">") + 1).trim();
+      elements.push(
+        <blockquote key={`quote-${i}`} className={`border-l-4 border-red-500 pl-4 py-2 my-4 text-xs sm:text-sm italic rounded-r-lg ${
           isDark ? "text-zinc-400 bg-white/5" : "text-zinc-600 bg-black/5"
         }`}>
-          {text.substring(2)}
+          {parseInlineStyles(quoteText)}
         </blockquote>
       );
+      continue;
     }
 
-    // Code blocks markers
-    if (text.startsWith("```")) {
-      return null;
-    }
-
-    // Empty lines
-    if (text === "") {
-      return <div key={idx} className="h-4" />;
-    }
-
-    // Paragraph with inline bold **text** parsing
-    const boldRegex = /\*\*(.*?)\*\*/g;
-    let parts = [];
-    let lastIndex = 0;
-    let match;
-    while ((match = boldRegex.exec(text)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push(text.substring(lastIndex, match.index));
+    // 5. Bullet Lists
+    const bulletMatch = rawLine.match(/^(\s*)([-*+])\s+(.*)/);
+    if (bulletMatch) {
+      if (currentListType !== "bullet") {
+        flushList(i);
+        currentListType = "bullet";
       }
-      parts.push(
-        <strong key={match.index} className={`font-bold ${isDark ? "text-white" : "text-zinc-950"}`}>
-          {match[1]}
-        </strong>
-      );
-      lastIndex = boldRegex.lastIndex;
-    }
-    if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex));
+      listItems.push(parseInlineStyles(bulletMatch[3]));
+      continue;
     }
 
-    return (
-      <p key={idx} className={`text-sm sm:text-base leading-relaxed mb-4 ${
+    // 6. Numbered Lists
+    const numberMatch = rawLine.match(/^(\s*)(\d+)\.\s+(.*)/);
+    if (numberMatch) {
+      if (currentListType !== "number") {
+        flushList(i);
+        currentListType = "number";
+      }
+      listItems.push(parseInlineStyles(numberMatch[3]));
+      continue;
+    }
+
+    // 7. Empty Lines
+    if (trimmed === "") {
+      flushList(i);
+      elements.push(<div key={`empty-${i}`} className="h-3" />);
+      continue;
+    }
+
+    // 8. Normal Paragraph
+    flushList(i);
+    elements.push(
+      <p key={`p-${i}`} className={`text-xs sm:text-sm leading-relaxed mb-3 ${
         isDark ? "text-zinc-300" : "text-zinc-700"
       }`}>
-        {parts}
+        {parseInlineStyles(rawLine)}
       </p>
     );
-  });
+  }
+
+  // Flush any remaining lists
+  flushList(lines.length);
+  return elements;
 }
 
 // Fallback base blogs with assigned static IDs
@@ -213,8 +405,6 @@ export default function BlogDetailPage() {
   const { id } = useParams();
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [likedBlogIds, setLikedBlogIds] = useState([]);
-  const [interactions, setInteractions] = useState({});
   const [isDark, setIsDark] = useState(true);
 
   // Webpage-wide theme state synchronization
@@ -233,19 +423,6 @@ export default function BlogDetailPage() {
     }
   }, []);
 
-  // Fetch local storage liked items on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("liked_blogs");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setLikedBlogIds(parsed);
-      }
-    } catch (e) {
-      console.error("Failed to load liked blogs:", e);
-    }
-  }, []);
-
   // Fetch details and interactions
   useEffect(() => {
     if (!id) return;
@@ -254,7 +431,6 @@ export default function BlogDetailPage() {
       let activeBlog = null;
 
       try {
-        // Fetch live blogs from MongoDB
         const res = await fetch("/api/blogs");
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -267,90 +443,19 @@ export default function BlogDetailPage() {
         console.error("Failed to fetch live blogs:", err);
       }
 
-      // Check fallbacks if not found in database
       if (!activeBlog) {
         const fallbackMatch = baseBlogs.find(b => b._id === id);
         if (fallbackMatch) {
           activeBlog = fallbackMatch;
-          
-          // Apply local storage liked state modifications in-memory
-          const stored = localStorage.getItem("liked_blogs");
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            if (parsed.includes(id) && !activeBlog.hasLikedIncremented) {
-              activeBlog.likes = (activeBlog.likes || 0) + 1;
-              activeBlog.hasLikedIncremented = true;
-            }
-          }
         }
       }
 
       setBlog(activeBlog);
       setLoading(false);
-
-      // Load specific likes count from interactions database
-      try {
-        const res = await fetch("/api/interactions");
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          const map = {};
-          data.forEach(item => {
-            map[item._id] = item.count;
-          });
-          setInteractions(map);
-        }
-      } catch (err) {
-        console.error("Failed to fetch interactions:", err);
-      }
     };
 
     loadBlogData();
   }, [id]);
-
-  const handleToggleLike = async () => {
-    if (!blog) return;
-    const isLiked = likedBlogIds.includes(id);
-    const action = isLiked ? "unlike" : "like";
-
-    // 1. Toggle locally for instant responsive UI feedback
-    let nextLiked;
-    if (isLiked) {
-      nextLiked = likedBlogIds.filter(x => x !== id);
-    } else {
-      nextLiked = [...likedBlogIds, id];
-    }
-    setLikedBlogIds(nextLiked);
-    localStorage.setItem("liked_blogs", JSON.stringify(nextLiked));
-
-    // Calculate current likes count
-    const currentCount = (interactions[id] !== undefined)
-      ? interactions[id]
-      : (blog.likes || 0);
-    const increment = isLiked ? -1 : 1;
-    const newCount = Math.max(0, currentCount + increment);
-
-    // Update interactions locally
-    setInteractions(prev => ({ ...prev, [id]: newCount }));
-
-    try {
-      const fallbackVal = blog.likes || 0;
-      const res = await fetch(`/api/interactions?id=${encodeURIComponent(id)}&type=like&action=${action}&fallback=${fallbackVal}`, {
-        method: "PATCH",
-      });
-      const data = await res.json();
-      if (data.success) {
-        setInteractions(prev => ({ ...prev, [id]: data.count }));
-        setBlog(prev => prev ? { ...prev, likes: data.count } : null);
-      }
-    } catch (err) {
-      console.error("Failed to update likes in database:", err);
-    }
-  };
-
-  const isLiked = likedBlogIds.includes(id);
-  const totalLikes = (interactions[id] !== undefined)
-    ? interactions[id]
-    : (blog ? (blog.likes || 0) : 0);
 
   if (loading) {
     return (
@@ -411,22 +516,8 @@ export default function BlogDetailPage() {
             </motion.button>
           </Link>
 
-          {/* Top-Right Mini Like Hook */}
-          <button
-            onClick={handleToggleLike}
-            className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border transition-all ${
-              isLiked
-                ? isDark
-                  ? "bg-red-500/10 text-red-400 border-red-500/30 shadow-lg shadow-red-500/5"
-                  : "bg-red-500/5 text-red-600 border-red-500/20 shadow-sm"
-                : isDark
-                  ? "bg-white/5 text-zinc-500 hover:text-white border-white/5"
-                  : "bg-black/5 text-zinc-400 hover:text-zinc-900 border-black/5"
-            }`}
-          >
-            <Heart className={`w-3.5 h-3.5 transition-colors ${isLiked ? "fill-current text-red-500" : ""}`} />
-            <span className="font-bold text-xs">{totalLikes}</span>
-          </button>
+          {/* Dynamic Heart Likes Mini button */}
+          <BlogLikeButton blogId={id} initialLikes={blog.likes || 0} isDark={isDark} mini={true} />
         </div>
 
         {/* Detailed Layout Card Container */}
@@ -483,25 +574,11 @@ export default function BlogDetailPage() {
                 Liked this write-up?
               </span>
               <span className={`text-xs ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                Show your appreciation with a star.
+                Show your appreciation with a heart.
               </span>
             </div>
             
-            <button
-              onClick={handleToggleLike}
-              className={`flex items-center space-x-2 px-5 py-2.5 rounded-2xl border transition-all ${
-                isLiked
-                  ? isDark
-                    ? "bg-red-500/10 text-red-400 border-red-500/30 shadow-lg shadow-red-500/10"
-                    : "bg-red-500/5 text-red-600 border-red-500/20 shadow-sm"
-                  : isDark
-                    ? "bg-white/5 text-zinc-500 hover:text-white border-white/5"
-                    : "bg-black/5 text-zinc-400 hover:text-zinc-900 border-black/5"
-              }`}
-            >
-              <Heart className={`w-4 h-4 transition-colors ${isLiked ? "fill-current text-red-500" : ""}`} />
-              <span className="font-bold text-sm">{totalLikes}</span>
-            </button>
+            <BlogLikeButton blogId={id} initialLikes={blog.likes || 0} isDark={isDark} />
           </div>
         </DetailSpotlightCard>
       </div>

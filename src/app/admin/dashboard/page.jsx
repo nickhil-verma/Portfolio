@@ -11,65 +11,288 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 // Senior-level React-based Markdown-to-HTML parser function for dynamic blog preview
-function renderMarkdownContent(md) {
+function renderMarkdownContent(md, isDark = true) {
   if (!md) return "";
-  const lines = md.split("\n");
-  return lines.map((line, idx) => {
-    const text = line.trim();
+  
+  const lines = md.split(/\r?\n/);
+  const elements = [];
+  let inCodeBlock = false;
+  let codeBlockLines = [];
+  let codeBlockLang = "";
+  let listItems = [];
+  let currentListType = null; // "bullet" or "number"
 
-    // Headers
-    if (text.startsWith("### ")) {
-      return <h4 key={idx} className="text-xs sm:text-sm font-bold font-outfit text-white mt-4 mb-2">{text.substring(4)}</h4>;
+  const flushList = (key) => {
+    if (listItems.length > 0) {
+      if (currentListType === "bullet") {
+        elements.push(
+          <ul key={`ul-${key}`} className={`list-disc pl-6 mb-4 space-y-1.5 ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>
+            {listItems.map((item, i) => <li key={i}>{item}</li>)}
+          </ul>
+        );
+      } else if (currentListType === "number") {
+        elements.push(
+          <ol key={`ol-${key}`} className={`list-decimal pl-6 mb-4 space-y-1.5 ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>
+            {listItems.map((item, i) => <li key={i}>{item}</li>)}
+          </ol>
+        );
+      }
+      listItems = [];
+      currentListType = null;
     }
-    if (text.startsWith("## ")) {
-      return <h3 key={idx} className="text-sm sm:text-base font-bold font-outfit text-white mt-5 mb-2.5">{text.substring(3)}</h3>;
-    }
-    if (text.startsWith("# ")) {
-      return <h2 key={idx} className="text-base sm:text-lg font-extrabold font-outfit text-white mt-6 mb-3">{text.substring(2)}</h2>;
+  };
+
+  const parseInlineStyles = (text) => {
+    if (!text) return "";
+    let parts = [text];
+    
+    // Parse inline code: `code`
+    parts = parts.flatMap((part) => {
+      if (typeof part !== "string") return part;
+      const codeRegex = /`([^`]+)`/g;
+      const subParts = [];
+      let lastIdx = 0;
+      let match;
+      while ((match = codeRegex.exec(part)) !== null) {
+        if (match.index > lastIdx) {
+          subParts.push(part.substring(lastIdx, match.index));
+        }
+        subParts.push(
+          <code key={`code-${match.index}`} className={`px-1.5 py-0.5 rounded text-[11px] font-mono ${
+            isDark ? "bg-white/10 text-red-400" : "bg-black/5 text-red-600"
+          }`}>
+            {match[1]}
+          </code>
+        );
+        lastIdx = codeRegex.lastIndex;
+      }
+      if (lastIdx < part.length) {
+        subParts.push(part.substring(lastIdx));
+      }
+      return subParts;
+    });
+
+    // Parse bold: **text**
+    parts = parts.flatMap((part) => {
+      if (typeof part !== "string") return part;
+      const boldRegex = /\*\*([^*]+)\*\*/g;
+      const subParts = [];
+      let lastIdx = 0;
+      let match;
+      while ((match = boldRegex.exec(part)) !== null) {
+        if (match.index > lastIdx) {
+          subParts.push(part.substring(lastIdx, match.index));
+        }
+        subParts.push(
+          <strong key={`bold-${match.index}`} className={`font-bold ${isDark ? "text-white" : "text-zinc-950"}`}>
+            {match[1]}
+          </strong>
+        );
+        lastIdx = boldRegex.lastIndex;
+      }
+      if (lastIdx < part.length) {
+        subParts.push(part.substring(lastIdx));
+      }
+      return subParts;
+    });
+
+    // Parse italic: *text*
+    parts = parts.flatMap((part) => {
+      if (typeof part !== "string") return part;
+      const italicRegex = /\*([^*]+)\*/g;
+      const subParts = [];
+      let lastIdx = 0;
+      let match;
+      while ((match = italicRegex.exec(part)) !== null) {
+        if (match.index > lastIdx) {
+          subParts.push(part.substring(lastIdx, match.index));
+        }
+        subParts.push(
+          <em key={`italic-${match.index}`} className="italic">
+            {match[1]}
+          </em>
+        );
+        lastIdx = italicRegex.lastIndex;
+      }
+      if (lastIdx < part.length) {
+        subParts.push(part.substring(lastIdx));
+      }
+      return subParts;
+    });
+
+    // Parse links: [text](url)
+    parts = parts.flatMap((part) => {
+      if (typeof part !== "string") return part;
+      const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+      const subParts = [];
+      let lastIdx = 0;
+      let match;
+      while ((match = linkRegex.exec(part)) !== null) {
+        if (match.index > lastIdx) {
+          subParts.push(part.substring(lastIdx, match.index));
+        }
+        subParts.push(
+          <a
+            key={`link-${match.index}`}
+            href={match[2]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`font-semibold hover:underline transition-colors ${
+              isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"
+            }`}
+          >
+            {match[1]}
+          </a>
+        );
+        lastIdx = linkRegex.lastIndex;
+      }
+      if (lastIdx < part.length) {
+        subParts.push(part.substring(lastIdx));
+      }
+      return subParts;
+    });
+
+    return parts;
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const trimmed = rawLine.trim();
+
+    // 1. Handle Code Blocks
+    if (trimmed.startsWith("```")) {
+      flushList(i);
+      if (inCodeBlock) {
+        elements.push(
+          <div key={`codeblock-${i}`} className={`p-4 rounded-xl font-mono text-[11px] overflow-x-auto mb-4 border ${
+            isDark ? "bg-black/40 border-white/5 text-zinc-300" : "bg-zinc-100 border-black/5 text-zinc-800"
+          }`}>
+            {codeBlockLang && (
+              <div className={`text-[9px] uppercase tracking-wider font-bold mb-2 pb-1 border-b ${
+                isDark ? "text-zinc-500 border-white/5" : "text-zinc-400 border-black/5"
+              }`}>
+                {codeBlockLang}
+              </div>
+            )}
+            <pre className="leading-relaxed">{codeBlockLines.join("\n")}</pre>
+          </div>
+        );
+        codeBlockLines = [];
+        codeBlockLang = "";
+        inCodeBlock = false;
+      } else {
+        codeBlockLang = trimmed.substring(3).trim();
+        inCodeBlock = true;
+      }
+      continue;
     }
 
-    // Bullet lists
-    if (text.startsWith("- ") || text.startsWith("* ")) {
-      return <li key={idx} className="list-disc pl-1 ml-4 text-[10px] sm:text-xs text-zinc-300 mb-1">{text.substring(2)}</li>;
+    if (inCodeBlock) {
+      codeBlockLines.push(rawLine);
+      continue;
     }
 
-    // Blockquote
-    if (text.startsWith("> ")) {
-      return (
-        <blockquote key={idx} className="border-l border-red-500 pl-3 py-1 my-3 text-[10px] sm:text-xs text-zinc-400 italic bg-white/5 rounded-r-md">
-          {text.substring(2)}
+    // 2. Horizontal Rules
+    if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
+      flushList(i);
+      elements.push(
+        <hr key={`hr-${i}`} className={`my-6 border-t ${isDark ? "border-white/5" : "border-black/5"}`} />
+      );
+      continue;
+    }
+
+    // 3. Headers
+    if (trimmed.startsWith("#")) {
+      flushList(i);
+      let depth = 0;
+      while (trimmed[depth] === "#") {
+        depth++;
+      }
+      const headerText = trimmed.substring(depth).trim();
+      const parsedText = parseInlineStyles(headerText);
+
+      if (depth === 1) {
+        elements.push(
+          <h2 key={`h2-${i}`} className={`text-base sm:text-lg font-extrabold font-outfit mt-6 mb-3 tracking-tight leading-tight ${
+            isDark ? "text-white" : "text-zinc-950"
+          }`}>
+            {parsedText}
+          </h2>
+        );
+      } else if (depth === 2) {
+        elements.push(
+          <h3 key={`h3-${i}`} className={`text-sm sm:text-base font-bold font-outfit mt-5 mb-2.5 tracking-tight ${
+            isDark ? "text-white" : "text-zinc-950"
+          }`}>
+            {parsedText}
+          </h3>
+        );
+      } else {
+        elements.push(
+          <h4 key={`h4-${i}`} className={`text-xs sm:text-sm font-bold font-outfit mt-4 mb-2 ${
+            isDark ? "text-white" : "text-zinc-950"
+          }`}>
+            {parsedText}
+          </h4>
+        );
+      }
+      continue;
+    }
+
+    // 4. Blockquotes
+    if (trimmed.startsWith("> ")) {
+      flushList(i);
+      const quoteText = rawLine.substring(rawLine.indexOf(">") + 1).trim();
+      elements.push(
+        <blockquote key={`quote-${i}`} className={`border-l-2 border-red-500 pl-3 py-1 my-3 text-[10px] sm:text-xs text-zinc-400 italic bg-white/5 rounded-r-md`}>
+          {parseInlineStyles(quoteText)}
         </blockquote>
       );
+      continue;
     }
 
-    // Code blocks markers
-    if (text.startsWith("```")) {
-      return null;
-    }
-
-    // Empty lines
-    if (text === "") {
-      return <div key={idx} className="h-2" />;
-    }
-
-    // Paragraph with inline bold **text** parsing
-    const boldRegex = /\*\*(.*?)\*\*/g;
-    let parts = [];
-    let lastIndex = 0;
-    let match;
-    while ((match = boldRegex.exec(text)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push(text.substring(lastIndex, match.index));
+    // 5. Bullet Lists
+    const bulletMatch = rawLine.match(/^(\s*)([-*+])\s+(.*)/);
+    if (bulletMatch) {
+      if (currentListType !== "bullet") {
+        flushList(i);
+        currentListType = "bullet";
       }
-      parts.push(<strong key={match.index} className="font-bold text-white">{match[1]}</strong>);
-      lastIndex = boldRegex.lastIndex;
-    }
-    if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex));
+      listItems.push(parseInlineStyles(bulletMatch[3]));
+      continue;
     }
 
-    return <p key={idx} className="text-[10px] sm:text-xs text-zinc-300 leading-relaxed mb-2">{parts}</p>;
-  });
+    // 6. Numbered Lists
+    const numberMatch = rawLine.match(/^(\s*)(\d+)\.\s+(.*)/);
+    if (numberMatch) {
+      if (currentListType !== "number") {
+        flushList(i);
+        currentListType = "number";
+      }
+      listItems.push(parseInlineStyles(numberMatch[3]));
+      continue;
+    }
+
+    // 7. Empty Lines
+    if (trimmed === "") {
+      flushList(i);
+      elements.push(<div key={`empty-${i}`} className="h-2" />);
+      continue;
+    }
+
+    // 8. Normal Paragraph
+    flushList(i);
+    elements.push(
+      <p key={`p-${i}`} className={`text-[10px] sm:text-xs leading-relaxed mb-2 ${
+        isDark ? "text-zinc-300" : "text-zinc-700"
+      }`}>
+        {parseInlineStyles(rawLine)}
+      </p>
+    );
+  }
+
+  flushList(lines.length);
+  return elements;
 }
 
 export default function AdminDashboard() {

@@ -861,35 +861,73 @@ export default function Portfolio() {
             {/* Desktop Skillset & Blogs Cards Grid */}
             <div className="grid grid-cols-12 gap-5 mt-5">
               {/* Skillset Card */}
-              <SpotlightCard isDark={isDark} className="col-span-6 p-6 sm:p-8 flex flex-col justify-start">
-                <div className="flex items-center space-x-2.5 mb-5 flex-shrink-0">
-                  <Cpu className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
-                  <h2 className={`text-base sm:text-lg font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
-                    Technical Skillset
-                  </h2>
-                </div>
-                <div className="space-y-4">
-                  {skillset.map((skill, index) => (
-                    <div key={index} className="flex flex-col space-y-1.5">
-                      <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>
-                        {skill.category}
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {skill.items.map((item, itemIdx) => (
+              <SpotlightCard isDark={isDark} className="col-span-6 p-6 sm:p-8 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center space-x-2.5 mb-6 flex-shrink-0">
+                    <Cpu className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                    <h2 className={`text-base sm:text-lg font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                      Technical Skillset
+                    </h2>
+                  </div>
+                  
+                  {/* Infinite Scrolling Professional Marquees */}
+                  <div className="space-y-5 overflow-hidden relative py-2">
+                    {/* Track 1: Left-to-Right Scrolling Marquee */}
+                    <div className="relative w-full overflow-hidden" style={{ maskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)" }}>
+                      <motion.div
+                        animate={{ x: [0, "-33.33%"] }}
+                        transition={{
+                          ease: "linear",
+                          duration: 25,
+                          repeat: Infinity,
+                        }}
+                        className="flex space-x-3 w-max"
+                      >
+                        {[...skillset[0].items, ...skillset[1].items, ...skillset[0].items, ...skillset[1].items, ...skillset[0].items, ...skillset[1].items].map((item, idx) => (
                           <span
-                            key={itemIdx}
-                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all ${
+                            key={idx}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
                               isDark
                                 ? "bg-white/5 text-zinc-300 border border-white/5 hover:bg-white/10 hover:text-white"
-                                : "bg-zinc-100 text-zinc-700 border border-zinc-200 hover:bg-zinc-200 hover:text-zinc-900"
+                                : "bg-zinc-100 text-zinc-700 border border-zinc-200 hover:bg-zinc-200 hover:text-zinc-950"
                             }`}
                           >
                             {item}
                           </span>
                         ))}
-                      </div>
+                      </motion.div>
                     </div>
-                  ))}
+
+                    {/* Track 2: Right-to-Left Scrolling Marquee */}
+                    <div className="relative w-full overflow-hidden" style={{ maskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)" }}>
+                      <motion.div
+                        animate={{ x: ["-33.33%", 0] }}
+                        transition={{
+                          ease: "linear",
+                          duration: 28,
+                          repeat: Infinity,
+                        }}
+                        className="flex space-x-3 w-max"
+                      >
+                        {[...skillset[2].items, ...skillset[3].items, ...skillset[4].items, ...skillset[2].items, ...skillset[3].items, ...skillset[4].items, ...skillset[2].items, ...skillset[3].items, ...skillset[4].items].map((item, idx) => (
+                          <span
+                            key={idx}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
+                              isDark
+                                ? "bg-white/5 text-zinc-300 border border-white/5 hover:bg-white/10 hover:text-white"
+                                : "bg-zinc-100 text-zinc-700 border border-zinc-200 hover:bg-zinc-200 hover:text-zinc-950"
+                            }`}
+                          >
+                            {item}
+                          </span>
+                        ))}
+                      </motion.div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`text-[10px] tracking-wider italic font-mono text-center pt-6 flex-shrink-0 ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>
+                  ✦ Continuous Marquee Loop • Non-stop Animation ✦
                 </div>
               </SpotlightCard>
 
@@ -1223,34 +1261,70 @@ export default function Portfolio() {
 
             {/* Skillset (Mobile) */}
             <SpotlightCard isDark={isDark} className="p-6">
-              <div className="flex items-center space-x-2.5 mb-5">
+              <div className="flex items-center space-x-2.5 mb-6">
                 <Cpu className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
                 <h2 className={`text-xl font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
                   Technical Skillset
                 </h2>
               </div>
-              <div className="space-y-4">
-                {skillset.map((skill, index) => (
-                  <div key={index} className="flex flex-col space-y-1.5">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>
-                      {skill.category}
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {skill.items.map((item, itemIdx) => (
-                        <span
-                          key={itemIdx}
-                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all ${
-                            isDark
-                              ? "bg-white/5 text-zinc-300 border border-white/5"
-                              : "bg-zinc-100 text-zinc-700 border border-zinc-200"
-                          }`}
-                        >
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+              
+              {/* Infinite Scrolling Professional Marquees (Mobile) */}
+              <div className="space-y-4 overflow-hidden relative py-1">
+                {/* Track 1 */}
+                <div className="relative w-full overflow-hidden" style={{ maskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)" }}>
+                  <motion.div
+                    animate={{ x: [0, "-33.33%"] }}
+                    transition={{
+                      ease: "linear",
+                      duration: 20,
+                      repeat: Infinity,
+                    }}
+                    className="flex space-x-2.5 w-max"
+                  >
+                    {[...skillset[0].items, ...skillset[1].items, ...skillset[0].items, ...skillset[1].items, ...skillset[0].items, ...skillset[1].items].map((item, idx) => (
+                      <span
+                        key={idx}
+                        className={`px-3 py-1 rounded-xl text-[10px] font-semibold tracking-wide ${
+                          isDark
+                            ? "bg-white/5 text-zinc-300 border border-white/5"
+                            : "bg-zinc-100 text-zinc-700 border border-zinc-200"
+                        }`}
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </motion.div>
+                </div>
+
+                {/* Track 2 */}
+                <div className="relative w-full overflow-hidden" style={{ maskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)" }}>
+                  <motion.div
+                    animate={{ x: ["-33.33%", 0] }}
+                    transition={{
+                      ease: "linear",
+                      duration: 23,
+                      repeat: Infinity,
+                    }}
+                    className="flex space-x-2.5 w-max"
+                  >
+                    {[...skillset[2].items, ...skillset[3].items, ...skillset[4].items, ...skillset[2].items, ...skillset[3].items, ...skillset[4].items, ...skillset[2].items, ...skillset[3].items, ...skillset[4].items].map((item, idx) => (
+                      <span
+                        key={idx}
+                        className={`px-3 py-1 rounded-xl text-[10px] font-semibold tracking-wide ${
+                          isDark
+                            ? "bg-white/5 text-zinc-300 border border-white/5"
+                            : "bg-zinc-100 text-zinc-700 border border-zinc-200"
+                        }`}
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </motion.div>
+                </div>
+              </div>
+
+              <div className={`text-[9px] tracking-wider italic font-mono text-center pt-5 ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>
+                ✦ Continuous Marquee Loop • Non-stop Animation ✦
               </div>
             </SpotlightCard>
 
