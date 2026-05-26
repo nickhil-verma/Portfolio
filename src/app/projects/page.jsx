@@ -29,30 +29,104 @@ const ProjectSpotlightCard = ({ children, className = "" }) => {
       onMouseLeave={() => setIsHovered(false)}
       className={`relative overflow-hidden rounded-[24px] glass-card hover:border-white/10 hover:-translate-y-1.5 transition-all duration-500 shadow-xl ${className}`}
     >
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none" />
+      {/* Reflective top highlight */}
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none z-20" />
+      
+      {/* Mouse spotlight light effect */}
       <div
-        className="absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none"
+        className="absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none z-0"
         style={{
           opacity: isHovered ? 1 : 0,
-          background: `radial-gradient(400px circle at ${coords.x}px ${coords.y}px, rgba(239, 68, 68, 0.04), transparent 80%)`,
+          background: `radial-gradient(400px circle at ${coords.x}px ${coords.y}px, rgba(255, 255, 255, 0.05), transparent 80%)`,
         }}
       />
-      <div className="relative z-10 h-full">{children}</div>
+
+      {/* Dynamic Border Spotlight mask matching macOS dock coordinate glows */}
+      {isHovered && (
+        <div
+          className="absolute inset-0 rounded-[24px] pointer-events-none transition-opacity duration-300 z-10"
+          style={{
+            border: "1.5px solid rgba(255, 255, 255, 0.4)",
+            background: `radial-gradient(150px circle at ${coords.x}px ${coords.y}px, rgba(255, 255, 255, 0.08), transparent 80%)`,
+            maskImage: `radial-gradient(150px circle at ${coords.x}px ${coords.y}px, black 30%, transparent 100%)`,
+            WebkitMaskImage: `radial-gradient(150px circle at ${coords.x}px ${coords.y}px, black 30%, transparent 100%)`,
+          }}
+        />
+      )}
+      
+      <div className="relative z-20 h-full">{children}</div>
     </div>
   );
 };
+
+const baseProjects = [
+  {
+    title: "Hireonova – AI Job Engine",
+    description: "A comprehensive jobs crawling engine and smart resume parser matching algorithm powered by Ollama 3B. Processes massive datasets with precision and ranks candidates contextually.",
+    link: "https://github.com/Hireonova",
+    tech: ["Python", "Playwright", "MERN", "NLP", "Ollama"],
+    category: "ai",
+    stars: 12,
+    created_at: new Date("2026-05-10"),
+  },
+  {
+    title: "MOSDAC ISRO Chatbot",
+    description: "A FAISS and Gemma 3B based RAG chatbot engineered during the ISRO Space Hackathon. Delivers highly contextual responses based on space research datasets and meteorological data.",
+    link: "https://github.com/nickhil-verma/MOSDAC_PARENT_REPO/tree/main",
+    tech: ["React", "Node.js", "Gemma 3B", "MongoDB", "FAISS"],
+    category: "ai",
+    stars: 8,
+    created_at: new Date("2026-04-20"),
+  },
+  {
+    title: "Eternalan Concerts",
+    description: "An interactive and visually stunning concert booking platform customized for cross-border audiences between the US and China. Highly optimized rendering pipeline.",
+    link: "https://github.com/nickhil-verma/eternalan",
+    tech: ["React", "Tailwind CSS", "JavaScript", "REST APIs"],
+    category: "web",
+    stars: 15,
+    created_at: new Date("2026-03-30"),
+  },
+  {
+    title: "Plant Disease Detection",
+    description: "Deep Convolutional Neural Network (CNN) model built with TensorFlow and Keras, delivering a 95% classification accuracy across 15 distinct leaf disease types.",
+    link: "https://github.com/nickhil-verma/Plant-disease-detection-model",
+    tech: ["TensorFlow", "Keras", "NumPy", "HuggingFace", "Python"],
+    category: "ai",
+    stars: 10,
+    created_at: new Date("2026-02-15"),
+  },
+  {
+    title: "CEDAXDSU Club Website",
+    description: "The official web portal designed and developed for the IEEE CEDA chapter at Dayananda Sagar University. Incorporates a broadcast notice system and serves over 500+ active members.",
+    link: "https://dsuieeeceda.vercel.app/",
+    tech: ["React", "Tailwind CSS", "framer-motion", "Node js", "Express"],
+    category: "web",
+    stars: 20,
+    created_at: new Date("2026-01-05"),
+  },
+];
 
 export default function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [liveProjects, setLiveProjects] = useState([]);
   const [starredProjectIds, setStarredProjectIds] = useState([]);
+  const [interactions, setInteractions] = useState({});
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem("starred_projects");
       if (stored) {
-        setStarredProjectIds(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        setStarredProjectIds(parsed);
+        // Sync static fallback projects star count in memory on mount
+        baseProjects.forEach(p => {
+          if (parsed.includes(p.title) && !p.hasStarredIncremented) {
+            p.stars = (p.stars || 0) + 1;
+            p.hasStarredIncremented = true;
+          }
+        });
       }
     } catch (e) {
       console.error("Failed to load starred projects:", e);
@@ -60,94 +134,50 @@ export default function ProjectsPage() {
   }, []);
 
   const handleToggleStarProject = async (project) => {
-    const isStarred = starredProjectIds.includes(project._id || project.title);
+    const id = project._id || project.title;
+    const isStarred = starredProjectIds.includes(id);
     const action = isStarred ? "unstar" : "star";
     
     // Toggle locally for instant responsive UI feedback
     let nextStarred;
     if (isStarred) {
-      nextStarred = starredProjectIds.filter(id => id !== (project._id || project.title));
-      project.stars = Math.max(0, (project.stars || 0) - 1);
+      nextStarred = starredProjectIds.filter(x => x !== id);
     } else {
-      nextStarred = [...starredProjectIds, project._id || project.title];
-      project.stars = (project.stars || 0) + 1;
+      nextStarred = [...starredProjectIds, id];
     }
     setStarredProjectIds(nextStarred);
     localStorage.setItem("starred_projects", JSON.stringify(nextStarred));
 
-    // If it is a database project, trigger API update
-    if (project._id) {
-      try {
-        const res = await fetch(`/api/projects?id=${project._id}&action=${action}`, {
-          method: "PATCH",
-        });
-        const data = await res.json();
-        if (data.success) {
-          setLiveProjects(prev => prev.map(p => {
-            if (p._id === project._id) {
-              return { ...p, stars: data.stars };
-            }
-            return p;
-          }));
+    // Calculate current stars count
+    const currentCount = (interactions[id] !== undefined)
+      ? interactions[id]
+      : (project.stars || 0);
+    const increment = isStarred ? -1 : 1;
+    const newCount = Math.max(0, currentCount + increment);
+
+    // Update interactions mapping locally
+    setInteractions(prev => ({ ...prev, [id]: newCount }));
+
+    try {
+      const fallbackVal = project.stars || 0;
+      const res = await fetch(`/api/interactions?id=${encodeURIComponent(id)}&type=star&action=${action}&fallback=${fallbackVal}`, {
+        method: "PATCH",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setInteractions(prev => ({ ...prev, [id]: data.count }));
+        if (project._id) {
+          setLiveProjects(prev => prev.map(p => p._id === project._id ? { ...p, stars: data.count } : p));
         }
-      } catch (err) {
-        console.error("Failed to update stars in database:", err);
       }
+    } catch (err) {
+      console.error("Failed to update stars in database:", err);
     }
   };
 
-  // Local base projects with descending timestamps
-  const baseProjects = [
-    {
-      title: "Hireonova – AI Job Engine",
-      description: "A comprehensive jobs crawling engine and smart resume parser matching algorithm powered by Ollama 3B. Processes massive datasets with precision and ranks candidates contextually.",
-      link: "https://github.com/Hireonova",
-      tech: ["Python", "Playwright", "MERN", "NLP", "Ollama"],
-      category: "ai",
-      stars: 12,
-      created_at: new Date("2026-05-10"),
-    },
-    {
-      title: "MOSDAC ISRO Chatbot",
-      description: "A FAISS and Gemma 3B based RAG chatbot engineered during the ISRO Space Hackathon. Delivers highly contextual responses based on space research datasets and meteorological data.",
-      link: "https://github.com/nickhil-verma/MOSDAC_PARENT_REPO/tree/main",
-      tech: ["React", "Node.js", "Gemma 3B", "MongoDB", "FAISS"],
-      category: "ai",
-      stars: 8,
-      created_at: new Date("2026-04-20"),
-    },
-    {
-      title: "Eternalan Concerts",
-      description: "An interactive and visually stunning concert booking platform customized for cross-border audiences between the US and China. Highly optimized rendering pipeline.",
-      link: "https://github.com/nickhil-verma/eternalan",
-      tech: ["React", "Tailwind CSS", "JavaScript", "REST APIs"],
-      category: "web",
-      stars: 15,
-      created_at: new Date("2026-03-30"),
-    },
-    {
-      title: "Plant Disease Detection",
-      description: "Deep Convolutional Neural Network (CNN) model built with TensorFlow and Keras, delivering a 95% classification accuracy across 15 distinct leaf disease types.",
-      link: "https://github.com/nickhil-verma/Plant-disease-detection-model",
-      tech: ["TensorFlow", "Keras", "NumPy", "HuggingFace", "Python"],
-      category: "ai",
-      stars: 10,
-      created_at: new Date("2026-02-15"),
-    },
-    {
-      title: "CEDAXDSU Club Website",
-      description: "The official web portal designed and developed for the IEEE CEDA chapter at Dayananda Sagar University. Incorporates a broadcast notice system and serves over 500+ active members.",
-      link: "https://dsuieeeceda.vercel.app/",
-      tech: ["React", "Tailwind CSS", "framer-motion", "Node js", "Express"],
-      category: "web",
-      stars: 20,
-      created_at: new Date("2026-01-05"),
-    },
-  ];
-
-  // Fetch live uploaded projects from MongoDB on mount
+  // Fetch live uploaded projects and interactions from MongoDB on mount
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchProjectsAndInteractions = async () => {
       try {
         const res = await fetch("/api/projects");
         const data = await res.json();
@@ -157,8 +187,22 @@ export default function ProjectsPage() {
       } catch (err) {
         console.error("Failed to fetch live projects:", err);
       }
+
+      try {
+        const res = await fetch("/api/interactions");
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const map = {};
+          data.forEach(item => {
+            map[item._id] = item.count;
+          });
+          setInteractions(map);
+        }
+      } catch (err) {
+        console.error("Failed to load interactions:", err);
+      }
     };
-    fetchProjects();
+    fetchProjectsAndInteractions();
   }, []);
 
   // Merge lists and sort by created_at in descending order (most recent first)
@@ -187,7 +231,7 @@ export default function ProjectsPage() {
             className="flex items-center space-x-2 text-xs font-semibold tracking-wide text-zinc-400 hover:text-white transition-colors py-2 px-3 bg-white/5 border border-white/5 rounded-xl backdrop-blur-md"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Dashboard</span>
+            <span>Back to Portfolio</span>
           </motion.button>
         </Link>
       </div>
@@ -255,7 +299,7 @@ export default function ProjectsPage() {
                     }`}
                   >
                     <Star className={`w-3.5 h-3.5 ${starredProjectIds.includes(project._id || project.title) ? "fill-current" : ""}`} />
-                    <span className="text-xs font-bold font-outfit">{project.stars || 0}</span>
+                    <span className="text-xs font-bold font-outfit">{interactions[project._id || project.title] !== undefined ? interactions[project._id || project.title] : (project.stars || 0)}</span>
                   </button>
                 </div>
 

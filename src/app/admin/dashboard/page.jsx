@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, LayoutDashboard, FolderKanban, BookHeart, LogOut, 
-  Plus, Trash2, Users, Cpu, FileText, CheckCircle2, Globe, Monitor, Smartphone, Tablet
+  Plus, Trash2, Users, Cpu, FileText, CheckCircle2, Globe, Monitor, Smartphone, Tablet,
+  Github, X
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -111,6 +112,11 @@ export default function AdminDashboard() {
   const [editingProjectId, setEditingProjectId] = useState(null);
   const [editingBlogId, setEditingBlogId] = useState(null);
   const [blogWriteMode, setBlogWriteMode] = useState("write");
+  const [fullscreenProjectEditor, setFullscreenProjectEditor] = useState(false);
+  const [fullscreenBlogEditor, setFullscreenBlogEditor] = useState(false);
+
+  const topProjects = Array.isArray(dashboardProjects) ? [...dashboardProjects].sort((a, b) => (b.stars || 0) - (a.stars || 0)).slice(0, 5) : [];
+  const topBlogs = Array.isArray(dashboardBlogs) ? [...dashboardBlogs].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 5) : [];
 
   // Fetch all live data on tab change or mount
   const fetchData = async () => {
@@ -194,6 +200,7 @@ export default function AdminDashboard() {
         setNewProjDeployed("");
         setNewProjDesc("");
         setEditingProjectId(null);
+        setFullscreenProjectEditor(false);
         fetchData();
       } else {
         setProjMsg(data.error || "Failed to submit project data");
@@ -213,6 +220,7 @@ export default function AdminDashboard() {
     setNewProjDesc(p.description);
     setNewProjCat(p.category);
     setProjMsg("");
+    setFullscreenProjectEditor(true);
   };
 
   const cancelEditProject = () => {
@@ -223,6 +231,7 @@ export default function AdminDashboard() {
     setNewProjDeployed("");
     setNewProjDesc("");
     setProjMsg("");
+    setFullscreenProjectEditor(false);
   };
 
   const handleDeleteProject = async (id) => {
@@ -281,6 +290,7 @@ export default function AdminDashboard() {
         setNewBlogBanner("");
         setNewBlogContent("");
         setEditingBlogId(null);
+        setFullscreenBlogEditor(false);
         fetchData();
       } else {
         setBlogMsg(data.error || "Failed to submit blog data");
@@ -300,6 +310,7 @@ export default function AdminDashboard() {
     setNewBlogCat(b.category);
     setNewBlogContent(b.content);
     setBlogMsg("");
+    setFullscreenBlogEditor(true);
   };
 
   const cancelEditBlog = () => {
@@ -310,6 +321,7 @@ export default function AdminDashboard() {
     setNewBlogBanner("");
     setNewBlogContent("");
     setBlogMsg("");
+    setFullscreenBlogEditor(false);
   };
 
   const handleDeleteBlog = async (id) => {
@@ -475,6 +487,79 @@ export default function AdminDashboard() {
               })}
             </div>
 
+            {/* Dynamic Leaderboards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Projects Leaderboard */}
+              <div className="p-6 rounded-[24px] glass-card relative">
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent pointer-events-none" />
+                <div className="flex justify-between items-center mb-5">
+                  <h3 className="text-sm font-bold font-outfit text-white flex items-center gap-2">
+                    <FolderKanban className="w-4 h-4 text-amber-400" />
+                    <span>Most Starred Projects</span>
+                  </h3>
+                  <span className="text-[9px] font-bold uppercase bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded text-amber-400">
+                    Leaderboard
+                  </span>
+                </div>
+                {topProjects.length === 0 ? (
+                  <div className="py-12 text-center text-xs text-zinc-500">No dynamic database projects recorded.</div>
+                ) : (
+                  <div className="space-y-3">
+                    {topProjects.map((p, idx) => (
+                      <div key={idx} className="flex justify-between items-center p-3.5 bg-white/[0.02] border border-white/5 rounded-xl hover:border-white/10 transition-all">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-xs font-bold text-zinc-500 font-mono w-4">#{idx + 1}</span>
+                          <div>
+                            <p className="text-xs font-bold text-white leading-none mb-1.5">{p.title}</p>
+                            <p className="text-[9px] text-zinc-400 font-mono">{p.category || "web"}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-amber-400 text-xs font-bold font-mono">
+                          <span>★</span>
+                          <span>{p.stars || 0}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Blogs Leaderboard */}
+              <div className="p-6 rounded-[24px] glass-card relative">
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/20 to-transparent pointer-events-none" />
+                <div className="flex justify-between items-center mb-5">
+                  <h3 className="text-sm font-bold font-outfit text-white flex items-center gap-2">
+                    <BookHeart className="w-4 h-4 text-red-400" />
+                    <span>Most Liked Blogs</span>
+                  </h3>
+                  <span className="text-[9px] font-bold uppercase bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded text-red-400">
+                    Leaderboard
+                  </span>
+                </div>
+                {topBlogs.length === 0 ? (
+                  <div className="py-12 text-center text-xs text-zinc-500">No dynamic database blogs published.</div>
+                ) : (
+                  <div className="space-y-3">
+                    {topBlogs.map((b, idx) => (
+                      <div key={idx} className="flex justify-between items-center p-3.5 bg-white/[0.02] border border-white/5 rounded-xl hover:border-white/10 transition-all">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-xs font-bold text-zinc-500 font-mono w-4">#{idx + 1}</span>
+                          <div>
+                            <p className="text-xs font-bold text-white leading-none mb-1.5">{b.title}</p>
+                            <p className="text-[9px] text-zinc-400 font-mono">{b.category || "Tech"}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-red-400 text-xs font-bold font-mono">
+                          <span>♥</span>
+                          <span>{b.likes || 0}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Geolocation visitor logs table */}
             <div className="p-6 rounded-[24px] glass-card relative">
               <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none" />
@@ -494,8 +579,8 @@ export default function AdminDashboard() {
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="border-b border-white/5 text-zinc-400 uppercase font-bold tracking-wider text-[9px]">
-                        <th className="pb-3.5 pl-2">Device profile</th>
-                        <th className="pb-3.5">IP Address</th>
+                        <th className="pb-3.5 pl-2">Device Profile & Screen</th>
+                        <th className="pb-3.5">IP Address & ISP</th>
                         <th className="pb-3.5">Geocoded Location</th>
                         <th className="pb-3.5">Timestamp</th>
                         <th className="pb-3.5 pr-2 text-right">System Agent</th>
@@ -512,13 +597,30 @@ export default function AdminDashboard() {
                             ) : (
                               <Monitor className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                             )}
-                            <span className="font-semibold">{log.device || "Desktop"}</span>
+                            <div>
+                              <span className="font-semibold text-xs text-white">{log.device || "Desktop"}</span>
+                              <span className="block text-[10px] text-zinc-500 font-mono mt-0.5">{log.screenResolution || "Unknown"}</span>
+                            </div>
                           </td>
-                          <td className="py-3 text-zinc-300 font-mono">{log.ip}</td>
-                          <td className="py-3 text-zinc-200 font-medium">
+                          <td className="py-3 text-zinc-300 font-mono text-xs">
+                            <div>
+                              <span>{log.ip}</span>
+                              <span className="block text-[10px] text-zinc-500 font-sans mt-0.5 max-w-[150px] truncate" title={log.isp || "Localhost Network"}>
+                                {log.isp || "Localhost Network"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 text-zinc-200 font-medium text-xs">
                             <span className="inline-flex items-center gap-1.5">
                               <Globe className="w-3.5 h-3.5 text-zinc-500" />
-                              <span>{log.location || "Unknown"}</span>
+                              <div>
+                                <span>{log.location || "Unknown"}</span>
+                                {log.lat && log.lon && (
+                                  <span className="block text-[10px] text-zinc-500 font-mono mt-0.5">
+                                    {log.lat.toFixed(4)}, {log.lon.toFixed(4)}
+                                  </span>
+                                )}
+                              </div>
                             </span>
                           </td>
                           <td className="py-3 text-zinc-400 font-mono text-[10px]">
@@ -531,7 +633,10 @@ export default function AdminDashboard() {
                             })}
                           </td>
                           <td className="py-3 text-zinc-400 pr-2 text-right text-[10px] font-medium">
-                            {log.browser} / {log.os}
+                            <div>
+                              <span>{log.browser} / {log.os}</span>
+                              <span className="block text-[10px] text-zinc-500 font-sans mt-0.5">{log.language || "Unknown"}</span>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -545,136 +650,44 @@ export default function AdminDashboard() {
 
         {/* PROJECTS TAB */}
         {activeTab === "projects" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Add Project Form */}
-            <div className="col-span-1 p-6 rounded-[24px] glass-card h-fit relative">
+          <div className="space-y-6">
+            <div className="flex justify-between items-center p-6 rounded-[24px] glass-card relative">
               <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/20 to-transparent pointer-events-none" />
-              <h3 className="text-lg font-bold font-outfit text-white mb-4">Upload Project</h3>
+              <div>
+                <h3 className="text-lg font-bold font-outfit text-white">Dynamic Project Control Panel</h3>
+                <p className="text-xs text-zinc-400">Launch premium workspace consoles to edit or upload projects in distraction-free mode.</p>
+              </div>
+              <button
+                onClick={() => {
+                  cancelEditProject();
+                  setFullscreenProjectEditor(true);
+                }}
+                className="py-2.5 px-5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center space-x-2 shadow-lg shadow-red-500/20"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Upload New Project</span>
+              </button>
+            </div>
+
+            {/* Projects list management */}
+            <div className="p-6 rounded-[24px] glass-card relative">
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/10 to-transparent pointer-events-none" />
+              <h3 className="text-lg font-bold font-outfit text-white mb-4">Existing dynamic uploaded projects</h3>
               
               {projMsg && (
-                <div className={`mb-4 p-3 rounded-xl text-xs font-semibold text-center border ${
-                  projMsg.includes("success") 
-                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
-                    : "bg-red-500/10 border-red-500/20 text-red-400"
-                }`}>
+                <div className="mb-4 p-3 rounded-xl text-xs font-semibold text-center border bg-emerald-500/10 border-emerald-500/20 text-emerald-400">
                   {projMsg}
                 </div>
               )}
 
-              <form onSubmit={handleAddProject} className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
-                    Project Title <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="E.g. Hireonova RAG Engine"
-                    value={newProjTitle}
-                    onChange={(e) => { setNewProjTitle(e.target.value); setProjMsg(""); }}
-                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
-                    Tech Stack (Comma Separated) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="React, Python, Tailwind, FAISS"
-                    value={newProjTech}
-                    onChange={(e) => { setNewProjTech(e.target.value); setProjMsg(""); }}
-                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
-                    GitHub Link <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="url"
-                    required
-                    placeholder="https://github.com/..."
-                    value={newProjGithub}
-                    onChange={(e) => { setNewProjGithub(e.target.value); setProjMsg(""); }}
-                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
-                    Deployed URL (Optional)
-                  </label>
-                  <input
-                    type="url"
-                    placeholder="https://..."
-                    value={newProjDeployed}
-                    onChange={(e) => { setNewProjDeployed(e.target.value); setProjMsg(""); }}
-                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
-                    Short Description
-                  </label>
-                  <textarea
-                    placeholder="Provide a quick detailed summary of the codebase parameters..."
-                    value={newProjDesc}
-                    onChange={(e) => setNewProjDesc(e.target.value)}
-                    className="w-full h-20 bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans resize-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">Category</label>
-                  <select
-                    value={newProjCat}
-                    onChange={(e) => setNewProjCat(e.target.value)}
-                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-zinc-400 font-sans"
-                  >
-                    <option value="web">Web & Systems</option>
-                    <option value="ai">AI / NLP / Chatbots</option>
-                  </select>
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center justify-center space-x-2 shadow-lg shadow-red-500/20"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>{editingProjectId ? "Update Project" : "Upload Project to DB"}</span>
-                  </button>
-                  {editingProjectId && (
-                    <button
-                      type="button"
-                      onClick={cancelEditProject}
-                      className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5 rounded-xl text-xs font-semibold transition-all"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </div>
-              </form>
-            </div>
-
-            {/* Projects list management */}
-            <div className="col-span-2 p-6 rounded-[24px] glass-card relative h-fit">
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/10 to-transparent pointer-events-none" />
-              <h3 className="text-lg font-bold font-outfit text-white mb-4">Existing dynamic uploaded projects</h3>
-              
               {dashboardProjects.length === 0 ? (
                 <div className="py-20 text-center text-xs text-zinc-500">
                   No dynamic database uploads recorded yet. Local fallback assets are displayed on main pages.
                 </div>
               ) : (
-                <div className="space-y-3 overflow-y-auto max-h-[580px] pr-2">
+                <div className="space-y-3">
                   {dashboardProjects.map((p, idx) => (
-                    <div key={idx} className="flex justify-between items-center p-4 bg-[#121214]/50 border border-white/5 rounded-2xl">
+                    <div key={idx} className="flex justify-between items-center p-4 bg-[#121214]/50 border border-white/5 rounded-2xl hover:border-white/10 transition-all">
                       <div>
                         <h4 className="text-xs font-bold text-white">{p.title}</h4>
                         <div className="flex flex-wrap gap-1 mt-1">
@@ -716,164 +729,47 @@ export default function AdminDashboard() {
 
         {/* BLOGS TAB */}
         {activeTab === "blogs" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Add Blog Form */}
-            <div className="col-span-1 p-6 rounded-[24px] glass-card h-fit relative">
+          <div className="space-y-6">
+            <div className="flex justify-between items-center p-6 rounded-[24px] glass-card relative">
               <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/20 to-transparent pointer-events-none" />
-              <h3 className="text-lg font-bold font-outfit text-white mb-4">Write Blog post</h3>
+              <div>
+                <h3 className="text-lg font-bold font-outfit text-white">Dynamic Markdown Blog Panel</h3>
+                <p className="text-xs text-zinc-400">Launch our distraction-free, fullscreen split-pane workspace with real-time markdown compilers.</p>
+              </div>
+              <button
+                onClick={() => {
+                  cancelEditBlog();
+                  setFullscreenBlogEditor(true);
+                }}
+                className="py-2.5 px-5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center space-x-2 shadow-lg shadow-red-500/20"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Write New Blog Post</span>
+              </button>
+            </div>
+
+            {/* Blogs list management */}
+            <div className="p-6 rounded-[24px] glass-card relative">
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/10 to-transparent pointer-events-none" />
+              <h3 className="text-lg font-bold font-outfit text-white mb-4">Published dynamic database blogs</h3>
               
               {blogMsg && (
-                <div className={`mb-4 p-3 rounded-xl text-xs font-semibold text-center border ${
-                  blogMsg.includes("success") 
-                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
-                    : "bg-red-500/10 border-red-500/20 text-red-400"
-                }`}>
+                <div className="mb-4 p-3 rounded-xl text-xs font-semibold text-center border bg-emerald-500/10 border-emerald-500/20 text-emerald-400">
                   {blogMsg}
                 </div>
               )}
 
-              <form onSubmit={handleAddBlog} className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
-                    Blog Title <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="E.g. Dynamic RAG Pipelines"
-                    value={newBlogTitle}
-                    onChange={(e) => { setNewBlogTitle(e.target.value); setBlogMsg(""); }}
-                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
-                    Blog Thumbnail Image URL
-                  </label>
-                  <input
-                    type="url"
-                    placeholder="https://images.unsplash.com/..."
-                    value={newBlogImage}
-                    onChange={(e) => setNewBlogImage(e.target.value)}
-                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
-                    Blog Banner Image URL
-                  </label>
-                  <input
-                    type="url"
-                    placeholder="https://images.unsplash.com/..."
-                    value={newBlogBanner}
-                    onChange={(e) => setNewBlogBanner(e.target.value)}
-                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">Short Excerpt Summary</label>
-                  <input
-                    type="text"
-                    placeholder="A quick overview of what the reader will explore..."
-                    value={newBlogExcerpt}
-                    onChange={(e) => setNewBlogExcerpt(e.target.value)}
-                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">Category Tag</label>
-                  <input
-                    type="text"
-                    placeholder="AI & NLP, Systems, Web Dev"
-                    value={newBlogCat}
-                    onChange={(e) => setNewBlogCat(e.target.value)}
-                    className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-sans"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                      Blog Body Content (Markdown Supported) <span className="text-red-500">*</span>
-                    </label>
-                    <div className="flex bg-white/5 border border-white/5 p-0.5 rounded-lg">
-                      <button
-                        type="button"
-                        onClick={() => setBlogWriteMode("write")}
-                        className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider transition-all ${
-                          blogWriteMode === "write" ? "bg-red-500/20 text-red-400" : "text-zinc-500"
-                        }`}
-                      >
-                        Write
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setBlogWriteMode("preview")}
-                        className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider transition-all ${
-                          blogWriteMode === "preview" ? "bg-red-500/20 text-red-400" : "text-zinc-500"
-                        }`}
-                      >
-                        Preview README
-                      </button>
-                    </div>
-                  </div>
-
-                  {blogWriteMode === "write" ? (
-                    <textarea
-                      required
-                      placeholder="# Article Header&#10;&#10;Write blog content in **Markdown format** (like README.md). Support headings, bullets, blockquotes, bold text..."
-                      value={newBlogContent}
-                      onChange={(e) => { setNewBlogContent(e.target.value); setBlogMsg(""); }}
-                      className="w-full h-44 bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none transition-colors backdrop-blur-md text-white font-mono resize-none"
-                    />
-                  ) : (
-                    <div className="w-full h-44 overflow-y-auto bg-[#121214]/60 border border-white/5 rounded-xl py-2.5 px-4 text-[10px] font-sans text-left text-zinc-300 select-text">
-                      {newBlogContent.trim() ? renderMarkdownContent(newBlogContent) : <p className="text-zinc-500 italic text-center py-16">No markdown written yet.</p>}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center justify-center space-x-2 shadow-lg shadow-red-500/20"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>{editingBlogId ? "Update Blog Post" : "Publish Blog post"}</span>
-                  </button>
-                  {editingBlogId && (
-                    <button
-                      type="button"
-                      onClick={cancelEditBlog}
-                      className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5 rounded-xl text-xs font-semibold transition-all"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </div>
-              </form>
-            </div>
-
-            {/* Blogs list management */}
-            <div className="col-span-2 p-6 rounded-[24px] glass-card relative h-fit">
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/10 to-transparent pointer-events-none" />
-              <h3 className="text-lg font-bold font-outfit text-white mb-4">Published dynamic database blogs</h3>
-              
               {dashboardBlogs.length === 0 ? (
                 <div className="py-20 text-center text-xs text-zinc-500">
                   No dynamic database blog uploads recorded yet. Local fallback mock articles are displayed.
                 </div>
               ) : (
-                <div className="space-y-3 overflow-y-auto max-h-[580px] pr-2">
+                <div className="space-y-3">
                   {dashboardBlogs.map((b, idx) => (
-                    <div key={idx} className="flex justify-between items-center p-4 bg-[#121214]/50 border border-white/5 rounded-2xl">
+                    <div key={idx} className="flex justify-between items-center p-4 bg-[#121214]/50 border border-white/5 rounded-2xl hover:border-white/10 transition-all">
                       <div>
                         <h4 className="text-xs font-bold text-white">{b.title}</h4>
-                        <p className="text-[9px] text-zinc-500 mt-1">
+                        <p className="text-[9px] text-zinc-500 mt-1 font-mono">
                           Published: {new Date(b.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
                         </p>
                       </div>
@@ -906,6 +802,342 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
+
+      {/* Fullscreen project editor overlay */}
+      <AnimatePresence>
+        {fullscreenProjectEditor && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="fixed inset-0 z-50 bg-[#050505] text-[#ededed] flex flex-col font-sans select-none"
+          >
+            {/* Header bar */}
+            <div className="flex justify-between items-center px-8 py-5 border-b border-white/5 bg-[#09090b]">
+              <div>
+                <h2 className="text-base font-extrabold font-outfit text-white tracking-tight flex items-center gap-2.5">
+                  <FolderKanban className="w-5 h-5 text-red-500" />
+                  <span>{editingProjectId ? "Update Dynamic Project Console" : "New Dynamic Project Workspace"}</span>
+                </h2>
+                <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                  {editingProjectId ? `PROJECT ID: ${editingProjectId}` : "CREATING FRESH DATABASE ENTREE"}
+                </p>
+              </div>
+              <div className="flex items-center space-x-3.5">
+                <button
+                  onClick={cancelEditProject}
+                  className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Exit Workspace</span>
+                </button>
+                <button
+                  onClick={handleAddProject}
+                  className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all shadow-lg shadow-red-500/20"
+                >
+                  {editingProjectId ? "Save Changes" : "Publish Project"}
+                </button>
+              </div>
+            </div>
+
+            {/* Body split-pane */}
+            <div className="flex-1 flex overflow-hidden select-text">
+              {/* Left Pane (Editor Form) */}
+              <div className="w-1/2 p-10 overflow-y-auto border-r border-white/5 space-y-6 select-text">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 pb-3 border-b border-white/5 select-none">
+                  Project Parameters Configuration
+                </h3>
+                
+                {projMsg && (
+                  <div className="p-3.5 rounded-xl text-xs font-semibold text-center border bg-red-500/10 border-red-500/20 text-red-400">
+                    {projMsg}
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                      Project Title <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="E.g. Hireonova RAG Engine"
+                      value={newProjTitle}
+                      onChange={(e) => { setNewProjTitle(e.target.value); setProjMsg(""); }}
+                      className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                        Tech Stack (Comma Separated) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="React, Python, Tailwind"
+                        value={newProjTech}
+                        onChange={(e) => { setNewProjTech(e.target.value); setProjMsg(""); }}
+                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">Category</label>
+                      <select
+                        value={newProjCat}
+                        onChange={(e) => setNewProjCat(e.target.value)}
+                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-zinc-400 font-sans"
+                      >
+                        <option value="web">Web & Systems</option>
+                        <option value="ai">AI / NLP / Chatbots</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                        GitHub Repository URL <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="url"
+                        required
+                        placeholder="https://github.com/..."
+                        value={newProjGithub}
+                        onChange={(e) => { setNewProjGithub(e.target.value); setProjMsg(""); }}
+                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                        Deployed Website Link (Optional)
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://..."
+                        value={newProjDeployed}
+                        onChange={(e) => { setNewProjDeployed(e.target.value); setProjMsg(""); }}
+                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                      Short Description / Explainer Text
+                    </label>
+                    <textarea
+                      placeholder="Provide a quick detailed summary of the codebase parameters..."
+                      value={newProjDesc}
+                      onChange={(e) => setNewProjDesc(e.target.value)}
+                      className="w-full h-40 bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Pane (Dynamic Card Preview) */}
+              <div className="w-1/2 p-10 bg-[#09090b] overflow-y-auto flex flex-col justify-center items-center select-none">
+                <div className="w-full max-w-md">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 pb-3 border-b border-white/5 mb-8 text-center">
+                    Portfolio Live Card Mockup
+                  </h3>
+                  
+                  <div className="relative overflow-hidden rounded-[24px] glass-card border border-white/5 p-8 shadow-2xl hover:border-red-500/20 transition-all duration-500 flex flex-col justify-between min-h-[280px]">
+                    {/* Reflective top highlight */}
+                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/25 to-transparent pointer-events-none z-20" />
+                    
+                    <div>
+                      <div className="flex justify-between items-start mb-4">
+                        <span className="text-[9px] font-bold bg-red-500/10 border border-red-500/20 text-red-400 px-2.5 py-0.5 rounded-md uppercase tracking-wider">
+                          {newProjCat || "web"}
+                        </span>
+                        <span className="flex items-center space-x-1 text-[10px] font-mono text-zinc-400 font-bold bg-white/5 border border-white/5 px-2 py-0.5 rounded-md">
+                          <span>★</span>
+                          <span>1</span>
+                        </span>
+                      </div>
+
+                      <h4 className="text-base font-extrabold font-outfit text-white mb-2 leading-snug">
+                        {newProjTitle || "Your Project Title Mock"}
+                      </h4>
+                      <p className="text-xs text-zinc-400 font-sans leading-relaxed mb-6">
+                        {newProjDesc || "Your short description parameters will populate dynamically in real-time as you type in the editor..."}
+                      </p>
+                    </div>
+
+                    <div className="flex justify-between items-center border-t border-white/5 pt-4">
+                      <div className="flex flex-wrap gap-1 max-w-[70%]">
+                        {(newProjTech ? newProjTech.split(",") : ["React", "Tailwind"]).map((t, idx) => (
+                          <span key={idx} className="text-[8px] bg-white/5 text-zinc-400 px-1.5 py-0.5 rounded-md uppercase font-semibold">
+                            {t.trim()}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex space-x-2 text-zinc-400">
+                        <Globe className="w-4 h-4 hover:text-white transition-colors" />
+                        <Github className="w-4 h-4 hover:text-white transition-colors" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Fullscreen blog editor overlay */}
+      <AnimatePresence>
+        {fullscreenBlogEditor && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="fixed inset-0 z-50 bg-[#050505] text-[#ededed] flex flex-col font-sans select-none"
+          >
+            {/* Header bar */}
+            <div className="flex justify-between items-center px-8 py-5 border-b border-white/5 bg-[#09090b]">
+              <div>
+                <h2 className="text-base font-extrabold font-outfit text-white tracking-tight flex items-center gap-2.5">
+                  <BookHeart className="w-5 h-5 text-red-500" />
+                  <span>{editingBlogId ? "Update Dynamic Blog Console" : "New Dynamic Blog Markdown Workspace"}</span>
+                </h2>
+                <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                  {editingBlogId ? `BLOG ID: ${editingBlogId}` : "CREATING FRESH DATABASE MARKDOWN ENTRY"}
+                </p>
+              </div>
+              <div className="flex items-center space-x-3.5">
+                <button
+                  onClick={cancelEditBlog}
+                  className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Exit Workspace</span>
+                </button>
+                <button
+                  onClick={handleAddBlog}
+                  className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all shadow-lg shadow-red-500/20"
+                >
+                  {editingBlogId ? "Save Changes" : "Publish Blog"}
+                </button>
+              </div>
+            </div>
+
+            {/* Body split-pane */}
+            <div className="flex-1 flex overflow-hidden">
+              {/* Left Pane (Editor Form) */}
+              <div className="w-1/2 p-10 overflow-y-auto border-r border-white/5 space-y-6 select-text">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 pb-3 border-b border-white/5 select-none">
+                  Markdown Blog Parameters
+                </h3>
+                
+                {blogMsg && (
+                  <div className="p-3.5 rounded-xl text-xs font-semibold text-center border bg-red-500/10 border-red-500/20 text-red-400">
+                    {blogMsg}
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                      Blog Article Title <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="E.g. Dynamic RAG Pipelines"
+                      value={newBlogTitle}
+                      onChange={(e) => { setNewBlogTitle(e.target.value); setBlogMsg(""); }}
+                      className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                        Thumbnail Image URL
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://images.unsplash.com/..."
+                        value={newBlogImage}
+                        onChange={(e) => setNewBlogImage(e.target.value)}
+                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                        Banner Image URL
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://images.unsplash.com/..."
+                        value={newBlogBanner}
+                        onChange={(e) => setNewBlogBanner(e.target.value)}
+                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">Short Excerpt Summary</label>
+                      <input
+                        type="text"
+                        placeholder="A quick overview of what the reader will explore..."
+                        value={newBlogExcerpt}
+                        onChange={(e) => setNewBlogExcerpt(e.target.value)}
+                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">Category Tag</label>
+                      <input
+                        type="text"
+                        placeholder="AI & NLP, Systems, Web Dev"
+                        value={newBlogCat}
+                        onChange={(e) => setNewBlogCat(e.target.value)}
+                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                      Blog Body Content (Markdown Supported) <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      required
+                      placeholder="# Article Header&#10;&#10;Write blog content in **Markdown format** (like README.md). Support headings, bullets, blockquotes, bold text..."
+                      value={newBlogContent}
+                      onChange={(e) => { setNewBlogContent(e.target.value); setBlogMsg(""); }}
+                      className="w-full h-80 bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-mono resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Pane (Live README Markdown Preview) */}
+              <div className="w-1/2 p-10 bg-[#09090b] overflow-y-auto flex flex-col justify-start text-left select-text">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 pb-3 border-b border-white/5 mb-6 text-center select-none">
+                  Live README Markdown Preview compiles on-the-go
+                </h3>
+                
+                <div className="w-full max-w-2xl bg-white/[0.01] border border-white/5 rounded-2xl p-8 min-h-[400px]">
+                  {newBlogContent.trim() ? (
+                    renderMarkdownContent(newBlogContent)
+                  ) : (
+                    <p className="text-zinc-500 italic text-center py-40 select-none">No markdown written yet. Enter some text in the left pane to compile.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

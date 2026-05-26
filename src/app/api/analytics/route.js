@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import clientPromise from "../../../lib/mongodb";
 
+export const dynamic = "force-dynamic";
+
 // Self-contained lightweight User-Agent Parser
 function parseUserAgent(ua) {
   let browser = "Other";
@@ -66,6 +68,18 @@ export async function POST(request) {
     const client = await clientPromise;
     const db = client.db("portfolio");
     
+    // Parse client-side parameters from request body
+    let body = {};
+    try {
+      body = await request.json();
+    } catch (e) {
+      // Body not present or invalid
+    }
+    const screenResolution = body.screenResolution || "Unknown";
+    const windowSize = body.windowSize || "Unknown";
+    const language = body.language || "Unknown";
+    const referrer = body.referrer || "Unknown";
+
     // Resolve IP address
     let ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "127.0.0.1";
     if (ip.includes(",")) {
@@ -78,9 +92,23 @@ export async function POST(request) {
     const country = request.headers.get("x-vercel-ip-country") || "";
     
     let location = "Localhost Development";
+    let lat = null;
+    let lon = null;
+    let isp = "Localhost Network";
+    let asn = "Localhost Org";
+
     if (country) {
       location = `${city ? city + ", " : ""}${region ? region + ", " : ""}${country}`;
-    } else if (ip === "127.0.0.1" || ip === "::1" || ip.startsWith("192.168.") || ip.startsWith("10.")) {
+      // Vercel gives coordinates via geo-headers as well
+      const latitude = request.headers.get("x-vercel-ip-latitude");
+      const longitude = request.headers.get("x-vercel-ip-longitude");
+      if (latitude && longitude) {
+        lat = parseFloat(latitude);
+        lon = parseFloat(longitude);
+      }
+    }
+
+    if (ip === "127.0.0.1" || ip === "::1" || ip.startsWith("192.168.") || ip.startsWith("10.") || ip.startsWith("172.16.")) {
       location = "Localhost Development";
     } else {
       // Dynamic live geolocation lookup from public API
@@ -98,6 +126,10 @@ export async function POST(request) {
           if (geoData.regionName) parts.push(geoData.regionName);
           if (geoData.country) parts.push(geoData.country);
           location = parts.length > 0 ? parts.join(", ") : "Unknown Location";
+          lat = geoData.lat || null;
+          lon = geoData.lon || null;
+          isp = geoData.isp || "Unknown ISP";
+          asn = geoData.as || "Unknown AS";
         } else {
           location = "Unknown Geolocation";
         }
@@ -114,6 +146,14 @@ export async function POST(request) {
     const logEntry = {
       ip,
       location,
+      lat,
+      lon,
+      isp,
+      asn,
+      screenResolution,
+      windowSize,
+      language,
+      referrer,
       browser,
       os,
       device,

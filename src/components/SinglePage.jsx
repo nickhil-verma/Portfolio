@@ -17,6 +17,10 @@ import {
   ChevronRight,
   FolderKanban,
   Star,
+  Cpu,
+  BookOpen,
+  Heart,
+  FileText,
 } from "lucide-react";
 import { SiLeetcode, SiCodeforces } from "react-icons/si";
 import Link from "next/link";
@@ -87,11 +91,11 @@ const SpotlightCard = ({ children, isDark, className = "", style = {} }) => {
       {/* Reflective top highlight */}
       <div className={`absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent ${
         isDark ? "via-white/10" : "via-black/5"
-      } to-transparent pointer-events-none`} />
+      } to-transparent pointer-events-none z-20`} />
 
       {/* Mouse spotlight light effect */}
       <div
-        className="absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none"
+        className="absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none z-0"
         style={{
           opacity: isHovered ? 1 : 0,
           background: `radial-gradient(400px circle at ${coords.x}px ${coords.y}px, ${
@@ -99,11 +103,81 @@ const SpotlightCard = ({ children, isDark, className = "", style = {} }) => {
           }, transparent 80%)`,
         }}
       />
+
+      {/* Dynamic Border Spotlight mask matching macOS dock coordinate glows */}
+      {isHovered && (
+        <div
+          className="absolute inset-0 rounded-[24px] pointer-events-none transition-opacity duration-300 z-10"
+          style={{
+            border: isDark ? "1.5px solid rgba(255, 255, 255, 0.4)" : "1.5px solid rgba(0, 0, 0, 0.15)",
+            background: `radial-gradient(150px circle at ${coords.x}px ${coords.y}px, ${isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.03)"}, transparent 80%)`,
+            maskImage: `radial-gradient(150px circle at ${coords.x}px ${coords.y}px, black 30%, transparent 100%)`,
+            WebkitMaskImage: `radial-gradient(150px circle at ${coords.x}px ${coords.y}px, black 30%, transparent 100%)`,
+          }}
+        />
+      )}
       
-      <div className={`relative z-10 w-full h-full flex flex-col ${innerClasses}`}>{children}</div>
+      <div className={`relative z-20 w-full h-full flex flex-col ${innerClasses}`}>{children}</div>
     </div>
   );
 };
+
+const fallbackBlogs = [
+  {
+    _id: "fb1",
+    title: "Building Scalable AI Search Engines with FAISS",
+    category: "AI & Search",
+    likes: 18,
+    excerpt: "An in-depth exploration of vector databases, similarity indexing, and building blazingly fast semantic search architectures...",
+    created_at: new Date()
+  },
+  {
+    _id: "fb2",
+    title: "Architecting High-Performance Next.js Serverless Routers",
+    category: "Web Engineering",
+    likes: 24,
+    excerpt: "Demystifying connection pools, route compiler trees, force-dynamic exports, and securing serverless executions under modern Vercel constraints...",
+    created_at: new Date()
+  }
+];
+
+const staticFallbackProjects = [
+  {
+    title: "Hireonova – AI Job Engine",
+    description: "Crawled 200K+ jobs, AI resume matcher with Ollama 3B",
+    link: "https://github.com/Hireonova",
+    tech: ["Python", "Playwright", "MERN", "NLP"],
+    stars: 12
+  },
+  {
+    title: "MOSDAC ISRO Chatbot",
+    description: "FAISS + Gemma 3B based chatbot for ISRO queries",
+    link: "https://github.com/nickhil-verma/MOSDAC_PARENT_REPO/tree/main",
+    tech: ["React", "Node.js", "Gemma 3B", "MongoDB"],
+    stars: 8
+  },
+  {
+    title: "Eternalan Concerts",
+    description: "Concert booking platform tailored for Chinese and US audiences.",
+    link: "https://github.com/nickhil-verma/eternalan",
+    tech: ["React", "Tailwind CSS", "JavaScript"],
+    stars: 15
+  },
+  {
+    title: "Plant Disease Detection",
+    description: "95% accuracy CNN model for 15 leaf diseases",
+    link: "https://github.com/nickhil-verma/Plant-disease-detection-model",
+    tech: ["TensorFlow", "Keras", "NumPy", "HuggingFace"],
+    stars: 9
+  },
+  {
+    title: "CEDAXDSU Club Website",
+    description: "IEEE Bangalore Chapter × DSU – Frontend Portal",
+    link: "https://dsuieeeceda.vercel.app/",
+    tech: ["React", "Tailwind CSS", "framer-motion", "Node js"],
+    stars: 11
+  }
+];
 
 export default function Portfolio() {
   const [isDark, setIsDark] = useState(true);
@@ -112,52 +186,129 @@ export default function Portfolio() {
   const [expandedExperience, setExpandedExperience] = useState(0); // Index 0 expanded by default
   const [liveProjects, setLiveProjects] = useState([]);
   const [starredProjectIds, setStarredProjectIds] = useState([]);
+  const [liveBlogs, setLiveBlogs] = useState([]);
+  const [likedBlogIds, setLikedBlogIds] = useState([]);
+  const [interactions, setInteractions] = useState({});
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("starred_projects");
-      if (stored) {
-        setStarredProjectIds(JSON.parse(stored));
+      const storedStars = localStorage.getItem("starred_projects");
+      if (storedStars) {
+        const parsedStars = JSON.parse(storedStars);
+        setStarredProjectIds(parsedStars);
+        
+        // Sync static fallback projects star count in memory on mount
+        staticFallbackProjects.forEach(p => {
+          if (parsedStars.includes(p.title) && !p.hasStarredIncremented) {
+            p.stars = (p.stars || 0) + 1;
+            p.hasStarredIncremented = true;
+          }
+        });
+      }
+
+      const storedLikes = localStorage.getItem("liked_blogs");
+      if (storedLikes) {
+        const parsedLikes = JSON.parse(storedLikes);
+        setLikedBlogIds(parsedLikes);
+
+        // Sync static fallback blogs likes count in memory on mount
+        fallbackBlogs.forEach(b => {
+          if (parsedLikes.includes(b._id || b.title) && !b.hasLikedIncremented) {
+            b.likes = (b.likes || 0) + 1;
+            b.hasLikedIncremented = true;
+          }
+        });
       }
     } catch (e) {
-      console.error("Failed to load starred projects:", e);
+      console.error("Failed to load local storage locks:", e);
     }
   }, []);
 
   const handleToggleStarProject = async (project) => {
-    const isStarred = starredProjectIds.includes(project._id || project.title);
+    const id = project._id || project.title;
+    const isStarred = starredProjectIds.includes(id);
     const action = isStarred ? "unstar" : "star";
-    
-    // Toggle locally for instant responsive UI feedback
+
+    // 1. Toggle locally for instant responsive UI feedback
     let nextStarred;
     if (isStarred) {
-      nextStarred = starredProjectIds.filter(id => id !== (project._id || project.title));
-      project.stars = Math.max(0, (project.stars || 0) - 1);
+      nextStarred = starredProjectIds.filter(x => x !== id);
     } else {
-      nextStarred = [...starredProjectIds, project._id || project.title];
-      project.stars = (project.stars || 0) + 1;
+      nextStarred = [...starredProjectIds, id];
     }
     setStarredProjectIds(nextStarred);
     localStorage.setItem("starred_projects", JSON.stringify(nextStarred));
 
-    // If it is a database project, trigger API update
-    if (project._id) {
-      try {
-        const res = await fetch(`/api/projects?id=${project._id}&action=${action}`, {
-          method: "PATCH",
-        });
-        const data = await res.json();
-        if (data.success) {
-          setLiveProjects(prev => prev.map(p => {
-            if (p._id === project._id) {
-              return { ...p, stars: data.stars };
-            }
-            return p;
-          }));
+    // Calculate current stars count
+    const currentCount = (interactions[id] !== undefined)
+      ? interactions[id]
+      : (project.stars || 0);
+    const increment = isStarred ? -1 : 1;
+    const newCount = Math.max(0, currentCount + increment);
+
+    // Update interactions mapping locally
+    setInteractions(prev => ({ ...prev, [id]: newCount }));
+
+    // 2. Dispatch database call to interactions endpoint
+    try {
+      const fallbackVal = project.stars || 0;
+      const res = await fetch(`/api/interactions?id=${encodeURIComponent(id)}&type=star&action=${action}&fallback=${fallbackVal}`, {
+        method: "PATCH",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setInteractions(prev => ({ ...prev, [id]: data.count }));
+        // Also update live projects state so dynamic data maps accurately
+        if (project._id) {
+          setLiveProjects(prev => prev.map(p => p._id === project._id ? { ...p, stars: data.count } : p));
         }
-      } catch (err) {
-        console.error("Failed to update stars in database:", err);
       }
+    } catch (err) {
+      console.error("Failed to update stars in database:", err);
+    }
+  };
+
+  const handleToggleLikeBlog = async (blog) => {
+    const id = blog._id || blog.title;
+    const isLiked = likedBlogIds.includes(id);
+    const action = isLiked ? "unlike" : "like";
+
+    // 1. Toggle locally for instant responsive UI feedback
+    let nextLiked;
+    if (isLiked) {
+      nextLiked = likedBlogIds.filter(x => x !== id);
+    } else {
+      nextLiked = [...likedBlogIds, id];
+    }
+    setLikedBlogIds(nextLiked);
+    localStorage.setItem("liked_blogs", JSON.stringify(nextLiked));
+
+    // Calculate current likes count
+    const currentCount = (interactions[id] !== undefined)
+      ? interactions[id]
+      : (blog.likes || 0);
+    const increment = isLiked ? -1 : 1;
+    const newCount = Math.max(0, currentCount + increment);
+
+    // Update interactions mapping locally
+    setInteractions(prev => ({ ...prev, [id]: newCount }));
+
+    // 2. Dispatch database call to interactions endpoint
+    try {
+      const fallbackVal = blog.likes || 0;
+      const res = await fetch(`/api/interactions?id=${encodeURIComponent(id)}&type=like&action=${action}&fallback=${fallbackVal}`, {
+        method: "PATCH",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setInteractions(prev => ({ ...prev, [id]: data.count }));
+        // Also update live blogs state so dynamic data maps accurately
+        if (blog._id) {
+          setLiveBlogs(prev => prev.map(b => b._id === blog._id ? { ...b, likes: data.count } : b));
+        }
+      }
+    } catch (err) {
+      console.error("Failed to update likes in database:", err);
     }
   };
 
@@ -231,7 +382,17 @@ export default function Portfolio() {
   useEffect(() => {
     const logVisitAndFetchProjects = async () => {
       try {
-        await fetch("/api/analytics", { method: "POST" });
+        const payload = {
+          screenResolution: typeof window !== "undefined" ? `${window.screen.width}x${window.screen.height}` : "Unknown",
+          windowSize: typeof window !== "undefined" ? `${window.innerWidth}x${window.innerHeight}` : "Unknown",
+          language: typeof navigator !== "undefined" ? navigator.language : "Unknown",
+          referrer: typeof document !== "undefined" ? (document.referrer || "Direct") : "Direct",
+        };
+        await fetch("/api/analytics", { 
+          method: "POST", 
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
       } catch (err) {
         console.error("Failed to log analytics visit:", err);
       }
@@ -244,6 +405,30 @@ export default function Portfolio() {
         }
       } catch (err) {
         console.error("Failed to fetch live projects from MongoDB:", err);
+      }
+
+      try {
+        const res = await fetch("/api/blogs");
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setLiveBlogs(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch live blogs from MongoDB:", err);
+      }
+
+      try {
+        const res = await fetch("/api/interactions");
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const map = {};
+          data.forEach(item => {
+            map[item._id] = item.count;
+          });
+          setInteractions(map);
+        }
+      } catch (err) {
+        console.error("Failed to load interactions:", err);
       }
     };
     logVisitAndFetchProjects();
@@ -265,6 +450,23 @@ export default function Portfolio() {
   }, []);
 
   const handleThemeChange = (val) => {
+    // Disable transitions temporarily to prevent jitter
+    const css = document.createElement("style");
+    css.type = "text/css";
+    css.appendChild(
+      document.createTextNode(
+        `* {
+           -webkit-transition: none !important;
+           -moz-transition: none !important;
+           -o-transition: none !important;
+           -ms-transition: none !important;
+           transition: none !important;
+         }`
+      )
+    );
+    document.head.appendChild(css);
+
+    // Apply theme changes
     setIsDark(val);
     localStorage.setItem("theme", val ? "dark" : "light");
     if (val) {
@@ -272,42 +474,18 @@ export default function Portfolio() {
     } else {
       document.documentElement.classList.remove("dark");
     }
+
+    // Force reflow
+    const _ = window.getComputedStyle(document.body);
+
+    // Re-enable transitions
+    setTimeout(() => {
+      document.head.removeChild(css);
+    }, 150);
   };
 
-  const projects = [
-    {
-      title: "Hireonova – AI Job Engine",
-      description: "Crawled 200K+ jobs, AI resume matcher with Ollama 3B",
-      link: "https://github.com/Hireonova",
-      tech: ["Python", "Playwright", "MERN", "NLP"],
-    },
-    {
-      title: "MOSDAC ISRO Chatbot",
-      description: "FAISS + Gemma 3B based chatbot for ISRO queries",
-      link: "https://github.com/nickhil-verma/MOSDAC_PARENT_REPO/tree/main",
-      tech: ["React", "Node.js", "Gemma 3B", "MongoDB"],
-    },
-    {
-      title: "Eternalan Concerts",
-      description: "Concert booking platform tailored for Chinese and US audiences.",
-      link: "https://github.com/nickhil-verma/eternalan",
-      tech: ["React", "Tailwind CSS", "JavaScript"],
-    },
-    {
-      title: "Plant Disease Detection",
-      description: "95% accuracy CNN model for 15 leaf diseases",
-      link: "https://github.com/nickhil-verma/Plant-disease-detection-model",
-      tech: ["TensorFlow", "Keras", "NumPy", "HuggingFace"],
-    },
-    {
-      title: "CEDAXDSU Club Website",
-      description: "IEEE Bangalore Chapter × DSU – Frontend Portal",
-      link: "https://dsuieeeceda.vercel.app/",
-      tech: ["React", "Tailwind CSS", "framer-motion", "Node js"],
-    },
-  ];
-
-  const combinedProjects = [...liveProjects, ...projects];
+  const combinedProjects = [...liveProjects, ...staticFallbackProjects];
+  const combinedBlogs = [...liveBlogs, ...fallbackBlogs].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   const experiences = [
     {
@@ -339,6 +517,14 @@ export default function Portfolio() {
     "Built a 500+ user university club site with broadcast system",
     "Global Rank 1097/35K – LeetCode Weekly Contest 408",
     "1700+ LeetCode rating, 300+ problems solved",
+  ];
+
+  const skillset = [
+    { category: "Languages", items: ["JavaScript", "TypeScript", "Python", "C++", "HTML/CSS"] },
+    { category: "Frontend", items: ["React", "Next.js", "Tailwind CSS", "Framer Motion", "Redux"] },
+    { category: "Backend", items: ["Node.js", "Express", "MongoDB", "PostgreSQL", "REST APIs"] },
+    { category: "AI & ML", items: ["TensorFlow", "Keras", "NLP", "Ollama", "FAISS", "Gemini API"] },
+    { category: "Tools", items: ["Git", "GitHub Actions", "Vercel", "Docker", "Playwright"] }
   ];
 
   return (
@@ -614,7 +800,7 @@ export default function Portfolio() {
                               }`}
                             >
                               <Star className={`w-3 h-3 ${starredProjectIds.includes(project._id || project.title) ? "fill-current" : ""}`} />
-                              <span>{project.stars || 0}</span>
+                              <span>{interactions[project._id || project.title] !== undefined ? interactions[project._id || project.title] : (project.stars || 0)}</span>
                             </button>
                           </div>
                         </div>
@@ -671,6 +857,104 @@ export default function Portfolio() {
               </SpotlightCard>
 
             </div>
+
+            {/* Desktop Skillset & Blogs Cards Grid */}
+            <div className="grid grid-cols-12 gap-5 mt-5">
+              {/* Skillset Card */}
+              <SpotlightCard isDark={isDark} className="col-span-6 p-6 sm:p-8 flex flex-col justify-start">
+                <div className="flex items-center space-x-2.5 mb-5 flex-shrink-0">
+                  <Cpu className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                  <h2 className={`text-base sm:text-lg font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                    Technical Skillset
+                  </h2>
+                </div>
+                <div className="space-y-4">
+                  {skillset.map((skill, index) => (
+                    <div key={index} className="flex flex-col space-y-1.5">
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>
+                        {skill.category}
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {skill.items.map((item, itemIdx) => (
+                          <span
+                            key={itemIdx}
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all ${
+                              isDark
+                                ? "bg-white/5 text-zinc-300 border border-white/5 hover:bg-white/10 hover:text-white"
+                                : "bg-zinc-100 text-zinc-700 border border-zinc-200 hover:bg-zinc-200 hover:text-zinc-900"
+                            }`}
+                          >
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </SpotlightCard>
+
+              {/* Blogs Card */}
+              <SpotlightCard isDark={isDark} className="col-span-6 p-6 sm:p-8 flex flex-col justify-start">
+                <div className="flex items-center justify-between mb-5 flex-shrink-0">
+                  <div className="flex items-center space-x-2.5">
+                    <FileText className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                    <h2 className={`text-base sm:text-lg font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                      Recent Insights
+                    </h2>
+                  </div>
+                  <Link
+                    href="/blogs"
+                    className={`text-xs font-bold transition-all hover:underline flex items-center space-x-1 ${
+                      isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"
+                    }`}
+                  >
+                    <span>View All</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+
+                <div className="space-y-4 overflow-y-auto pr-1 flex-1 hide-scrollbar max-h-[300px]">
+                  {combinedBlogs.slice(0, 2).map((blog, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-4 rounded-2xl flex flex-col justify-between transition-all ${
+                        isDark 
+                          ? "bg-[#121214]/50 border border-white/5 hover:bg-[#18181b]/50" 
+                          : "bg-white/60 border border-black/5 hover:bg-white shadow-sm"
+                      }`}
+                    >
+                      <div className="flex justify-between items-center mb-2">
+                        <span className={`px-2 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-wider ${
+                          isDark ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-red-50 text-red-600 border border-red-100"
+                        }`}>
+                          {blog.category}
+                        </span>
+                        <button
+                          onClick={() => handleToggleLikeBlog(blog)}
+                          className={`flex items-center space-x-1 px-2 py-0.5 rounded-lg border transition-all ${
+                            likedBlogIds.includes(blog._id || blog.title)
+                              ? "bg-red-500/10 text-red-400 border-red-500/30"
+                              : isDark 
+                                ? "bg-white/5 text-zinc-500 hover:text-white border-white/5" 
+                                : "bg-zinc-100 text-zinc-500 border-zinc-200"
+                          }`}
+                        >
+                          <Heart className={`w-3 h-3 ${likedBlogIds.includes(blog._id || blog.title) ? "fill-current" : ""}`} />
+                          <span className="text-[10px] font-bold">{interactions[blog._id || blog.title] !== undefined ? interactions[blog._id || blog.title] : (blog.likes || 0)}</span>
+                        </button>
+                      </div>
+                      <h3 className={`font-bold font-outfit text-xs sm:text-sm mb-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                        {blog.title}
+                      </h3>
+                      <p className={`text-[10px] sm:text-xs leading-relaxed line-clamp-2 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+                        {blog.excerpt}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </SpotlightCard>
+            </div>
+
           </div>
 
           {/* Mobile and Tablet Layout */}
@@ -877,7 +1161,7 @@ export default function Portfolio() {
                           }`}
                         >
                           <Star className={`w-3.5 h-3.5 ${starredProjectIds.includes(project._id || project.title) ? "fill-current" : ""}`} />
-                          <span>{project.stars || 0}</span>
+                          <span>{interactions[project._id || project.title] !== undefined ? interactions[project._id || project.title] : (project.stars || 0)}</span>
                         </button>
                       </div>
                     </div>
@@ -937,6 +1221,100 @@ export default function Portfolio() {
 
             </div>
 
+            {/* Skillset (Mobile) */}
+            <SpotlightCard isDark={isDark} className="p-6">
+              <div className="flex items-center space-x-2.5 mb-5">
+                <Cpu className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                <h2 className={`text-xl font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                  Technical Skillset
+                </h2>
+              </div>
+              <div className="space-y-4">
+                {skillset.map((skill, index) => (
+                  <div key={index} className="flex flex-col space-y-1.5">
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>
+                      {skill.category}
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {skill.items.map((item, itemIdx) => (
+                        <span
+                          key={itemIdx}
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all ${
+                            isDark
+                              ? "bg-white/5 text-zinc-300 border border-white/5"
+                              : "bg-zinc-100 text-zinc-700 border border-zinc-200"
+                          }`}
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </SpotlightCard>
+
+            {/* Recent Insights (Mobile) */}
+            <SpotlightCard isDark={isDark} className="p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center space-x-2.5">
+                  <FileText className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                  <h2 className={`text-xl font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                    Recent Insights
+                  </h2>
+                </div>
+                <Link
+                  href="/blogs"
+                  className={`text-xs font-bold transition-all hover:underline flex items-center space-x-1 ${
+                    isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"
+                  }`}
+                >
+                  <span>View All</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+
+              <div className="space-y-4">
+                {combinedBlogs.slice(0, 2).map((blog, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-4 rounded-2xl flex flex-col justify-between transition-all ${
+                      isDark 
+                        ? "bg-[#121214]/50 border border-white/5" 
+                        : "bg-white/60 border border-black/5"
+                    }`}
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <span className={`px-2 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-wider ${
+                        isDark ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-red-50 text-red-600 border border-red-100"
+                      }`}>
+                        {blog.category}
+                      </span>
+                      <button
+                        onClick={() => handleToggleLikeBlog(blog)}
+                        className={`flex items-center space-x-1 px-2 py-0.5 rounded-lg border transition-all ${
+                          likedBlogIds.includes(blog._id || blog.title)
+                            ? "bg-red-500/10 text-red-400 border-red-500/30"
+                            : isDark 
+                              ? "bg-white/5 text-zinc-500 hover:text-white border-white/5" 
+                              : "bg-zinc-100 text-zinc-500 border-zinc-200"
+                        }`}
+                      >
+                        <Heart className={`w-3 h-3 ${likedBlogIds.includes(blog._id || blog.title) ? "fill-current" : ""}`} />
+                        <span className="text-[10px] font-bold">{interactions[blog._id || blog.title] !== undefined ? interactions[blog._id || blog.title] : (blog.likes || 0)}</span>
+                      </button>
+                    </div>
+                    <h3 className={`font-bold font-outfit text-sm mb-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                      {blog.title}
+                    </h3>
+                    <p className={`text-xs leading-relaxed line-clamp-2 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+                      {blog.excerpt}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </SpotlightCard>
+
           </div>
 
         </div>
@@ -959,8 +1337,8 @@ export default function Portfolio() {
           <div
             className="absolute inset-0 rounded-[24px] pointer-events-none transition-opacity duration-300 z-0"
             style={{
-              border: "1.5px solid rgba(239, 68, 68, 0.5)",
-              background: `radial-gradient(80px circle at ${dockCoords.x}px ${dockCoords.y}px, rgba(239, 68, 68, 0.1), transparent 80%)`,
+              border: isDark ? "1.5px solid rgba(255, 255, 255, 0.4)" : "1.5px solid rgba(0, 0, 0, 0.15)",
+              background: `radial-gradient(80px circle at ${dockCoords.x}px ${dockCoords.y}px, ${isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.03)"}, transparent 80%)`,
               maskImage: `radial-gradient(80px circle at ${dockCoords.x}px ${dockCoords.y}px, black 30%, transparent 100%)`,
               WebkitMaskImage: `radial-gradient(80px circle at ${dockCoords.x}px ${dockCoords.y}px, black 30%, transparent 100%)`,
             }}

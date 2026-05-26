@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import clientPromise from "../../../lib/mongodb";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     if (!clientPromise) {
@@ -126,5 +128,40 @@ export async function PUT(request) {
   } catch (error) {
     console.error("Error in PUT /api/blogs:", error);
     return NextResponse.json({ error: "Failed to update blog" }, { status: 500 });
+  }
+}
+
+export async function PATCH(request) {
+  try {
+    if (!clientPromise) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+    }
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    const action = searchParams.get("action"); // "like" or "unlike"
+    
+    if (!id) {
+      return NextResponse.json({ error: "Blog ID is required" }, { status: 400 });
+    }
+
+    const client = await clientPromise;
+    const db = client.db("portfolio");
+    
+    const increment = action === "unlike" ? -1 : 1;
+    const result = await db.collection("blogs").updateOne(
+      { _id: new ObjectId(id) },
+      { $inc: { likes: increment } }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ error: "Blog post not found" }, { status: 404 });
+    }
+
+    // Fetch updated likes
+    const updatedBlog = await db.collection("blogs").findOne({ _id: new ObjectId(id) });
+    return NextResponse.json({ success: true, likes: updatedBlog.likes }, { status: 200 });
+  } catch (error) {
+    console.error("Error in PATCH /api/blogs:", error);
+    return NextResponse.json({ error: "Failed to update likes" }, { status: 500 });
   }
 }

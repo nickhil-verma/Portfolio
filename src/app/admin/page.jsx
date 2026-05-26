@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Lock, User, KeyRound, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
@@ -12,6 +12,12 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && localStorage.getItem("admin_logged_in") === "true") {
+      router.push("/admin/dashboard");
+    }
+  }, [router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
