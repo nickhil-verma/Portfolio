@@ -1022,6 +1022,67 @@ export default function Portfolio() {
 
           </div>
 
+          {/* GitHub Stats Card — Desktop */}
+          <SpotlightCard isDark={isDark} className="p-6 sm:p-8 mt-5">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-2.5">
+                <svg viewBox="0 0 24 24" className={`w-5 h-5 fill-current ${isDark ? "text-red-400" : "text-red-600"}`} xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                <h2 className={`text-base sm:text-lg font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                  GitHub Activity
+                </h2>
+              </div>
+              <a
+                href="https://github.com/nickhil-verma"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`text-xs font-bold flex items-center gap-1 transition-colors ${
+                  isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"
+                }`}
+              >
+                @nickhil-verma
+                <ChevronRight className="w-3.5 h-3.5" />
+              </a>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Main Stats */}
+              <div className={`sm:col-span-2 rounded-2xl overflow-hidden border ${
+                isDark ? "border-white/5 bg-[#121214]/30" : "border-black/5 bg-white/60"
+              }`}>
+                <img
+                  src={`https://github-readme-stats.vercel.app/api?username=nickhil-verma&show_icons=true&count_private=true&hide_border=true&bg_color=${isDark ? "0d0d0f" : "ffffff"}&title_color=${isDark ? "f87171" : "dc2626"}&text_color=${isDark ? "a1a1aa" : "52525b"}&icon_color=${isDark ? "f87171" : "dc2626"}&ring_color=ef4444`}
+                  alt="Nikhil Verma GitHub Stats"
+                  className="w-full h-auto"
+                  loading="lazy"
+                />
+              </div>
+
+              {/* Top Languages */}
+              <div className={`rounded-2xl overflow-hidden border ${
+                isDark ? "border-white/5 bg-[#121214]/30" : "border-black/5 bg-white/60"
+              }`}>
+                <img
+                  src={`https://github-readme-stats.vercel.app/api/top-langs/?username=nickhil-verma&layout=compact&hide_border=true&bg_color=${isDark ? "0d0d0f" : "ffffff"}&title_color=${isDark ? "f87171" : "dc2626"}&text_color=${isDark ? "a1a1aa" : "52525b"}&langs_count=6`}
+                  alt="Top Languages"
+                  className="w-full h-auto"
+                  loading="lazy"
+                />
+              </div>
+
+              {/* Streak Stats */}
+              <div className={`sm:col-span-3 rounded-2xl overflow-hidden border ${
+                isDark ? "border-white/5 bg-[#121214]/30" : "border-black/5 bg-white/60"
+              }`}>
+                <img
+                  src={`https://github-readme-streak-stats.herokuapp.com/?user=nickhil-verma&hide_border=true&background=${isDark ? "0d0d0f" : "ffffff"}&stroke=${isDark ? "27272a" : "e4e4e7"}&ring=ef4444&fire=f87171&currStreakLabel=${isDark ? "f87171" : "dc2626"}&sideLabels=${isDark ? "a1a1aa" : "71717a"}&currStreakNum=${isDark ? "ffffff" : "18181b"}&sideNums=${isDark ? "a1a1aa" : "52525b"}&dates=${isDark ? "52525b" : "a1a1aa"}`}
+                  alt="GitHub Streak"
+                  className="w-full h-auto max-h-40 object-contain"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </SpotlightCard>
+
           {/* Mobile and Tablet Layout */}
           <div className="lg:hidden space-y-5 pb-24">
             
@@ -1379,6 +1440,22 @@ export default function Portfolio() {
 
               <div className={`text-[9px] tracking-wider italic font-mono text-center pt-5 ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>
                 ✦ Continuous Marquee Loop • Non-stop Animation ✦
+              </div>
+            </SpotlightCard>
+
+            {/* GitHub Stats (Mobile) */}
+            <SpotlightCard isDark={isDark} className="p-6">
+              <div className="flex items-center space-x-2.5 mb-5">
+                <svg viewBox="0 0 24 24" className={`w-5 h-5 fill-current ${isDark ? "text-red-400" : "text-red-600"}`} xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                <h2 className={`text-xl font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>GitHub Activity</h2>
+              </div>
+              <div className="space-y-3">
+                <div className={`rounded-2xl overflow-hidden border ${isDark ? "border-white/5" : "border-black/5"}`}>
+                  <img src={`https://github-readme-stats.vercel.app/api?username=nickhil-verma&show_icons=true&count_private=true&hide_border=true&bg_color=${isDark ? "0d0d0f" : "ffffff"}&title_color=${isDark ? "f87171" : "dc2626"}&text_color=${isDark ? "a1a1aa" : "52525b"}&icon_color=${isDark ? "f87171" : "dc2626"}`} alt="GitHub Stats" className="w-full h-auto" loading="lazy" />
+                </div>
+                <div className={`rounded-2xl overflow-hidden border ${isDark ? "border-white/5" : "border-black/5"}`}>
+                  <img src={`https://github-readme-stats.vercel.app/api/top-langs/?username=nickhil-verma&layout=compact&hide_border=true&bg_color=${isDark ? "0d0d0f" : "ffffff"}&title_color=${isDark ? "f87171" : "dc2626"}&text_color=${isDark ? "a1a1aa" : "52525b"}`} alt="Top Languages" className="w-full h-auto" loading="lazy" />
+                </div>
               </div>
             </SpotlightCard>
 

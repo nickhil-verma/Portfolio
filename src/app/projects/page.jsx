@@ -73,6 +73,7 @@ const baseProjects = [
     title: "Hireonova – AI Job Engine",
     description: "A comprehensive jobs crawling engine and smart resume parser matching algorithm powered by Ollama 3B. Processes massive datasets with precision and ranks candidates contextually.",
     link: "https://github.com/Hireonova",
+    imageUrl: "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=800&q=80",
     tech: ["Python", "Playwright", "MERN", "NLP", "Ollama"],
     category: "ai",
     stars: 12,
@@ -82,6 +83,7 @@ const baseProjects = [
     title: "MOSDAC ISRO Chatbot",
     description: "A FAISS and Gemma 3B based RAG chatbot engineered during the ISRO Space Hackathon. Delivers highly contextual responses based on space research datasets and meteorological data.",
     link: "https://github.com/nickhil-verma/MOSDAC_PARENT_REPO/tree/main",
+    imageUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80",
     tech: ["React", "Node.js", "Gemma 3B", "MongoDB", "FAISS"],
     category: "ai",
     stars: 8,
@@ -91,6 +93,8 @@ const baseProjects = [
     title: "Eternalan Concerts",
     description: "An interactive and visually stunning concert booking platform customized for cross-border audiences between the US and China. Highly optimized rendering pipeline.",
     link: "https://github.com/nickhil-verma/eternalan",
+    deployedUrl: "https://eternalan.vercel.app",
+    imageUrl: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80",
     tech: ["React", "Tailwind CSS", "JavaScript", "REST APIs"],
     category: "web",
     stars: 15,
@@ -100,6 +104,7 @@ const baseProjects = [
     title: "Plant Disease Detection",
     description: "Deep Convolutional Neural Network (CNN) model built with TensorFlow and Keras, delivering a 95% classification accuracy across 15 distinct leaf disease types.",
     link: "https://github.com/nickhil-verma/Plant-disease-detection-model",
+    imageUrl: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=80",
     tech: ["TensorFlow", "Keras", "NumPy", "HuggingFace", "Python"],
     category: "ai",
     stars: 10,
@@ -108,7 +113,9 @@ const baseProjects = [
   {
     title: "CEDAXDSU Club Website",
     description: "The official web portal designed and developed for the IEEE CEDA chapter at Dayananda Sagar University. Incorporates a broadcast notice system and serves over 500+ active members.",
-    link: "https://dsuieeeceda.vercel.app/",
+    link: "https://github.com/nickhil-verma/CEDAXDSU",
+    deployedUrl: "https://dsuieeeceda.vercel.app/",
+    imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80",
     tech: ["React", "Tailwind CSS", "framer-motion", "Node js", "Express"],
     category: "web",
     stars: 20,
@@ -329,99 +336,94 @@ export default function ProjectsPage() {
         {/* Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredProjects.map((project, idx) => (
-            <ProjectSpotlightCard key={idx} isDark={isDark} className="p-8 flex flex-col justify-between min-h-[280px]">
-              <div>
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center space-x-2">
-                    <Code className={`w-4 h-4 ${isDark ? "text-red-400" : "text-red-600"}`} />
-                    <span className={`text-[10px] font-bold uppercase tracking-widest uppercase ${
-                      isDark ? "text-red-400" : "text-red-600"
-                    }`}>{project.category}</span>
+            <ProjectSpotlightCard key={idx} isDark={isDark} className="flex flex-col justify-between overflow-hidden">
+              {/* Thumbnail */}
+              {(project.imageUrl || project.thumbnailUrl) && (
+                <div className="w-full h-48 overflow-hidden relative flex-shrink-0">
+                  <img
+                    src={project.imageUrl || project.thumbnailUrl}
+                    alt={project.title}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className={`absolute inset-0 bg-gradient-to-b ${isDark ? "from-transparent to-black/80" : "from-transparent to-black/50"}`} />
+                  <span className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                    project.category === "ai" 
+                      ? "bg-violet-500/80 text-white" 
+                      : "bg-red-500/80 text-white"
+                  }`}>
+                    {project.category === "ai" ? "AI & Data" : "Web"}
+                  </span>
+                </div>
+              )}
+
+              <div className="p-7 flex flex-col flex-1 justify-between">
+                <div>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center space-x-2">
+                      {!(project.imageUrl || project.thumbnailUrl) && (
+                        <><Code className={`w-4 h-4 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? "text-red-400" : "text-red-600"}`}>{project.category}</span></>
+                      )}
+                    </div>
+
+                    {/* Star count */}
+                    <button
+                      onClick={() => handleToggleStarProject(project)}
+                      className={`flex items-center space-x-1 px-2 py-0.5 rounded-lg border transition-all ${
+                        starredProjectIds.includes(project._id || project.title)
+                          ? "bg-[#ef4444]/10 text-red-400 border-red-500/30"
+                          : isDark ? "bg-white/5 text-zinc-500 hover:text-white border-white/5" : "bg-zinc-100 text-zinc-500 border-zinc-200"
+                      }`}
+                    >
+                      <Star className={`w-3.5 h-3.5 ${starredProjectIds.includes(project._id || project.title) ? "fill-current" : ""}`} />
+                      <span className="text-xs font-bold font-outfit">{interactions[project._id || project.title] !== undefined ? interactions[project._id || project.title] : (project.stars || 0)}</span>
+                    </button>
                   </div>
-                  
-                  {/* Star count */}
-                  <button
-                    onClick={() => handleToggleStarProject(project)}
-                    className={`flex items-center space-x-1 px-2 py-0.5 rounded-lg border transition-all ${
-                      starredProjectIds.includes(project._id || project.title)
-                        ? "bg-[#ef4444]/10 text-red-400 border-red-500/30"
-                        : isDark
-                          ? "bg-white/5 text-zinc-500 hover:text-white border-white/5"
-                          : "bg-zinc-100 text-zinc-500 border-zinc-200"
-                    }`}
-                  >
-                    <Star className={`w-3.5 h-3.5 ${starredProjectIds.includes(project._id || project.title) ? "fill-current" : ""}`} />
-                    <span className="text-xs font-bold font-outfit">{interactions[project._id || project.title] !== undefined ? interactions[project._id || project.title] : (project.stars || 0)}</span>
-                  </button>
+
+                  <h3 className={`text-xl font-bold font-outfit mb-2 ${isDark ? "text-white" : "text-zinc-900"}`}>{project.title}</h3>
+                  <p className={`text-xs leading-relaxed mb-6 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>{project.description}</p>
                 </div>
 
-                <h3 className={`text-xl font-bold font-outfit mb-2 ${
-                  isDark ? "text-white" : "text-zinc-900"
-                }`}>{project.title}</h3>
-                <p className={`text-xs leading-relaxed mb-6 ${
-                  isDark ? "text-zinc-400" : "text-zinc-600"
-                }`}>{project.description}</p>
-              </div>
+                <div>
+                  {/* Tech Pills */}
+                  <div className="flex flex-wrap gap-1.5 mb-5">
+                    {project.tech.map((tech, tIdx) => (
+                      <span key={tIdx} className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
+                        isDark ? "bg-white/5 text-zinc-400 border-white/5" : "bg-zinc-100 text-zinc-600 border-zinc-200"
+                      }`}>{tech}</span>
+                    ))}
+                  </div>
 
-              <div>
-                {/* Tech Pills */}
-                <div className="flex flex-wrap gap-1.5 mb-5">
-                  {project.tech.map((tech, tIdx) => (
-                    <span 
-                      key={tIdx} 
-                      className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
-                        isDark 
-                          ? "bg-white/5 text-zinc-400 border-white/5" 
-                          : "bg-zinc-100 text-zinc-600 border-zinc-200"
-                      }`}
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-
-                {/* CTA Links */}
-                <div className="flex items-center space-x-3">
-                  <a
-                    href={project.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center space-x-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all shadow-lg shadow-red-500/20"
-                  >
-                    <span>View Project</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                  {project.deployedUrl && (
-                    <a
-                      href={project.deployedUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`flex items-center justify-center p-2 border rounded-xl transition-all ${
-                        isDark 
-                          ? "bg-white/5 hover:bg-white/10 text-zinc-300 border-white/5" 
-                          : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border-zinc-200"
-                      }`}
-                    >
-                      <ExternalLink className="w-4.5 h-4.5" />
+                  {/* CTA Links */}
+                  <div className="flex items-center space-x-3">
+                    <a href={project.link} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center space-x-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all shadow-lg shadow-red-500/20">
+                      <span>View Project</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
                     </a>
-                  )}
-                  <a
-                    href="https://github.com/nickhil-verma"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`flex items-center justify-center p-2 border rounded-xl transition-all ${
-                      isDark 
-                        ? "bg-white/5 hover:bg-white/10 text-zinc-300 border-white/5" 
-                        : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border-zinc-200"
-                    }`}
-                  >
-                    <Github className="w-4.5 h-4.5" />
-                  </a>
+                    {(project.deployedUrl || project.liveLink || project.deployedLink) && (
+                      <a href={project.deployedUrl || project.liveLink || project.deployedLink} target="_blank" rel="noopener noreferrer"
+                        className={`flex items-center justify-center gap-1.5 px-3 py-2 border rounded-xl text-xs font-semibold transition-all ${
+                          isDark ? "bg-white/5 hover:bg-white/10 text-zinc-300 border-white/5" : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border-zinc-200"
+                        }`}>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Live</span>
+                      </a>
+                    )}
+                    <a href="https://github.com/nickhil-verma" target="_blank" rel="noopener noreferrer"
+                      className={`flex items-center justify-center p-2 border rounded-xl transition-all ${
+                        isDark ? "bg-white/5 hover:bg-white/10 text-zinc-300 border-white/5" : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border-zinc-200"
+                      }`}>
+                      <Github className="w-4 h-4" />
+                    </a>
+                  </div>
                 </div>
               </div>
             </ProjectSpotlightCard>
           ))}
         </div>
+
+
         <footer className={`py-6 text-center text-[10px] tracking-widest uppercase font-mono relative z-10 ${
           isDark ? "text-zinc-600" : "text-zinc-400"
         }`}>

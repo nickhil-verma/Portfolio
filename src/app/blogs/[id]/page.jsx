@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Clock, Calendar, Share2, MessageSquare } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, Share2, MessageSquare, Eye } from "lucide-react";
 import Link from "next/link";
 import BlogLikeButton from "../../../components/BlogLikeButton";
 import CustomToast from "../../../components/CustomToast";
@@ -410,6 +410,8 @@ export default function BlogDetailPage() {
   const [toast, setToast] = useState({ message: "", type: "success", key: 0 });
   const [commentText, setCommentText] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [views, setViews] = useState(0);
+  const viewTracked = React.useRef(false);
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -508,6 +510,27 @@ export default function BlogDetailPage() {
 
       setBlog(activeBlog);
       setLoading(false);
+
+      // Track view once per page load (skipped on localhost by the API)
+      if (!viewTracked.current && activeBlog) {
+        viewTracked.current = true;
+        try {
+          const isLocalhost =
+            typeof window !== "undefined" &&
+            (window.location.hostname === "localhost" ||
+              window.location.hostname === "127.0.0.1" ||
+              window.location.hostname === "::1");
+          if (!isLocalhost) {
+            const vRes = await fetch(`/api/blogs/views?id=${id}`, { method: "POST" });
+            const vData = await vRes.json();
+            if (vData.views !== undefined) setViews(vData.views);
+          } else {
+            setViews(activeBlog?.views || 0);
+          }
+        } catch (e) {
+          // non-critical
+        }
+      }
     };
 
     loadBlogData();
@@ -608,6 +631,11 @@ export default function BlogDetailPage() {
             <div className="flex items-center space-x-1.5">
               <Clock className="w-3.5 h-3.5" />
               <span>{blog.readTime}</span>
+            </div>
+
+            <div className="flex items-center space-x-1.5">
+              <Eye className="w-3.5 h-3.5" />
+              <span>{(views || blog.views || 0).toLocaleString()} views</span>
             </div>
           </div>
 

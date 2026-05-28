@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, LayoutDashboard, FolderKanban, BookHeart, LogOut, 
   Plus, Trash2, Users, Cpu, FileText, CheckCircle2, Globe, Monitor, Smartphone, Tablet,
-  Github, X, MessageSquare
+  Github, X, MessageSquare, Sun, Moon, GripVertical
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -300,6 +300,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [isDark, setIsDark] = useState(true);
   const [toast, setToast] = useState({ message: "", type: "success", key: 0 });
 
   const triggerToast = (message, type = "success") => {
@@ -363,6 +364,35 @@ export default function AdminDashboard() {
   const [blogWriteMode, setBlogWriteMode] = useState("write");
   const [fullscreenProjectEditor, setFullscreenProjectEditor] = useState(false);
   const [fullscreenBlogEditor, setFullscreenBlogEditor] = useState(false);
+  const [blogEditorSplit, setBlogEditorSplit] = useState(50); // % width for left pane
+  const isResizingBlog = React.useRef(false);
+  const splitContainerRef = React.useRef(null);
+
+  const startBlogResize = (e) => {
+    isResizingBlog.current = true;
+    const onMove = (ev) => {
+      if (!isResizingBlog.current || !splitContainerRef.current) return;
+      const rect = splitContainerRef.current.getBoundingClientRect();
+      const pct = Math.min(80, Math.max(20, ((ev.clientX - rect.left) / rect.width) * 100));
+      setBlogEditorSplit(pct);
+    };
+    const onUp = () => { isResizingBlog.current = false; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
+  const toggleTheme = () => {
+    const next = !isDark;
+    setIsDark(next);
+    localStorage.setItem("theme", next ? "dark" : "light");
+    if (next) document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
+  };
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved) { const d = saved === "dark"; setIsDark(d); if (d) document.documentElement.classList.add("dark"); else document.documentElement.classList.remove("dark"); }
+  }, []);
 
   const topProjects = Array.isArray(dashboardProjects) ? [...dashboardProjects].sort((a, b) => (b.stars || 0) - (a.stars || 0)).slice(0, 5) : [];
   const topBlogs = Array.isArray(dashboardBlogs) ? [...dashboardBlogs].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 5) : [];
@@ -623,8 +653,10 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#ededed] noise-overlay relative overflow-hidden flex font-sans">
-      <div className="absolute inset-0 z-0 grid-mesh pointer-events-none" />
+    <div className={`min-h-screen transition-colors duration-0 noise-overlay relative overflow-hidden flex font-sans ${
+      isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f5f5f7] text-[#1c1c1e]"
+    }`}>
+      <div className={`absolute inset-0 z-0 ${isDark ? "grid-mesh" : "grid-mesh-light"} pointer-events-none`} />
 
       {/* Sidebar Navigation */}
       <aside className="w-64 border-r border-white/5 bg-[#09090b]/80 backdrop-blur-xl z-10 p-6 flex flex-col justify-between hidden md:flex">
@@ -665,27 +697,41 @@ export default function AdminDashboard() {
           </nav>
         </div>
 
-        {/* Quick LogOut */}
-        <div className="space-y-3.5">
+        {/* Quick LogOut + Theme Toggle */}
+        <div className="space-y-2">
+          <button
+            onClick={toggleTheme}
+            className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wide border border-transparent transition-all ${
+              isDark ? "text-zinc-400 hover:text-white hover:bg-white/5" : "text-zinc-600 hover:text-zinc-900 hover:bg-black/5"
+            }`}
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
+          </button>
           <button
             onClick={handleLogout}
             className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wide text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent transition-all"
           >
-            <LogOut className="w-4.5 h-4.5" />
+            <LogOut className="w-4 h-4" />
             <span>Sign Out</span>
           </button>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 z-10 p-6 sm:p-10 overflow-y-auto max-h-screen">
+      <main className={`flex-1 z-10 p-6 sm:p-10 overflow-y-auto max-h-screen ${
+        isDark ? "" : "bg-[#f5f5f7]"
+      }`}>
         {/* Mobile menu bar */}
         <div className="flex md:hidden items-center justify-between p-4 mb-6 glass-card rounded-2xl">
           <div className="flex items-center space-x-2">
             <Cpu className="w-4.5 h-4.5 text-red-400" />
             <span className="font-bold text-xs tracking-tight text-white">Nikhil Console</span>
           </div>
-          <div className="flex space-x-1">
+          <div className="flex items-center space-x-1">
+            <button onClick={toggleTheme} className="px-2 py-1.5 rounded-lg text-[10px] text-zinc-400 hover:text-white">
+              {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+            </button>
             {["overview", "projects", "blogs", "comments"].map((tab) => (
               <button
                 key={tab}
@@ -849,7 +895,20 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                      {analytics.logs.map((log, index) => (
+                      {analytics.logs
+                        .filter(log => {
+                          const ip = log.ip || "";
+                          const loc = log.location || "";
+                          return (
+                            ip !== "127.0.0.1" &&
+                            ip !== "::1" &&
+                            !ip.startsWith("192.168.") &&
+                            !ip.startsWith("10.") &&
+                            !ip.startsWith("172.") &&
+                            !loc.toLowerCase().includes("localhost")
+                          );
+                        })
+                        .map((log, index) => (
                         <tr key={index} className="hover:bg-white/[0.01] transition-colors">
                           <td className="py-3 pl-2 flex items-center space-x-2 text-zinc-200">
                             {log.device === "Mobile" ? (
@@ -1352,9 +1411,9 @@ export default function AdminDashboard() {
             </div>
 
             {/* Body split-pane */}
-            <div className="flex-1 flex overflow-hidden">
+            <div ref={splitContainerRef} className="flex-1 flex overflow-hidden">
               {/* Left Pane (Editor Form) */}
-              <div className="w-1/2 p-10 overflow-y-auto border-r border-white/5 space-y-6 select-text">
+              <div style={{ width: `${blogEditorSplit}%` }} className="overflow-y-auto border-r border-white/5 space-y-6 select-text p-10">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 pb-3 border-b border-white/5 select-none">
                   Markdown Blog Parameters
                 </h3>
@@ -1445,13 +1504,22 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* Drag Handle */}
+              <div
+                onMouseDown={startBlogResize}
+                className="w-1.5 bg-white/5 hover:bg-red-500/30 cursor-col-resize flex items-center justify-center transition-colors group flex-shrink-0"
+                title="Drag to resize"
+              >
+                <GripVertical className="w-3 h-3 text-zinc-600 group-hover:text-red-400" />
+              </div>
+
               {/* Right Pane (Live README Markdown Preview) */}
-              <div className="w-1/2 p-10 bg-[#09090b] overflow-y-auto flex flex-col justify-start text-left select-text">
+              <div className="flex-1 p-10 bg-[#09090b] overflow-y-auto flex flex-col justify-start text-left select-text">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 pb-3 border-b border-white/5 mb-6 text-center select-none">
                   Live README Markdown Preview compiles on-the-go
                 </h3>
                 
-                <div className="w-full max-w-2xl bg-white/[0.01] border border-white/5 rounded-2xl p-8 min-h-[400px]">
+                <div className="w-full bg-white/[0.01] border border-white/5 rounded-2xl p-8 min-h-[400px]">
                   {newBlogContent.trim() ? (
                     renderMarkdownContent(newBlogContent)
                   ) : (
