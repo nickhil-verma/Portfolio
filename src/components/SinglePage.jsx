@@ -362,6 +362,8 @@ export default function Portfolio() {
         );
 
         setGithubStats({
+          avatarUrl: userData.avatar_url || "https://avatars.githubusercontent.com/u/99318181?v=4",
+          name: userData.name || "Nikhil Verma",
           publicRepos: userData.public_repos || 25,
           followers: userData.followers || 12,
           following: userData.following || 18,
@@ -372,6 +374,8 @@ export default function Portfolio() {
       } catch (error) {
         console.error("Error fetching GitHub stats:", error);
         setGithubStats({
+          avatarUrl: "https://avatars.githubusercontent.com/u/99318181?v=4",
+          name: "Nikhil Verma",
           publicRepos: 25,
           followers: 12,
           following: 18,
@@ -953,51 +957,130 @@ export default function Portfolio() {
                 </SpotlightCard>
 
                 {/* GitHub Stats Card - Middle */}
-                <SpotlightCard isDark={isDark} className="w-full p-4 sm:p-5 flex flex-col justify-between h-[170px]">
-                  <div>
-                    <div className="flex items-center justify-between mb-3 flex-shrink-0">
-                      <div className="flex items-center space-x-2.5">
-                        <svg viewBox="0 0 24 24" className={`w-5 h-5 fill-current ${isDark ? "text-red-400" : "text-red-600"}`} xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-                        <h2 className={`text-sm sm:text-base font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
-                          GitHub Stats
-                        </h2>
-                      </div>
-                      <a
-                        href="https://github.com/nickhil-verma"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`text-xs font-bold flex items-center gap-1 transition-colors ${
-                          isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"
-                        }`}
-                      >
-                        <span>Profile</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </a>
+                <SpotlightCard isDark={isDark} className="w-full p-3 sm:p-4 flex flex-col justify-between h-[170px] relative overflow-hidden">
+                  {/* Decorative Math Equations background banner at top */}
+                  <div className={`absolute top-0 inset-x-0 h-[68px] ${
+                    isDark 
+                      ? "bg-gradient-to-r from-zinc-900 to-zinc-950 border-b border-white/5" 
+                      : "bg-gradient-to-r from-zinc-100 to-zinc-200 border-b border-black/5"
+                  } overflow-hidden flex items-center justify-center px-4 z-0`}>
+                    {/* Math symbols background noise */}
+                    <div className="absolute inset-0 opacity-10 font-mono text-[8px] select-none pointer-events-none p-1 leading-normal overflow-hidden flex flex-wrap gap-x-2 gap-y-1">
+                      <span>x² + y² = r²</span>
+                      <span>∫ e^x dx</span>
+                      <span>λ = h/p</span>
+                      <span>E = mc²</span>
+                      <span>∇ × B = μ₀J</span>
+                      <span>f(x) = ∑ c_n x^n</span>
+                      <span>π ≈ 3.14159</span>
+                      <span>i² = -1</span>
+                      <span>∑_{n=1}^∞ 1/n² = π²/6</span>
+                      <span>∂u/∂t = α∇²u</span>
                     </div>
 
-                    {/* Compact Side-by-Side Horizontal Layout */}
-                    <div className="grid grid-cols-2 gap-4 items-center mt-1">
-                      {/* Main Stats */}
-                      <div className={`rounded-xl overflow-hidden border ${isDark ? "border-white/5 bg-[#121214]/30" : "border-black/5 bg-white/60"} p-1 shadow-sm`}>
+                    {/* Centered Profile Info: Avatar, Name & Username in Center */}
+                    <div className="flex flex-col items-center justify-center text-center z-10 mt-1">
+                      {/* Avatar Octocat circular */}
+                      <div className={`w-9 h-9 rounded-full border-2 ${isDark ? "border-red-400 bg-zinc-900" : "border-red-600 bg-white"} overflow-hidden flex-shrink-0 flex items-center justify-center shadow`}>
                         <img
-                          src={`https://github-readme-stats.vercel.app/api?username=nickhil-verma&show_icons=true&count_private=true&hide_border=true&bg_color=${isDark ? "0d0d0f" : "ffffff"}&title_color=${isDark ? "f87171" : "dc2626"}&text_color=${isDark ? "a1a1aa" : "52525b"}&icon_color=${isDark ? "f87171" : "dc2626"}&ring_color=ef4444`}
-                          alt="Nikhil Verma GitHub Stats"
-                          className="w-full h-auto object-contain max-h-[85px]"
-                          loading="lazy"
+                          src={githubStats?.avatarUrl || "https://avatars.githubusercontent.com/u/99318181?v=4"}
+                          alt="Nikhil Verma Avatar"
+                          className="w-full h-full object-cover"
                         />
                       </div>
+                      <div className="mt-1">
+                        <h4 className={`text-[11px] font-black font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"} leading-none mb-0.5`}>
+                          {githubStats?.name || "Nikhil Verma"}
+                        </h4>
+                        <span className={`text-[8px] font-bold font-mono ${isDark ? "text-zinc-400" : "text-zinc-600"} leading-none`}>
+                          @nickhil-verma
+                        </span>
+                      </div>
+                    </div>
 
-                      {/* Top Languages */}
-                      <div className={`rounded-xl overflow-hidden border ${isDark ? "border-white/5 bg-[#121214]/30" : "border-black/5 bg-white/60"} p-1 shadow-sm`}>
-                        <img
-                          src={`https://github-readme-stats.vercel.app/api/top-langs/?username=nickhil-verma&layout=compact&hide_border=true&bg_color=${isDark ? "0d0d0f" : "ffffff"}&title_color=${isDark ? "f87171" : "dc2626"}&text_color=${isDark ? "a1a1aa" : "52525b"}&langs_count=6`}
-                          alt="Top Languages"
-                          className="w-full h-auto object-contain max-h-[85px]"
-                          loading="lazy"
-                        />
-                      </div>
+                    {/* Banner Right: External Link - Absolute positioned on top right */}
+                    <a
+                      href="https://github.com/nickhil-verma"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`absolute top-2 right-2 z-10 p-1.5 rounded-lg border transition-all ${
+                        isDark 
+                          ? "bg-white/5 border-white/5 hover:bg-white/10 text-red-400 hover:text-white"
+                          : "bg-white border-black/10 hover:bg-zinc-50 text-red-600 hover:text-red-700 shadow-sm"
+                      }`}
+                      title="View GitHub Profile"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 6V8H5V19H16V14H18V20C18 20.5523 17.5523 21 17 21H4C3.44772 21 3 20.5523 3 20V7C3 6.44772 3.44772 6 4 6H10ZM21 3V11H19V6.413L11.207 14.207L9.793 12.793L17.585 5H13V3H21Z"/>
+                      </svg>
+                    </a>
+                  </div>
+
+                  {/* Empty spacer for the absolute banner height */}
+                  <div className="h-[68px] flex-shrink-0" />
+
+                  {/* 4 Column Bottom Stats Grid */}
+                  <div className="grid grid-cols-4 gap-2 items-center flex-1 py-3 px-2 z-10">
+                    {/* Repo Name Metric */}
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                      </svg>
+                      <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
+                        Repo Name
+                      </span>
+                      <span className={`text-[9px] font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title="Portfolio">
+                        Portfolio
+                      </span>
+                    </div>
+
+                    {/* Commits Metric */}
+                    <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
+                      <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="4"/>
+                        <line x1="1.05" y1="12" x2="8" y2="12"/>
+                        <line x1="16" y1="12" x2="22.95" y2="12"/>
+                      </svg>
+                      <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
+                        Commits
+                      </span>
+                      <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                        1,480+
+                      </span>
+                    </div>
+
+                    {/* Lines of Code Metric */}
+                    <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
+                      <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
+                      </svg>
+                      <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
+                        Line of code
+                      </span>
+                      <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                        12,400+
+                      </span>
+                    </div>
+
+                    {/* Languages Metric */}
+                    <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
+                      <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                        <polyline points="16 18 22 12 16 6"/>
+                        <polyline points="8 6 2 12 8 18"/>
+                      </svg>
+                      <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
+                        Languages
+                      </span>
+                      <span className={`text-[10px] font-black font-mono mt-1 leading-none ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title="JS, TS, Python">
+                        JS/TS/Py
+                      </span>
                     </div>
                   </div>
+
                 </SpotlightCard>
               </div>
 
@@ -1431,17 +1514,123 @@ export default function Portfolio() {
             </SpotlightCard>
 
             {/* GitHub Stats (Mobile) */}
-            <SpotlightCard isDark={isDark} className="p-6">
-              <div className="flex items-center space-x-2.5 mb-5">
-                <svg viewBox="0 0 24 24" className={`w-5 h-5 fill-current ${isDark ? "text-red-400" : "text-red-600"}`} xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-                <h2 className={`text-xl font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>GitHub Activity</h2>
-              </div>
-              <div className="space-y-3">
-                <div className={`rounded-2xl overflow-hidden border ${isDark ? "border-white/5" : "border-black/5"}`}>
-                  <img src={`https://github-readme-stats.vercel.app/api?username=nickhil-verma&show_icons=true&count_private=true&hide_border=true&bg_color=${isDark ? "0d0d0f" : "ffffff"}&title_color=${isDark ? "f87171" : "dc2626"}&text_color=${isDark ? "a1a1aa" : "52525b"}&icon_color=${isDark ? "f87171" : "dc2626"}`} alt="GitHub Stats" className="w-full h-auto" loading="lazy" />
+            <SpotlightCard isDark={isDark} className="p-3 sm:p-4 flex flex-col justify-between h-[170px] relative overflow-hidden">
+              {/* Decorative Math Equations background banner at top */}
+              <div className={`absolute top-0 inset-x-0 h-[68px] ${
+                isDark 
+                  ? "bg-gradient-to-r from-zinc-900 to-zinc-950 border-b border-white/5" 
+                  : "bg-gradient-to-r from-zinc-100 to-zinc-200 border-b border-black/5"
+              } overflow-hidden flex items-center justify-center px-4 z-0`}>
+                {/* Math symbols background noise */}
+                <div className="absolute inset-0 opacity-10 font-mono text-[8px] select-none pointer-events-none p-1 leading-normal overflow-hidden flex flex-wrap gap-x-2 gap-y-1">
+                  <span>x² + y² = r²</span>
+                  <span>∫ e^x dx</span>
+                  <span>λ = h/p</span>
+                  <span>E = mc²</span>
+                  <span>∇ × B = μ₀J</span>
+                  <span>f(x) = ∑ c_n x^n</span>
                 </div>
-                <div className={`rounded-2xl overflow-hidden border ${isDark ? "border-white/5" : "border-black/5"}`}>
-                  <img src={`https://github-readme-stats.vercel.app/api/top-langs/?username=nickhil-verma&layout=compact&hide_border=true&bg_color=${isDark ? "0d0d0f" : "ffffff"}&title_color=${isDark ? "f87171" : "dc2626"}&text_color=${isDark ? "a1a1aa" : "52525b"}`} alt="Top Languages" className="w-full h-auto" loading="lazy" />
+
+                {/* Centered Profile Info: Avatar, Name & Username in Center */}
+                <div className="flex flex-col items-center justify-center text-center z-10 mt-1">
+                  {/* Avatar Octocat circular */}
+                  <div className={`w-9 h-9 rounded-full border-2 ${isDark ? "border-red-400 bg-zinc-900" : "border-red-600 bg-white"} overflow-hidden flex-shrink-0 flex items-center justify-center shadow`}>
+                    <img
+                      src={githubStats?.avatarUrl || "https://avatars.githubusercontent.com/u/99318181?v=4"}
+                      alt="Nikhil Verma Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="mt-1">
+                    <h4 className={`text-[11px] font-black font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"} leading-none mb-0.5`}>
+                      {githubStats?.name || "Nikhil Verma"}
+                    </h4>
+                    <span className={`text-[8px] font-bold font-mono ${isDark ? "text-zinc-400" : "text-zinc-600"} leading-none`}>
+                      @nickhil-verma
+                    </span>
+                  </div>
+                </div>
+
+                {/* Banner Right: External Link - Absolute positioned on top right */}
+                <a
+                  href="https://github.com/nickhil-verma"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`absolute top-2 right-2 z-10 p-1.5 rounded-lg border transition-all ${
+                    isDark 
+                      ? "bg-white/5 border-white/5 hover:bg-white/10 text-red-400 hover:text-white"
+                      : "bg-white border-black/10 hover:bg-zinc-50 text-red-600 hover:text-red-700 shadow-sm"
+                  }`}
+                  title="View GitHub Profile"
+                >
+                  <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 6V8H5V19H16V14H18V20C18 20.5523 17.5523 21 17 21H4C3.44772 21 3 20.5523 3 20V7C3 6.44772 3.44772 6 4 6H10ZM21 3V11H19V6.413L11.207 14.207L9.793 12.793L17.585 5H13V3H21Z"/>
+                  </svg>
+                </a>
+              </div>
+
+              {/* Empty spacer for the absolute banner height */}
+              <div className="h-[68px] flex-shrink-0" />
+
+              {/* 4 Column Bottom Stats Grid */}
+              <div className="grid grid-cols-4 gap-2 items-center flex-1 py-3 px-2 z-10">
+                {/* Repo Name Metric */}
+                <div className="flex flex-col items-center justify-center text-center">
+                  <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
+                    Repo Name
+                  </span>
+                  <span className={`text-[9px] font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title="Portfolio">
+                    Portfolio
+                  </span>
+                </div>
+
+                {/* Commits Metric */}
+                <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
+                  <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="4"/>
+                    <line x1="1.05" y1="12" x2="8" y2="12"/>
+                    <line x1="16" y1="12" x2="22.95" y2="12"/>
+                  </svg>
+                  <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
+                    Commits
+                  </span>
+                  <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                    1,480+
+                  </span>
+                </div>
+
+                {/* Lines of Code Metric */}
+                <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
+                  <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                  </svg>
+                  <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
+                    Line of code
+                  </span>
+                  <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                    12,400+
+                  </span>
+                </div>
+
+                {/* Languages Metric */}
+                <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
+                  <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                    <polyline points="16 18 22 12 16 6"/>
+                    <polyline points="8 6 2 12 8 18"/>
+                  </svg>
+                  <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
+                    Languages
+                  </span>
+                  <span className={`text-[10px] font-black font-mono mt-1 leading-none ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title="JS, TS, Python">
+                    JS/TS/Py
+                  </span>
                 </div>
               </div>
             </SpotlightCard>
