@@ -957,42 +957,36 @@ export default function Portfolio() {
                 </SpotlightCard>
 
                 {/* GitHub Stats Card - Middle */}
-                <SpotlightCard isDark={isDark} className="w-full p-3 sm:p-4 flex flex-col justify-between h-[170px] relative overflow-hidden">
-                  {/* Decorative Math Equations background banner at top */}
-                  <div className={`absolute top-0 inset-x-0 h-[68px] ${
+                <SpotlightCard isDark={isDark} className="w-full p-3 sm:p-4 flex flex-col justify-between h-[190px] relative overflow-hidden">
+                  {/* Decorative Cover Image background banner at top */}
+                  <div className={`absolute top-0 inset-x-0 h-[76px] ${
                     isDark 
-                      ? "bg-gradient-to-r from-zinc-900 to-zinc-950 border-b border-white/5" 
-                      : "bg-gradient-to-r from-zinc-100 to-zinc-200 border-b border-black/5"
-                  } overflow-hidden flex items-center justify-center px-4 z-0`}>
-                    {/* Math symbols background noise */}
-                    <div className="absolute inset-0 opacity-10 font-mono text-[8px] select-none pointer-events-none p-1 leading-normal overflow-hidden flex flex-wrap gap-x-2 gap-y-1">
-                      <span>x² + y² = r²</span>
-                      <span>∫ e^x dx</span>
-                      <span>λ = h/p</span>
-                      <span>E = mc²</span>
-                      <span>∇ × B = μ₀J</span>
-                      <span>f(x) = ∑ c_n x^n</span>
-                      <span>π ≈ 3.14159</span>
-                      <span>i² = -1</span>
-                      <span>{"∑_{n=1}^∞ 1/n² = π²/6"}</span>
-                      <span>∂u/∂t = α∇²u</span>
-                    </div>
+                      ? "border-b border-white/5" 
+                      : "border-b border-black/5"
+                  } overflow-hidden flex items-center justify-center px-4 z-0`}
+                  style={{
+                    backgroundImage: `url("https://camo.githubusercontent.com/20b0e586a6532cedfecaaefed0e8fe35dd5acf524e30a5d2dd5e75f637e95ef1/68747470733a2f2f692e706f7374696d672e63632f6b47366e6d5a475a2f41534b2d42616e6e65722d496d6167652d4769746875622e706e67")`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center"
+                  }}>
+                    {/* Semi-transparent dark overlay to ensure readability */}
+                    <div className="absolute inset-0 bg-black/35 z-0" />
 
                     {/* Centered Profile Info: Avatar, Name & Username in Center */}
                     <div className="flex flex-col items-center justify-center text-center z-10 mt-1">
                       {/* Avatar Octocat circular */}
-                      <div className={`w-9 h-9 rounded-full border-2 ${isDark ? "border-red-400 bg-zinc-900" : "border-red-600 bg-white"} overflow-hidden flex-shrink-0 flex items-center justify-center shadow`}>
+                      <div className={`w-[38px] h-[38px] rounded-full border-2 ${isDark ? "border-red-400 bg-zinc-900" : "border-white bg-white"} overflow-hidden flex-shrink-0 flex items-center justify-center shadow`}>
                         <img
                           src={githubStats?.avatarUrl || "https://avatars.githubusercontent.com/u/99318181?v=4"}
                           alt="Nikhil Verma Avatar"
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <div className="mt-1">
-                        <h4 className={`text-[11px] font-black font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"} leading-none mb-0.5`}>
+                      <div className="mt-0.5">
+                        <h4 className="text-[11px] font-black font-outfit tracking-tight text-white leading-none mb-0.5">
                           {githubStats?.name || "Nikhil Verma"}
                         </h4>
-                        <span className={`text-[8px] font-bold font-mono ${isDark ? "text-zinc-400" : "text-zinc-600"} leading-none`}>
+                        <span className="text-[8px] font-bold font-mono text-zinc-300 leading-none">
                           @nickhil-verma
                         </span>
                       </div>
@@ -1003,11 +997,7 @@ export default function Portfolio() {
                       href="https://github.com/nickhil-verma"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`absolute top-2 right-2 z-10 p-1.5 rounded-lg border transition-all ${
-                        isDark 
-                          ? "bg-white/5 border-white/5 hover:bg-white/10 text-red-400 hover:text-white"
-                          : "bg-white border-black/10 hover:bg-zinc-50 text-red-600 hover:text-red-700 shadow-sm"
-                      }`}
+                      className="absolute top-2.5 right-2.5 z-10 p-1.5 rounded-lg border transition-all bg-black/40 border-white/10 hover:bg-black/60 text-white shadow-sm"
                       title="View GitHub Profile"
                     >
                       <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current" xmlns="http://www.w3.org/2000/svg">
@@ -1017,7 +1007,7 @@ export default function Portfolio() {
                   </div>
 
                   {/* Empty spacer for the absolute banner height */}
-                  <div className="h-[68px] flex-shrink-0" />
+                  <div className="h-[76px] flex-shrink-0" />
 
                   {/* 4 Column Bottom Stats Grid */}
                   <div className="grid grid-cols-4 gap-2 items-center flex-1 py-3 px-2 z-10">
@@ -1081,11 +1071,12 @@ export default function Portfolio() {
                     </div>
                   </div>
 
+
                 </SpotlightCard>
               </div>
 
               {/* Blogs Card */}
-              <SpotlightCard isDark={isDark} className="col-span-4 p-6 sm:p-8 flex flex-col justify-start h-[360px]">
+              <SpotlightCard isDark={isDark} className="col-span-4 p-6 sm:p-8 flex flex-col justify-start h-[380px]">
                 <div className="flex items-center justify-between mb-5 flex-shrink-0">
                   <div className="flex items-center space-x-2.5">
                     <FileText className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
@@ -1104,7 +1095,7 @@ export default function Portfolio() {
                   </Link>
                 </div>
 
-                <div data-lenis-prevent className="space-y-4 overflow-y-auto pr-1 flex-1 hide-scrollbar max-h-[220px]" onWheel={(e) => e.stopPropagation()}>
+                <div data-lenis-prevent className="space-y-4 overflow-y-auto pr-1 flex-1 hide-scrollbar max-h-[240px]" onWheel={(e) => e.stopPropagation()}>
                   {combinedBlogs.slice(0, 2).map((blog, idx) => (
                     <Link
                       key={idx}
@@ -1514,38 +1505,36 @@ export default function Portfolio() {
             </SpotlightCard>
 
             {/* GitHub Stats (Mobile) */}
-            <SpotlightCard isDark={isDark} className="p-3 sm:p-4 flex flex-col justify-between h-[170px] relative overflow-hidden">
-              {/* Decorative Math Equations background banner at top */}
-              <div className={`absolute top-0 inset-x-0 h-[68px] ${
+            <SpotlightCard isDark={isDark} className="p-3 sm:p-4 flex flex-col justify-between h-[190px] relative overflow-hidden">
+              {/* Decorative Cover Image background banner at top */}
+              <div className={`absolute top-0 inset-x-0 h-[76px] ${
                 isDark 
-                  ? "bg-gradient-to-r from-zinc-900 to-zinc-950 border-b border-white/5" 
-                  : "bg-gradient-to-r from-zinc-100 to-zinc-200 border-b border-black/5"
-              } overflow-hidden flex items-center justify-center px-4 z-0`}>
-                {/* Math symbols background noise */}
-                <div className="absolute inset-0 opacity-10 font-mono text-[8px] select-none pointer-events-none p-1 leading-normal overflow-hidden flex flex-wrap gap-x-2 gap-y-1">
-                  <span>x² + y² = r²</span>
-                  <span>∫ e^x dx</span>
-                  <span>λ = h/p</span>
-                  <span>E = mc²</span>
-                  <span>∇ × B = μ₀J</span>
-                  <span>f(x) = ∑ c_n x^n</span>
-                </div>
+                  ? "border-b border-white/5" 
+                  : "border-b border-black/5"
+              } overflow-hidden flex items-center justify-center px-4 z-0`}
+              style={{
+                backgroundImage: `url("https://camo.githubusercontent.com/20b0e586a6532cedfecaaefed0e8fe35dd5acf524e30a5d2dd5e75f637e95ef1/68747470733a2f2f692e706f7374696d672e63632f6b47366e6d5a475a2f41534b2d42616e6e65722d496d6167652d4769746875622e706e67")`,
+                backgroundSize: "cover",
+                backgroundPosition: "center"
+              }}>
+                {/* Semi-transparent dark overlay to ensure readability */}
+                <div className="absolute inset-0 bg-black/35 z-0" />
 
                 {/* Centered Profile Info: Avatar, Name & Username in Center */}
                 <div className="flex flex-col items-center justify-center text-center z-10 mt-1">
                   {/* Avatar Octocat circular */}
-                  <div className={`w-9 h-9 rounded-full border-2 ${isDark ? "border-red-400 bg-zinc-900" : "border-red-600 bg-white"} overflow-hidden flex-shrink-0 flex items-center justify-center shadow`}>
+                  <div className={`w-[38px] h-[38px] rounded-full border-2 ${isDark ? "border-red-400 bg-zinc-900" : "border-white bg-white"} overflow-hidden flex-shrink-0 flex items-center justify-center shadow`}>
                     <img
                       src={githubStats?.avatarUrl || "https://avatars.githubusercontent.com/u/99318181?v=4"}
                       alt="Nikhil Verma Avatar"
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="mt-1">
-                    <h4 className={`text-[11px] font-black font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"} leading-none mb-0.5`}>
+                  <div className="mt-0.5">
+                    <h4 className="text-[11px] font-black font-outfit tracking-tight text-white leading-none mb-0.5">
                       {githubStats?.name || "Nikhil Verma"}
                     </h4>
-                    <span className={`text-[8px] font-bold font-mono ${isDark ? "text-zinc-400" : "text-zinc-600"} leading-none`}>
+                    <span className="text-[8px] font-bold font-mono text-zinc-300 leading-none">
                       @nickhil-verma
                     </span>
                   </div>
@@ -1556,11 +1545,7 @@ export default function Portfolio() {
                   href="https://github.com/nickhil-verma"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`absolute top-2 right-2 z-10 p-1.5 rounded-lg border transition-all ${
-                    isDark 
-                      ? "bg-white/5 border-white/5 hover:bg-white/10 text-red-400 hover:text-white"
-                      : "bg-white border-black/10 hover:bg-zinc-50 text-red-600 hover:text-red-700 shadow-sm"
-                  }`}
+                  className="absolute top-2.5 right-2.5 z-10 p-1.5 rounded-lg border transition-all bg-black/40 border-white/10 hover:bg-black/60 text-white shadow-sm"
                   title="View GitHub Profile"
                 >
                   <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current" xmlns="http://www.w3.org/2000/svg">
@@ -1570,7 +1555,7 @@ export default function Portfolio() {
               </div>
 
               {/* Empty spacer for the absolute banner height */}
-              <div className="h-[68px] flex-shrink-0" />
+              <div className="h-[76px] flex-shrink-0" />
 
               {/* 4 Column Bottom Stats Grid */}
               <div className="grid grid-cols-4 gap-2 items-center flex-1 py-3 px-2 z-10">
