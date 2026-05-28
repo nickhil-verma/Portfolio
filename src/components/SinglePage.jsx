@@ -342,101 +342,103 @@ export default function Portfolio() {
   useEffect(() => {
     const fetchGitHubStats = async () => {
       try {
-        const response = await fetch(
-          "https://api.github.com/users/nickhil-verma"
-        );
-        const userData = await response.json();
+        const response = await fetch("/api/github-stats");
+        const statsData = await response.json();
 
-        const reposResponse = await fetch(
-          "https://api.github.com/users/nickhil-verma/repos?per_page=100"
-        );
-        const reposData = await reposResponse.json();
-
-        const totalStars = reposData.reduce(
-          (acc, repo) => acc + repo.stargazers_count,
-          0
-        );
-        const totalForks = reposData.reduce(
-          (acc, repo) => acc + repo.forks_count,
-          0
-        );
-
-        const featuredRepoObj = Array.isArray(reposData) 
-          ? [...reposData].sort((a, b) => (b.stargazers_count || 0) - (a.stargazers_count || 0))[0] 
-          : null;
-        const dynamicRepoName = featuredRepoObj ? featuredRepoObj.name : "Portfolio";
-
-        // Aggregate top 3 languages
-        let dynamicLanguages = "JS/TS/Py";
-        if (Array.isArray(reposData)) {
-          const langCounts = {};
-          reposData.forEach(r => {
-            if (r.language) {
-              langCounts[r.language] = (langCounts[r.language] || 0) + 1;
-            }
-          });
-          const sortedLangs = Object.keys(langCounts).sort((a, b) => langCounts[b] - langCounts[a]);
-          const langMapper = (l) => {
-            const map = {
-              "JavaScript": "JS",
-              "TypeScript": "TS",
-              "Python": "Py",
-              "C++": "C++",
-              "HTML": "HTML",
-              "CSS": "CSS",
-              "Jupyter Notebook": "Ipynb",
-              "Shell": "Sh"
-            };
-            return map[l] || l.slice(0, 4);
-          };
-          if (sortedLangs.length > 0) {
-            dynamicLanguages = sortedLangs.slice(0, 3).map(langMapper).join("/");
-          }
-        }
-
-        // Calculate dynamic commits & LOC
-        let dynamicCommits = "1,480+";
-        let dynamicLOC = "12,400+";
-        if (Array.isArray(reposData)) {
-          const totalSizeKB = reposData.reduce((acc, r) => acc + (r.size || 0), 0);
-          
-          const estimatedCommits = reposData.reduce((acc, r) => acc + Math.round((r.size || 0) / 12 + (r.stargazers_count || 0) * 6 + 20), 0);
-          dynamicCommits = estimatedCommits.toLocaleString() + "+";
-
-          const estimatedLOC = Math.round(totalSizeKB * 20);
-          dynamicLOC = estimatedLOC.toLocaleString() + "+";
+        if (statsData.error) {
+          throw new Error(statsData.error);
         }
 
         setGithubStats({
-          avatarUrl: userData.avatar_url || "https://avatars.githubusercontent.com/u/99318181?v=4",
-          name: userData.name || "Nikhil Verma",
-          publicRepos: userData.public_repos || 25,
-          followers: userData.followers || 12,
-          following: userData.following || 18,
-          totalStars: totalStars || 45,
-          totalForks: totalForks || 8,
-          createdAt: userData.created_at ? new Date(userData.created_at).getFullYear() : 2021,
-          repoName: dynamicRepoName,
-          commits: dynamicCommits,
-          loc: dynamicLOC,
-          languages: dynamicLanguages,
+          avatarUrl: statsData.avatarUrl || "https://avatars.githubusercontent.com/u/99318181?v=4",
+          name: statsData.name || "Nikhil Verma",
+          repoCount: statsData.repoCount || 77,
+          commits: statsData.commits || "1,480+",
+          loc: statsData.loc || "12,400+",
+          languages: statsData.languages || "JS/TS/Py",
+          totalStars: statsData.totalStars || 45,
         });
       } catch (error) {
-        console.error("Error fetching GitHub stats:", error);
-        setGithubStats({
-          avatarUrl: "https://avatars.githubusercontent.com/u/99318181?v=4",
-          name: "Nikhil Verma",
-          publicRepos: 25,
-          followers: 12,
-          following: 18,
-          totalStars: 45,
-          totalForks: 8,
-          createdAt: 2021,
-          repoName: "Portfolio",
-          commits: "1,480+",
-          loc: "12,400+",
-          languages: "JS/TS/Py",
-        });
+        console.error("Error fetching GitHub stats via API route, falling back to REST:", error);
+        
+        // REST API client-side fallback
+        try {
+          const response = await fetch(
+            "https://api.github.com/users/nickhil-verma"
+          );
+          const userData = await response.json();
+
+          const reposResponse = await fetch(
+            "https://api.github.com/users/nickhil-verma/repos?per_page=100"
+          );
+          const reposData = await reposResponse.json();
+
+          const totalStars = Array.isArray(reposData)
+            ? reposData.reduce((acc, repo) => acc + repo.stargazers_count, 0)
+            : 0;
+
+          const publicReposCount = userData.public_repos || 77;
+
+          // Estimate commits & LOC dynamically from REST fallback
+          let dynamicCommits = "1,480+";
+          let dynamicLOC = "12,400+";
+          let dynamicLanguages = "JS/TS/Py";
+
+          if (Array.isArray(reposData)) {
+            const totalSizeKB = reposData.reduce((acc, r) => acc + (r.size || 0), 0);
+            
+            const estimatedCommits = reposData.reduce((acc, r) => acc + Math.round((r.size || 0) / 12 + (r.stargazers_count || 0) * 6 + 20), 0);
+            dynamicCommits = estimatedCommits.toLocaleString() + "+";
+
+            const estimatedLOC = Math.round(totalSizeKB * 20);
+            dynamicLOC = estimatedLOC.toLocaleString() + "+";
+
+            const langCounts = {};
+            reposData.forEach(r => {
+              if (r.language) {
+                langCounts[r.language] = (langCounts[r.language] || 0) + 1;
+              }
+            });
+            const sortedLangs = Object.keys(langCounts).sort((a, b) => langCounts[b] - langCounts[a]);
+            const langMapper = (l) => {
+              const map = {
+                "JavaScript": "JS",
+                "TypeScript": "TS",
+                "Python": "Py",
+                "C++": "C++",
+                "HTML": "HTML",
+                "CSS": "CSS",
+                "Jupyter Notebook": "Ipynb",
+                "Shell": "Sh"
+              };
+              return map[l] || l.slice(0, 4);
+            };
+            if (sortedLangs.length > 0) {
+              dynamicLanguages = sortedLangs.slice(0, 3).map(langMapper).join("/");
+            }
+          }
+
+          setGithubStats({
+            avatarUrl: userData.avatar_url || "https://avatars.githubusercontent.com/u/99318181?v=4",
+            name: userData.name || "Nikhil Verma",
+            repoCount: publicReposCount,
+            commits: dynamicCommits,
+            loc: dynamicLOC,
+            languages: dynamicLanguages,
+            totalStars: totalStars || 45,
+          });
+        } catch (fallbackError) {
+          console.error("Error in REST fallback:", fallbackError);
+          setGithubStats({
+            avatarUrl: "https://avatars.githubusercontent.com/u/99318181?v=4",
+            name: "Nikhil Verma",
+            repoCount: 77,
+            commits: "1,480+",
+            loc: "12,400+",
+            languages: "JS/TS/Py",
+            totalStars: 45,
+          });
+        }
       } finally {
         setLoading(false);
       }
@@ -1065,16 +1067,16 @@ export default function Portfolio() {
 
                   {/* 4 Column Bottom Stats Grid */}
                   <div className="grid grid-cols-4 gap-2 items-center flex-1 py-3 px-2 z-10">
-                    {/* Repo Name Metric */}
+                    {/* Repo Count Metric */}
                     <div className="flex flex-col items-center justify-center text-center">
                       <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                       </svg>
                       <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
-                        Repo Name
+                        Repo Count
                       </span>
-                      <span className={`text-[9px] font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title={githubStats?.repoName || "Portfolio"}>
-                        {githubStats?.repoName || "Portfolio"}
+                      <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                        {githubStats?.repoCount || 77}
                       </span>
                     </div>
 
@@ -1089,7 +1091,7 @@ export default function Portfolio() {
                         Commits
                       </span>
                       <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
-                        {githubStats?.commits || "1,480+"}
+                        {githubStats?.commits || "0"}
                       </span>
                     </div>
 
@@ -1106,7 +1108,7 @@ export default function Portfolio() {
                         Line of code
                       </span>
                       <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
-                        {githubStats?.loc || "12,400+"}
+                        {githubStats?.loc || "0"}
                       </span>
                     </div>
 
@@ -1120,7 +1122,7 @@ export default function Portfolio() {
                         Languages
                       </span>
                       <span className={`text-[10px] font-black font-mono mt-1 leading-none ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title={githubStats?.languages || "JS, TS, Python"}>
-                        {githubStats?.languages || "JS/TS/Py"}
+                        {githubStats?.languages || "Null"}
                       </span>
                     </div>
                   </div>
@@ -1613,16 +1615,16 @@ export default function Portfolio() {
 
               {/* 4 Column Bottom Stats Grid */}
               <div className="grid grid-cols-4 gap-2 items-center flex-1 py-3 px-2 z-10">
-                {/* Repo Name Metric */}
+                {/* Repo Count Metric */}
                 <div className="flex flex-col items-center justify-center text-center">
                   <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
                     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                   </svg>
                   <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
-                    Repo Name
+                    Repo Count
                   </span>
-                  <span className={`text-[9px] font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title={githubStats?.repoName || "Portfolio"}>
-                    {githubStats?.repoName || "Portfolio"}
+                  <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                    {githubStats?.repoCount || 77}
                   </span>
                 </div>
 
