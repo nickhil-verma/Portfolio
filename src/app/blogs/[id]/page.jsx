@@ -511,24 +511,19 @@ export default function BlogDetailPage() {
       setBlog(activeBlog);
       setLoading(false);
 
-      // Track view once per page load (skipped on localhost by the API)
+      // Track view once per page load
       if (!viewTracked.current && activeBlog) {
         viewTracked.current = true;
         try {
-          const isLocalhost =
-            typeof window !== "undefined" &&
-            (window.location.hostname === "localhost" ||
-              window.location.hostname === "127.0.0.1" ||
-              window.location.hostname === "::1");
-          if (!isLocalhost) {
-            const vRes = await fetch(`/api/blogs/views?id=${id}`, { method: "POST" });
-            const vData = await vRes.json();
-            if (vData.views !== undefined) setViews(vData.views);
+          const vRes = await fetch(`/api/blogs/views?id=${id}`, { method: "POST" });
+          const vData = await vRes.json();
+          if (vData.views !== undefined) {
+            setViews(vData.views);
           } else {
-            setViews(activeBlog?.views || 0);
+            setViews((activeBlog.views || 0) + 1);
           }
         } catch (e) {
-          // non-critical
+          setViews((activeBlog.views || 0) + 1);
         }
       }
     };

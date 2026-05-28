@@ -11,6 +11,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CustomToast from "../../../components/CustomToast";
 
+// Recharts components for shadcn-style graphs
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid
+} from "recharts";
+
 // Senior-level React-based Markdown-to-HTML parser function for dynamic blog preview
 function renderMarkdownContent(md, isDark = true) {
   if (!md) return "";
@@ -396,6 +409,54 @@ export default function AdminDashboard() {
 
   const topProjects = Array.isArray(dashboardProjects) ? [...dashboardProjects].sort((a, b) => (b.stars || 0) - (a.stars || 0)).slice(0, 5) : [];
   const topBlogs = Array.isArray(dashboardBlogs) ? [...dashboardBlogs].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 5) : [];
+  
+  // Dynamic leaderboard for top viewed blogs with thumbnails
+  const topViewedBlogs = Array.isArray(dashboardBlogs) ? [...dashboardBlogs].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5) : [];
+
+  // Aggregated traffic log data for charts (last 7 days)
+  const chartData = React.useMemo(() => {
+    if (!analytics || !analytics.logs || !Array.isArray(analytics.logs)) return [];
+    
+    // Filter out local traffic
+    const filtered = analytics.logs.filter(log => {
+      const ip = log.ip || "";
+      const loc = log.location || "";
+      return (
+        ip !== "127.0.0.1" &&
+        ip !== "::1" &&
+        !ip.startsWith("192.168.") &&
+        !ip.startsWith("10.") &&
+        !ip.startsWith("172.") &&
+        !loc.toLowerCase().includes("localhost")
+      );
+    });
+
+    // Map last 7 days (including today)
+    const dataMap = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      const key = d.toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" });
+      dataMap[key] = { label, views: 0, unique: new Set() };
+    }
+
+    filtered.forEach(log => {
+      if (!log.timestamp) return;
+      const logDate = new Date(log.timestamp);
+      const key = logDate.toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" });
+      if (dataMap[key]) {
+        dataMap[key].views += 1;
+        dataMap[key].unique.add(log.ip || "unknown");
+      }
+    });
+
+    return Object.keys(dataMap).sort().map(key => ({
+      date: dataMap[key].label,
+      Views: dataMap[key].views,
+      Visitors: dataMap[key].unique.size
+    }));
+  }, [analytics]);
 
   // Fetch all live data on tab change or mount
   const fetchData = async () => {
@@ -659,14 +720,14 @@ export default function AdminDashboard() {
       <div className={`absolute inset-0 z-0 ${isDark ? "grid-mesh" : "grid-mesh-light"} pointer-events-none`} />
 
       {/* Sidebar Navigation */}
-      <aside className="w-64 border-r border-white/5 bg-[#09090b]/80 backdrop-blur-xl z-10 p-6 flex flex-col justify-between hidden md:flex">
+      <aside className={`w-64 border-r ${isDark ? "border-white/5 bg-[#09090b]/80" : "border-black/10 bg-white/85"} backdrop-blur-xl z-10 p-6 flex flex-col justify-between hidden md:flex`}>
         <div>
           {/* Logo Heading */}
           <div className="flex items-center space-x-3 mb-10">
-            <div className="w-8 h-8 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-              <Cpu className="w-4 h-4 text-red-400" />
+            <div className={`w-8 h-8 rounded-xl ${isDark ? "bg-red-500/10 border-red-500/20" : "bg-red-50 border-red-200"} border flex items-center justify-center`}>
+              <Cpu className="w-4 h-4 text-red-500" />
             </div>
-            <span className="font-extrabold font-outfit text-base tracking-tight text-white">Nikhil Console</span>
+            <span className={`font-extrabold font-outfit text-base tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>Nikhil Console</span>
           </div>
 
           {/* Menu Items */}
@@ -681,13 +742,13 @@ export default function AdminDashboard() {
               const isActive = activeTab === item.id;
               return (
                 <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
-                    isActive 
-                      ? "bg-red-500/20 text-red-400 border border-red-500/20 shadow-lg shadow-red-500/5" 
-                      : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
-                  }`}
+                   key={item.id}
+                   onClick={() => setActiveTab(item.id)}
+                   className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
+                     isActive 
+                       ? "bg-red-500/20 text-red-400 border border-red-500/20 shadow-lg shadow-red-500/5" 
+                       : `${isDark ? "text-zinc-400 hover:text-white hover:bg-white/5" : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5"} border border-transparent`
+                   }`}
                 >
                   <Icon className="w-4.5 h-4.5" />
                   <span>{item.label}</span>
@@ -723,13 +784,13 @@ export default function AdminDashboard() {
         isDark ? "" : "bg-[#f5f5f7]"
       }`}>
         {/* Mobile menu bar */}
-        <div className="flex md:hidden items-center justify-between p-4 mb-6 glass-card rounded-2xl">
+        <div className={`flex md:hidden items-center justify-between p-4 mb-6 border ${isDark ? "glass-card border-white/5" : "bg-white/90 border-black/5 shadow-sm"} rounded-2xl`}>
           <div className="flex items-center space-x-2">
-            <Cpu className="w-4.5 h-4.5 text-red-400" />
-            <span className="font-bold text-xs tracking-tight text-white">Nikhil Console</span>
+            <Cpu className="w-4.5 h-4.5 text-red-500" />
+            <span className={`font-bold text-xs tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>Nikhil Console</span>
           </div>
           <div className="flex items-center space-x-1">
-            <button onClick={toggleTheme} className="px-2 py-1.5 rounded-lg text-[10px] text-zinc-400 hover:text-white">
+            <button onClick={toggleTheme} className={`px-2 py-1.5 rounded-lg text-[10px] ${isDark ? "text-zinc-400 hover:text-white" : "text-zinc-500 hover:text-zinc-900"}`}>
               {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
             {["overview", "projects", "blogs", "comments"].map((tab) => (
@@ -737,7 +798,9 @@ export default function AdminDashboard() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase ${
-                  activeTab === tab ? "bg-red-500/20 text-red-400" : "text-zinc-400"
+                  activeTab === tab 
+                    ? "bg-red-500/20 text-red-400" 
+                    : `${isDark ? "text-zinc-400 hover:text-white" : "text-zinc-500 hover:text-zinc-900"}`
                 }`}
               >
                 {tab === "overview" ? "Views" : tab === "comments" ? "Reflections" : tab}
@@ -749,19 +812,21 @@ export default function AdminDashboard() {
         {/* Header bar */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-10">
           <div>
-            <h1 className="text-3xl font-extrabold font-outfit tracking-tight text-white flex items-center gap-2">
+            <h1 className={`text-3xl font-extrabold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"} flex items-center gap-2`}>
               {activeTab === "overview" && "Analytics Overview"}
               {activeTab === "projects" && "Projects Manager"}
               {activeTab === "blogs" && "Blogging Dashboard"}
               {activeTab === "comments" && "Anonymous Comments"}
             </h1>
-            <p className="text-xs text-zinc-400">
+            <p className={`text-xs ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>
               Manage database assets and monitor traffic geocoding telemetry.
             </p>
           </div>
 
           <Link href="/">
-            <button className="flex items-center space-x-2 text-xs font-semibold tracking-wide text-zinc-400 hover:text-white transition-all py-2 px-3 bg-white/5 border border-white/5 rounded-xl">
+            <button className={`flex items-center space-x-2 text-xs font-semibold tracking-wide border transition-all py-2 px-3 rounded-xl ${
+              isDark ? "text-zinc-400 hover:text-white bg-white/5 border-white/5" : "text-zinc-600 hover:text-zinc-900 bg-white border-black/10 shadow-sm"
+            }`}>
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Portfolio</span>
             </button>
@@ -781,31 +846,209 @@ export default function AdminDashboard() {
               ].map((metric, idx) => {
                 const Icon = metric.icon;
                 return (
-                  <div key={idx} className="p-5 rounded-2xl glass-card relative overflow-hidden">
+                  <div key={idx} className={`p-5 rounded-2xl ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative overflow-hidden`}>
                     <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/10 to-transparent pointer-events-none" />
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">{metric.label}</span>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>{metric.label}</span>
                       <div className={`p-2 rounded-xl border flex items-center justify-center ${metric.color}`}>
                         <Icon className="w-4 h-4" />
                       </div>
                     </div>
-                    <p className="text-2xl font-extrabold font-outfit text-white tracking-tight">{metric.value}</p>
+                    <p className={`text-2xl font-extrabold font-outfit ${isDark ? "text-white" : "text-zinc-900"} tracking-tight`}>{metric.value}</p>
                   </div>
                 );
               })}
             </div>
 
+            {/* Visualizations Grid: site activity & geocoding visitor map */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+              {/* Traffic Trends Dashboard Card */}
+              <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative overflow-hidden flex flex-col justify-between min-h-[400px]`}>
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/25 to-transparent pointer-events-none" />
+                <div className="flex justify-between items-center mb-5 flex-shrink-0">
+                  <h3 className={`text-sm font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"} flex items-center gap-2`}>
+                    <Cpu className="w-4 h-4 text-red-500" />
+                    <span>Traffic & Site Analytics</span>
+                  </h3>
+                  <span className={`text-[9px] font-bold uppercase ${isDark ? "bg-red-500/10 border-red-500/20 text-red-400" : "bg-red-50 border-red-200 text-red-600"} border px-2.5 py-1 rounded`}>
+                    Live Recharts
+                  </span>
+                </div>
+                
+                {/* Area Chart: site activity trend */}
+                <div className="flex-1 space-y-6">
+                  <div>
+                    <h4 className={`text-xs font-semibold ${isDark ? "text-zinc-400" : "text-zinc-500"} mb-3`}>
+                      📈 Trajectory Jump (Views vs Visitors)
+                    </h4>
+                    <div className="h-[140px] w-full">
+                      {chartData.length === 0 ? (
+                        <div className="h-full flex items-center justify-center text-xs text-zinc-500 font-mono">No traffic records in the telemetry logs.</div>
+                      ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                            <defs>
+                              <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2}/>
+                                <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                              </linearGradient>
+                              <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)"} />
+                            <XAxis dataKey="date" stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
+                            <YAxis stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
+                            <Tooltip contentStyle={{ backgroundColor: isDark ? "#09090b" : "#ffffff", borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)", fontSize: 10, borderRadius: 12, color: isDark ? "#fff" : "#000" }} />
+                            <Area type="monotone" dataKey="Views" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorViews)" />
+                            <Area type="monotone" dataKey="Visitors" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorVisitors)" />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bar Chart: daily traffic */}
+                  <div>
+                    <h4 className={`text-xs font-semibold ${isDark ? "text-zinc-400" : "text-zinc-500"} mb-3`}>
+                      📊 Page Visits per Day of Week
+                    </h4>
+                    <div className="h-[120px] w-full">
+                      {chartData.length === 0 ? (
+                        <div className="h-full flex items-center justify-center text-xs text-zinc-500 font-mono">No traffic records in the telemetry logs.</div>
+                      ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)"} />
+                            <XAxis dataKey="date" stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
+                            <YAxis stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
+                            <Tooltip contentStyle={{ backgroundColor: isDark ? "#09090b" : "#ffffff", borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)", fontSize: 10, borderRadius: 12, color: isDark ? "#fff" : "#000" }} />
+                            <Bar dataKey="Views" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Geocoding Visitor Map Card */}
+              <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative overflow-hidden min-h-[400px] flex flex-col justify-between`}>
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/25 to-transparent pointer-events-none" />
+                <div className="flex justify-between items-center mb-5 flex-shrink-0">
+                  <h3 className={`text-sm font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"} flex items-center gap-2`}>
+                    <Globe className="w-4 h-4 text-emerald-400" />
+                    <span>Live Visitor Geolocation Radar</span>
+                  </h3>
+                  <span className={`text-[9px] font-bold uppercase ${isDark ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-emerald-50 border-emerald-200 text-emerald-600"} border px-2.5 py-1 rounded`}>
+                    Geocoded Map
+                  </span>
+                </div>
+
+                <div className="flex-1 flex flex-col justify-center items-center relative py-2">
+                  {/* Styled Cyber World Map SVG */}
+                  <svg viewBox="0 0 500 250" className={`w-full h-auto rounded-2xl border ${isDark ? "bg-black/40 border-white/5" : "bg-zinc-100 border-black/5"} relative overflow-hidden shadow-inner`}>
+                    {/* Grid mesh backdrop */}
+                    <g className={`${isDark ? "stroke-white/[0.02]" : "stroke-black/[0.03]"} stroke-1`} strokeDasharray="3 3">
+                      <line x1="0" y1="50" x2="500" y2="50" />
+                      <line x1="0" y1="100" x2="500" y2="100" />
+                      <line x1="0" y1="150" x2="500" y2="150" />
+                      <line x1="0" y1="200" x2="500" y2="200" />
+                      <line x1="100" y1="0" x2="100" y2="250" />
+                      <line x1="200" y1="0" x2="200" y2="250" />
+                      <line x1="300" y1="0" x2="300" y2="250" />
+                      <line x1="400" y1="0" x2="400" y2="250" />
+                    </g>
+                    
+                    {/* Abstract Continents Polygons */}
+                    {(() => {
+                      const mapFill = isDark ? "fill-white/[0.04] stroke-white/10" : "fill-black/[0.03] stroke-black/10";
+                      return (
+                        <g>
+                          {/* North America */}
+                          <polygon points="50,40 130,45 150,90 120,105 80,90 50,70" className={mapFill} />
+                          {/* South America */}
+                          <polygon points="120,105 140,115 130,170 100,130" className={mapFill} />
+                          {/* Eurasia & Africa */}
+                          <polygon points="200,45 370,40 390,90 320,140 250,150 220,100" className={mapFill} />
+                          {/* Australia */}
+                          <polygon points="380,140 420,150 400,180 370,170" className={mapFill} />
+                        </g>
+                      );
+                    })()}
+
+                    {/* Glowing Beacons at Visitor Coordinates */}
+                    {analytics.logs
+                      .filter(log => {
+                        const ip = log.ip || "";
+                        const loc = log.location || "";
+                        const latVal = parseFloat(log.lat);
+                        const lonVal = parseFloat(log.lon);
+                        return (
+                          ip !== "127.0.0.1" &&
+                          ip !== "::1" &&
+                          !ip.startsWith("192.168.") &&
+                          !ip.startsWith("10.") &&
+                          !ip.startsWith("172.") &&
+                          !loc.toLowerCase().includes("localhost") &&
+                          !isNaN(latVal) &&
+                          !isNaN(lonVal)
+                        );
+                      })
+                      .map((log, idx) => {
+                        // Math equirectangular conversion to map box 500x250
+                        const x = ((parseFloat(log.lon) + 180) * 500) / 360;
+                        const y = ((90 - parseFloat(log.lat)) * 250) / 180;
+                        return (
+                          <g key={idx} className="group cursor-pointer">
+                            <circle cx={x} cy={y} r="8" className="fill-red-500/35 animate-ping" />
+                            <circle cx={x} cy={y} r="3" className="fill-red-500 stroke-white stroke-0.5" />
+                            <title>{`${log.location || "Visitor"} (IP: ${log.ip})`}</title>
+                          </g>
+                        );
+                      })
+                    }
+                  </svg>
+                  
+                  {/* Latest visitor telemetry banner */}
+                  <div className={`mt-3 w-full py-2 px-3 rounded-xl border ${isDark ? "bg-[#0c0c0e]/80 border-white/5 text-zinc-400" : "bg-black/[0.02] border-black/5 text-zinc-600"} text-[10px] font-mono flex items-center justify-between`}>
+                    <span className="font-bold text-red-400 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse inline-block" /> Live Radar Feed
+                    </span>
+                    <span className="truncate max-w-[200px] text-right">
+                      {(() => {
+                        const rec = analytics.logs.find(log => {
+                          const ip = log.ip || "";
+                          const loc = log.location || "";
+                          return (
+                            ip !== "127.0.0.1" &&
+                            ip !== "::1" &&
+                            !ip.startsWith("192.168.") &&
+                            !ip.startsWith("10.") &&
+                            !ip.startsWith("172.") &&
+                            !loc.toLowerCase().includes("localhost")
+                          );
+                        });
+                        return rec ? `Active connection geocoded at ${rec.location}` : "Awaiting external logs...";
+                      })()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Dynamic Leaderboards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Projects Leaderboard */}
-              <div className="p-6 rounded-[24px] glass-card relative">
+              <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
                 <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent pointer-events-none" />
                 <div className="flex justify-between items-center mb-5">
-                  <h3 className="text-sm font-bold font-outfit text-white flex items-center gap-2">
+                  <h3 className={`text-sm font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"} flex items-center gap-2`}>
                     <FolderKanban className="w-4 h-4 text-amber-400" />
                     <span>Most Starred Projects</span>
                   </h3>
-                  <span className="text-[9px] font-bold uppercase bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded text-amber-400">
+                  <span className={`text-[9px] font-bold uppercase ${isDark ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-amber-50 border-amber-200 text-amber-600"} border px-2.5 py-1 rounded`}>
                     Leaderboard
                   </span>
                 </div>
@@ -814,11 +1057,11 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="space-y-3">
                     {topProjects.map((p, idx) => (
-                      <div key={idx} className="flex justify-between items-center p-3.5 bg-white/[0.02] border border-white/5 rounded-xl hover:border-white/10 transition-all">
+                      <div key={idx} className={`flex justify-between items-center p-3 bg-white/[0.01] border ${isDark ? "border-white/5" : "border-black/5"} rounded-xl hover:border-white/10 transition-all`}>
                         <div className="flex items-center space-x-3">
                           <span className="text-xs font-bold text-zinc-500 font-mono w-4">#{idx + 1}</span>
                           <div>
-                            <p className="text-xs font-bold text-white leading-none mb-1.5">{p.title}</p>
+                            <p className={`text-xs font-bold ${isDark ? "text-white" : "text-zinc-900"} leading-none mb-1.5`}>{p.title}</p>
                             <p className="text-[9px] text-zinc-400 font-mono">{p.category || "web"}</p>
                           </div>
                         </div>
@@ -832,34 +1075,43 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              {/* Blogs Leaderboard */}
-              <div className="p-6 rounded-[24px] glass-card relative">
-                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/20 to-transparent pointer-events-none" />
+              {/* Top Viewed Blogs Leaderboard with thumbnails */}
+              <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent pointer-events-none" />
                 <div className="flex justify-between items-center mb-5">
-                  <h3 className="text-sm font-bold font-outfit text-white flex items-center gap-2">
-                    <BookHeart className="w-4 h-4 text-red-400" />
-                    <span>Most Liked Blogs</span>
+                  <h3 className={`text-sm font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"} flex items-center gap-2`}>
+                    <BookHeart className="w-4 h-4 text-emerald-400" />
+                    <span>Most Viewed Insights</span>
                   </h3>
-                  <span className="text-[9px] font-bold uppercase bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded text-red-400">
-                    Leaderboard
+                  <span className={`text-[9px] font-bold uppercase ${isDark ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-emerald-50 border-emerald-200 text-emerald-600"} border px-2.5 py-1 rounded`}>
+                    Telemetry
                   </span>
                 </div>
-                {topBlogs.length === 0 ? (
-                  <div className="py-12 text-center text-xs text-zinc-500">No dynamic database blogs published.</div>
+                {topViewedBlogs.length === 0 ? (
+                  <div className="py-12 text-center text-xs text-zinc-500">No dynamic database blogs recorded.</div>
                 ) : (
                   <div className="space-y-3">
-                    {topBlogs.map((b, idx) => (
-                      <div key={idx} className="flex justify-between items-center p-3.5 bg-white/[0.02] border border-white/5 rounded-xl hover:border-white/10 transition-all">
+                    {topViewedBlogs.map((b, idx) => (
+                      <div key={idx} className={`flex justify-between items-center p-3 bg-white/[0.01] border ${isDark ? "border-white/5" : "border-black/5"} rounded-xl hover:border-emerald-500/30 transition-all`}>
                         <div className="flex items-center space-x-3">
                           <span className="text-xs font-bold text-zinc-500 font-mono w-4">#{idx + 1}</span>
-                          <div>
-                            <p className="text-xs font-bold text-white leading-none mb-1.5">{b.title}</p>
+                          <div className={`w-9 h-9 rounded-lg overflow-hidden flex-shrink-0 border ${isDark ? "border-white/10" : "border-black/10"} bg-zinc-800`}>
+                            {b.imageUrl ? (
+                              <img src={b.imageUrl} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center text-[10px] text-emerald-400 font-bold font-mono">
+                                BG
+                              </div>
+                            )}
+                          </div>
+                          <div className="max-w-[150px] sm:max-w-[200px] truncate">
+                            <p className={`text-xs font-bold ${isDark ? "text-white" : "text-zinc-900"} leading-none mb-1.5 truncate`} title={b.title}>{b.title}</p>
                             <p className="text-[9px] text-zinc-400 font-mono">{b.category || "Tech"}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1.5 text-red-400 text-xs font-bold font-mono">
-                          <span>♥</span>
-                          <span>{b.likes || 0}</span>
+                        <div className="flex items-center gap-1 text-emerald-400 text-xs font-bold font-mono">
+                          <span>👁</span>
+                          <span>{b.views || 0}</span>
                         </div>
                       </div>
                     ))}
@@ -869,11 +1121,11 @@ export default function AdminDashboard() {
             </div>
 
             {/* Geolocation visitor logs table */}
-            <div className="p-6 rounded-[24px] glass-card relative">
+            <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
               <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none" />
               <div className="flex justify-between items-center mb-5">
-                <h3 className="text-lg font-bold font-outfit text-white">Live Visitor Geolocation Telemetry</h3>
-                <span className="text-[10px] font-bold uppercase bg-white/5 border border-white/5 px-2.5 py-1 rounded-md text-zinc-400">
+                <h3 className={`text-lg font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Live Visitor Geolocation Telemetry</h3>
+                <span className={`text-[10px] font-bold uppercase ${isDark ? "bg-white/5 border-white/5 text-zinc-400" : "bg-black/5 border-black/5 text-zinc-500"} border px-2.5 py-1 rounded-md`}>
                   Real-time Database Logs
                 </span>
               </div>
@@ -886,7 +1138,7 @@ export default function AdminDashboard() {
                 <div className="overflow-x-auto pr-1">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="border-b border-white/5 text-zinc-400 uppercase font-bold tracking-wider text-[9px]">
+                      <tr className={`border-b ${isDark ? "border-white/5 text-zinc-400" : "border-black/10 text-zinc-500"} uppercase font-bold tracking-wider text-[9px]`}>
                         <th className="pb-3.5 pl-2">Device Profile & Screen</th>
                         <th className="pb-3.5">IP Address & ISP</th>
                         <th className="pb-3.5">Geocoded Location</th>
@@ -894,7 +1146,7 @@ export default function AdminDashboard() {
                         <th className="pb-3.5 pr-2 text-right">System Agent</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className={`divide-y ${isDark ? "divide-white/5" : "divide-black/5"}`}>
                       {analytics.logs
                         .filter(log => {
                           const ip = log.ip || "";
@@ -909,8 +1161,8 @@ export default function AdminDashboard() {
                           );
                         })
                         .map((log, index) => (
-                        <tr key={index} className="hover:bg-white/[0.01] transition-colors">
-                          <td className="py-3 pl-2 flex items-center space-x-2 text-zinc-200">
+                        <tr key={index} className={`hover:${isDark ? "bg-white/[0.01]" : "bg-black/[0.01]"} transition-colors`}>
+                          <td className={`py-3 pl-2 flex items-center space-x-2 ${isDark ? "text-zinc-200" : "text-zinc-700"}`}>
                             {log.device === "Mobile" ? (
                               <Smartphone className="w-4 h-4 text-red-400 flex-shrink-0" />
                             ) : log.device === "Tablet" ? (
@@ -919,11 +1171,11 @@ export default function AdminDashboard() {
                               <Monitor className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                             )}
                             <div>
-                              <span className="font-semibold text-xs text-white">{log.device || "Desktop"}</span>
+                              <span className={`font-semibold text-xs ${isDark ? "text-white" : "text-zinc-900"}`}>{log.device || "Desktop"}</span>
                               <span className="block text-[10px] text-zinc-500 font-mono mt-0.5">{log.screenResolution || "Unknown"}</span>
                             </div>
                           </td>
-                          <td className="py-3 text-zinc-300 font-mono text-xs">
+                          <td className={`py-3 ${isDark ? "text-zinc-300" : "text-zinc-700"} font-mono text-xs`}>
                             <div>
                               <span>{log.ip}</span>
                               <span className="block text-[10px] text-zinc-500 font-sans mt-0.5 max-w-[150px] truncate" title={log.isp || "Localhost Network"}>
@@ -931,7 +1183,7 @@ export default function AdminDashboard() {
                               </span>
                             </div>
                           </td>
-                          <td className="py-3 text-zinc-200 font-medium text-xs">
+                          <td className={`py-3 ${isDark ? "text-zinc-200" : "text-zinc-800"} font-medium text-xs`}>
                             <span className="inline-flex items-center gap-1.5">
                               <Globe className="w-3.5 h-3.5 text-zinc-500" />
                               <div>

@@ -34,21 +34,11 @@ export async function POST(request) {
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ success: false }, { status: 200 });
 
-    // Skip localhost
+    // Skip localhost check removed to ensure local development testing works perfectly.
     const ip =
       request.headers.get("x-forwarded-for") ||
       request.headers.get("x-real-ip") ||
       "127.0.0.1";
-    const cleanIp = ip.includes(",") ? ip.split(",")[0].trim() : ip;
-    const isLocal =
-      cleanIp === "127.0.0.1" ||
-      cleanIp === "::1" ||
-      cleanIp.startsWith("192.168.") ||
-      cleanIp.startsWith("10.") ||
-      cleanIp.startsWith("172.");
-    if (isLocal) {
-      return NextResponse.json({ success: false, message: "Skipped: localhost" }, { status: 200 });
-    }
 
     if (!clientPromise) return NextResponse.json({ success: false }, { status: 200 });
     const client = await clientPromise;
