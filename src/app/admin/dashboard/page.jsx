@@ -309,6 +309,193 @@ function renderMarkdownContent(md, isDark = true) {
   return elements;
 }
 
+// Dynamic 3D Spinning Globe component using standard 3D orthographic projection
+function GeolocationGlobe({ logs, isDark }) {
+  const canvasRef = React.useRef(null);
+  const rotationRef = React.useRef({ x: 0, y: 0 });
+  const mouseRef = React.useRef({ isDown: false, lastX: 0 });
+
+  React.useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let frameId;
+
+    // Filter valid geocodes
+    const visitors = logs.filter(log => {
+      const lat = parseFloat(log.lat);
+      const lon = parseFloat(log.lon);
+      return !isNaN(lat) && !isNaN(lon);
+    });
+
+    let autoRot = 0.3; // auto rotation velocity (in degrees per frame)
+
+    const render = () => {
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const radius = canvas.width / 2.3;
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+
+      // Draw sphere shadow glow
+      const sphereGlow = ctx.createRadialGradient(cx, cy, radius * 0.8, cx, cy, radius * 1.05);
+      sphereGlow.addColorStop(0, "transparent");
+      sphereGlow.addColorStop(1, isDark ? "rgba(239, 68, 68, 0.06)" : "rgba(220, 38, 38, 0.03)");
+      ctx.fillStyle = sphereGlow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius * 1.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw sphere outline
+      ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Draw meridians & parallels (grid lines)
+      ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.025)" : "rgba(0, 0, 0, 0.025)";
+      ctx.lineWidth = 0.5;
+
+      const currentRotX = rotationRef.current.x;
+
+      // Draw parallels
+      for (let lat = -60; lat <= 60; lat += 30) {
+        const r = radius * Math.cos((lat * Math.PI) / 180);
+        const y = cy - radius * Math.sin((lat * Math.PI) / 180);
+        ctx.beginPath();
+        ctx.ellipse(cx, y, r, r * 0.2, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Draw meridians
+      for (let lon = 0; lon < 360; lon += 30) {
+        const radLon = ((lon + currentRotX) * Math.PI) / 180;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, radius * Math.abs(Math.sin(radLon)), radius, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Draw stylized world dot-matrix map for continent outlines
+      const landPoints = [
+        // North America
+        { lat: 45, lon: -100 }, { lat: 55, lon: -120 }, { lat: 35, lon: -90 }, { lat: 60, lon: -80 }, { lat: 25, lon: -100 },
+        // South America
+        { lat: -10, lon: -60 }, { lat: -20, lon: -50 }, { lat: -30, lon: -60 }, { lat: 0, lon: -70 }, { lat: -40, lon: -70 },
+        // Africa
+        { lat: 10, lon: 20 }, { lat: 20, lon: 10 }, { lat: 0, lon: 25 }, { lat: -20, lon: 20 }, { lat: -30, lon: 25 }, { lat: 25, lon: 25 },
+        // Eurasia
+        { lat: 50, lon: 40 }, { lat: 60, lon: 60 }, { lat: 40, lon: 80 }, { lat: 55, lon: 100 }, { lat: 45, lon: 120 }, { lat: 35, lon: 105 },
+        { lat: 30, font: "bold", lon: 70 }, { lat: 20, lon: 80 }, { lat: 50, lon: 10 }, { lat: 45, lon: 25 },
+        // Australia
+        { lat: -25, lon: 135 }, { lat: -30, lon: 140 }, { lat: -20, lon: 120 }, { lat: -30, lon: 115 }
+      ];
+
+      ctx.fillStyle = isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.08)";
+      landPoints.forEach(pt => {
+        const radLat = (pt.lat * Math.PI) / 180;
+        const radLon = ((pt.lon + currentRotX) * Math.PI) / 180;
+
+        const xSphere = Math.cos(radLat) * Math.sin(radLon);
+        const ySphere = Math.sin(radLat);
+        const zSphere = Math.cos(radLat) * Math.cos(radLon);
+
+        if (zSphere > 0) { // front hemisphere
+          const x = cx + xSphere * radius;
+          const y = cy - ySphere * radius;
+          ctx.beginPath();
+          ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      // Draw visitor coords as flashing/pulsing beacons
+      visitors.forEach(visitor => {
+        const lat = parseFloat(visitor.lat);
+        const lon = parseFloat(visitor.lon);
+        const radLat = (lat * Math.PI) / 180;
+        const radLon = ((visitor.lon || lon + currentRotX) * Math.PI) / 180; // use raw or adjusted
+        const actualRadLon = ((lon + currentRotX) * Math.PI) / 180;
+
+        const xSphere = Math.cos(radLat) * Math.sin(actualRadLon);
+        const ySphere = Math.sin(radLat);
+        const zSphere = Math.cos(radLat) * Math.cos(actualRadLon);
+
+        if (zSphere > 0) {
+          const x = cx + xSphere * radius;
+          const y = cy - ySphere * radius;
+
+          // Glowing pulse ring
+          const time = Date.now() / 1000;
+          const pulseRadius = 3 + (time * 12) % 10;
+          const alpha = 1 - (pulseRadius / 10);
+          
+          ctx.strokeStyle = `rgba(239, 68, 68, ${alpha})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(x, y, pulseRadius, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Center solid point
+          ctx.fillStyle = "#ef4444";
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Border for center point
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      });
+
+      // Update rotationRef
+      if (!mouseRef.current.isDown) {
+        rotationRef.current.x = (rotationRef.current.x + autoRot) % 360;
+      }
+
+      frameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
+  }, [logs, isDark]);
+
+  const handleMouseDown = (e) => {
+    mouseRef.current.isDown = true;
+    mouseRef.current.lastX = e.clientX;
+  };
+
+  const handleMouseMove = (e) => {
+    if (!mouseRef.current.isDown) return;
+    const deltaX = e.clientX - mouseRef.current.lastX;
+    rotationRef.current.x = (rotationRef.current.x + deltaX * 0.4) % 360;
+    mouseRef.current.lastX = e.clientX;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    mouseRef.current.isDown = false;
+  };
+
+  return (
+    <div className="w-full flex flex-col items-center justify-center relative cursor-grab active:cursor-grabbing select-none py-1">
+      <canvas
+        ref={canvasRef}
+        width={240}
+        height={240}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUpOrLeave}
+        onMouseLeave={handleMouseUpOrLeave}
+        className="max-w-full h-auto"
+      />
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
@@ -900,7 +1087,7 @@ export default function AdminDashboard() {
                             <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)"} />
                             <XAxis dataKey="date" stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
                             <YAxis stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
-                            <Tooltip contentStyle={{ backgroundColor: isDark ? "#09090b" : "#ffffff", borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)", fontSize: 10, borderRadius: 12, color: isDark ? "#fff" : "#000" }} />
+                            <Tooltip contentStyle={{ backgroundColor: isDark ? "#09090b" : "#ffffff", borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)", fontSize: 10, borderRadius: 12, color: isDark ? "#fff" : "#000" }} itemStyle={{ color: isDark ? "#fff" : "#000" }} labelStyle={{ color: isDark ? "#fff" : "#000", fontWeight: "bold" }} />
                             <Area type="monotone" dataKey="Views" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorViews)" />
                             <Area type="monotone" dataKey="Visitors" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorVisitors)" />
                           </AreaChart>
@@ -923,7 +1110,7 @@ export default function AdminDashboard() {
                             <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)"} />
                             <XAxis dataKey="date" stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
                             <YAxis stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
-                            <Tooltip contentStyle={{ backgroundColor: isDark ? "#09090b" : "#ffffff", borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)", fontSize: 10, borderRadius: 12, color: isDark ? "#fff" : "#000" }} />
+                            <Tooltip contentStyle={{ backgroundColor: isDark ? "#09090b" : "#ffffff", borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)", fontSize: 10, borderRadius: 12, color: isDark ? "#fff" : "#000" }} itemStyle={{ color: isDark ? "#fff" : "#000" }} labelStyle={{ color: isDark ? "#fff" : "#000", fontWeight: "bold" }} />
                             <Bar dataKey="Views" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={30} />
                           </BarChart>
                         </ResponsiveContainer>
@@ -947,74 +1134,13 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="flex-1 flex flex-col justify-center items-center relative py-2">
-                  {/* Styled Cyber World Map SVG */}
-                  <svg viewBox="0 0 500 250" className={`w-full h-auto rounded-2xl border ${isDark ? "bg-black/40 border-white/5" : "bg-zinc-100 border-black/5"} relative overflow-hidden shadow-inner`}>
-                    {/* Grid mesh backdrop */}
-                    <g className={`${isDark ? "stroke-white/[0.02]" : "stroke-black/[0.03]"} stroke-1`} strokeDasharray="3 3">
-                      <line x1="0" y1="50" x2="500" y2="50" />
-                      <line x1="0" y1="100" x2="500" y2="100" />
-                      <line x1="0" y1="150" x2="500" y2="150" />
-                      <line x1="0" y1="200" x2="500" y2="200" />
-                      <line x1="100" y1="0" x2="100" y2="250" />
-                      <line x1="200" y1="0" x2="200" y2="250" />
-                      <line x1="300" y1="0" x2="300" y2="250" />
-                      <line x1="400" y1="0" x2="400" y2="250" />
-                    </g>
-                    
-                    {/* Abstract Continents Polygons */}
-                    {(() => {
-                      const mapFill = isDark ? "fill-white/[0.04] stroke-white/10" : "fill-black/[0.03] stroke-black/10";
-                      return (
-                        <g>
-                          {/* North America */}
-                          <polygon points="50,40 130,45 150,90 120,105 80,90 50,70" className={mapFill} />
-                          {/* South America */}
-                          <polygon points="120,105 140,115 130,170 100,130" className={mapFill} />
-                          {/* Eurasia & Africa */}
-                          <polygon points="200,45 370,40 390,90 320,140 250,150 220,100" className={mapFill} />
-                          {/* Australia */}
-                          <polygon points="380,140 420,150 400,180 370,170" className={mapFill} />
-                        </g>
-                      );
-                    })()}
-
-                    {/* Glowing Beacons at Visitor Coordinates */}
-                    {analytics.logs
-                      .filter(log => {
-                        const ip = log.ip || "";
-                        const loc = log.location || "";
-                        const latVal = parseFloat(log.lat);
-                        const lonVal = parseFloat(log.lon);
-                        return (
-                          ip !== "127.0.0.1" &&
-                          ip !== "::1" &&
-                          !ip.startsWith("192.168.") &&
-                          !ip.startsWith("10.") &&
-                          !ip.startsWith("172.") &&
-                          !loc.toLowerCase().includes("localhost") &&
-                          !isNaN(latVal) &&
-                          !isNaN(lonVal)
-                        );
-                      })
-                      .map((log, idx) => {
-                        // Math equirectangular conversion to map box 500x250
-                        const x = ((parseFloat(log.lon) + 180) * 500) / 360;
-                        const y = ((90 - parseFloat(log.lat)) * 250) / 180;
-                        return (
-                          <g key={idx} className="group cursor-pointer">
-                            <circle cx={x} cy={y} r="8" className="fill-red-500/35 animate-ping" />
-                            <circle cx={x} cy={y} r="3" className="fill-red-500 stroke-white stroke-0.5" />
-                            <title>{`${log.location || "Visitor"} (IP: ${log.ip})`}</title>
-                          </g>
-                        );
-                      })
-                    }
-                  </svg>
+                  {/* Styled Cyber Spinning Globe */}
+                  <GeolocationGlobe logs={analytics.logs} isDark={isDark} />
                   
                   {/* Latest visitor telemetry banner */}
                   <div className={`mt-3 w-full py-2 px-3 rounded-xl border ${isDark ? "bg-[#0c0c0e]/80 border-white/5 text-zinc-400" : "bg-black/[0.02] border-black/5 text-zinc-600"} text-[10px] font-mono flex items-center justify-between`}>
                     <span className="font-bold text-red-400 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse inline-block" /> Live Radar Feed
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse inline-block" /> Live 3D Globe Radar
                     </span>
                     <span className="truncate max-w-[200px] text-right">
                       {(() => {
@@ -1057,12 +1183,12 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="space-y-3">
                     {topProjects.map((p, idx) => (
-                      <div key={idx} className={`flex justify-between items-center p-3 bg-white/[0.01] border ${isDark ? "border-white/5" : "border-black/5"} rounded-xl hover:border-white/10 transition-all`}>
+                      <div key={idx} className={`flex justify-between items-center p-3 ${isDark ? "bg-white/[0.01] border-white/5 hover:border-white/10" : "bg-black/[0.01] border-black/5 hover:border-black/10 shadow-sm"} border rounded-xl transition-all`}>
                         <div className="flex items-center space-x-3">
                           <span className="text-xs font-bold text-zinc-500 font-mono w-4">#{idx + 1}</span>
                           <div>
                             <p className={`text-xs font-bold ${isDark ? "text-white" : "text-zinc-900"} leading-none mb-1.5`}>{p.title}</p>
-                            <p className="text-[9px] text-zinc-400 font-mono">{p.category || "web"}</p>
+                            <p className={`text-[9px] ${isDark ? "text-zinc-400" : "text-zinc-500"} font-mono`}>{p.category || "web"}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 text-amber-400 text-xs font-bold font-mono">
@@ -1092,7 +1218,7 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="space-y-3">
                     {topViewedBlogs.map((b, idx) => (
-                      <div key={idx} className={`flex justify-between items-center p-3 bg-white/[0.01] border ${isDark ? "border-white/5" : "border-black/5"} rounded-xl hover:border-emerald-500/30 transition-all`}>
+                      <div key={idx} className={`flex justify-between items-center p-3 ${isDark ? "bg-white/[0.01] border-white/5 hover:border-emerald-500/30" : "bg-black/[0.01] border-black/5 hover:border-emerald-500/30 shadow-sm"} border rounded-xl transition-all`}>
                         <div className="flex items-center space-x-3">
                           <span className="text-xs font-bold text-zinc-500 font-mono w-4">#{idx + 1}</span>
                           <div className={`w-9 h-9 rounded-lg overflow-hidden flex-shrink-0 border ${isDark ? "border-white/10" : "border-black/10"} bg-zinc-800`}>
@@ -1106,7 +1232,7 @@ export default function AdminDashboard() {
                           </div>
                           <div className="max-w-[150px] sm:max-w-[200px] truncate">
                             <p className={`text-xs font-bold ${isDark ? "text-white" : "text-zinc-900"} leading-none mb-1.5 truncate`} title={b.title}>{b.title}</p>
-                            <p className="text-[9px] text-zinc-400 font-mono">{b.category || "Tech"}</p>
+                            <p className={`text-[9px] ${isDark ? "text-zinc-400" : "text-zinc-500"} font-mono`}>{b.category || "Tech"}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1 text-emerald-400 text-xs font-bold font-mono">
@@ -1196,7 +1322,7 @@ export default function AdminDashboard() {
                               </div>
                             </span>
                           </td>
-                          <td className="py-3 text-zinc-400 font-mono text-[10px]">
+                          <td className={`py-3 ${isDark ? "text-zinc-400" : "text-zinc-600"} font-mono text-[10px]`}>
                             {new Date(log.timestamp).toLocaleString("en-US", {
                               month: "short",
                               day: "numeric",
@@ -1205,7 +1331,7 @@ export default function AdminDashboard() {
                               second: "2-digit",
                             })}
                           </td>
-                          <td className="py-3 text-zinc-400 pr-2 text-right text-[10px] font-medium">
+                          <td className={`py-3 ${isDark ? "text-zinc-400" : "text-zinc-600"} pr-2 text-right text-[10px] font-medium`}>
                             <div>
                               <span>{log.browser} / {log.os}</span>
                               <span className="block text-[10px] text-zinc-500 font-sans mt-0.5">{log.language || "Unknown"}</span>
@@ -1224,11 +1350,11 @@ export default function AdminDashboard() {
         {/* PROJECTS TAB */}
         {activeTab === "projects" && (
           <div className="space-y-6">
-            <div className="flex justify-between items-center p-6 rounded-[24px] glass-card relative">
+            <div className={`flex justify-between items-center p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
               <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/20 to-transparent pointer-events-none" />
               <div>
-                <h3 className="text-lg font-bold font-outfit text-white">Dynamic Project Control Panel</h3>
-                <p className="text-xs text-zinc-400">Launch premium workspace consoles to edit or upload projects in distraction-free mode.</p>
+                <h3 className={`text-lg font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Dynamic Project Control Panel</h3>
+                <p className={`text-xs ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>Launch premium workspace consoles to edit or upload projects in distraction-free mode.</p>
               </div>
               <button
                 onClick={() => {
@@ -1243,9 +1369,9 @@ export default function AdminDashboard() {
             </div>
 
             {/* Projects list management */}
-            <div className="p-6 rounded-[24px] glass-card relative">
+            <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
               <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/10 to-transparent pointer-events-none" />
-              <h3 className="text-lg font-bold font-outfit text-white mb-4">Existing dynamic uploaded projects</h3>
+              <h3 className={`text-lg font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"} mb-4`}>Existing dynamic uploaded projects</h3>
               
               {projMsg && (
                 <div className="mb-4 p-3 rounded-xl text-xs font-semibold text-center border bg-emerald-500/10 border-emerald-500/20 text-emerald-400">
@@ -1260,12 +1386,12 @@ export default function AdminDashboard() {
               ) : (
                 <div className="space-y-3">
                   {dashboardProjects.map((p, idx) => (
-                    <div key={idx} className="flex justify-between items-center p-4 bg-[#121214]/50 border border-white/5 rounded-2xl hover:border-white/10 transition-all">
+                    <div key={idx} className={`flex justify-between items-center p-4 ${isDark ? "bg-[#121214]/50 border-white/5 hover:border-white/10" : "bg-white border-black/5 hover:border-black/10 shadow-sm"} border rounded-2xl transition-all`}>
                       <div>
-                        <h4 className="text-xs font-bold text-white">{p.title}</h4>
+                        <h4 className={`text-xs font-bold ${isDark ? "text-white" : "text-zinc-900"}`}>{p.title}</h4>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {p.tech.map((t, tIdx) => (
-                            <span key={tIdx} className="text-[8px] bg-white/5 text-zinc-400 px-1.5 py-0.5 rounded-md uppercase font-semibold">
+                            <span key={tIdx} className={`text-[8px] ${isDark ? "bg-white/5 text-zinc-400" : "bg-zinc-100 text-zinc-600"} px-1.5 py-0.5 rounded-md uppercase font-semibold`}>
                               {t}
                             </span>
                           ))}
@@ -1278,7 +1404,7 @@ export default function AdminDashboard() {
                         <div className="flex items-center space-x-1.5">
                           <button
                             onClick={() => startEditProject(p)}
-                            className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg border border-transparent hover:border-white/5 transition-all"
+                            className={`p-1.5 ${isDark ? "text-zinc-400 hover:text-white hover:bg-white/5 hover:border-white/5" : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5 hover:border-black/5"} rounded-lg border border-transparent transition-all`}
                             title="Edit Project"
                           >
                             <FileText className="w-3.5 h-3.5" />
@@ -1303,11 +1429,11 @@ export default function AdminDashboard() {
         {/* BLOGS TAB */}
         {activeTab === "blogs" && (
           <div className="space-y-6">
-            <div className="flex justify-between items-center p-6 rounded-[24px] glass-card relative">
+            <div className={`flex justify-between items-center p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
               <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/20 to-transparent pointer-events-none" />
               <div>
-                <h3 className="text-lg font-bold font-outfit text-white">Dynamic Markdown Blog Panel</h3>
-                <p className="text-xs text-zinc-400">Launch our distraction-free, fullscreen split-pane workspace with real-time markdown compilers.</p>
+                <h3 className={`text-lg font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Dynamic Markdown Blog Panel</h3>
+                <p className={`text-xs ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>Launch our distraction-free, fullscreen split-pane workspace with real-time markdown compilers.</p>
               </div>
               <button
                 onClick={() => {
@@ -1322,9 +1448,9 @@ export default function AdminDashboard() {
             </div>
 
             {/* Blogs list management */}
-            <div className="p-6 rounded-[24px] glass-card relative">
+            <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
               <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/10 to-transparent pointer-events-none" />
-              <h3 className="text-lg font-bold font-outfit text-white mb-4">Published dynamic database blogs</h3>
+              <h3 className={`text-lg font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"} mb-4`}>Published dynamic database blogs</h3>
               
               {blogMsg && (
                 <div className="mb-4 p-3 rounded-xl text-xs font-semibold text-center border bg-emerald-500/10 border-emerald-500/20 text-emerald-400">
@@ -1339,10 +1465,10 @@ export default function AdminDashboard() {
               ) : (
                 <div className="space-y-3">
                   {dashboardBlogs.map((b, idx) => (
-                    <div key={idx} className="flex justify-between items-center p-4 bg-[#121214]/50 border border-white/5 rounded-2xl hover:border-white/10 transition-all">
+                    <div key={idx} className={`flex justify-between items-center p-4 ${isDark ? "bg-[#121214]/50 border-white/5 hover:border-white/10" : "bg-white border-black/5 hover:border-black/10 shadow-sm"} border rounded-2xl transition-all`}>
                       <div>
-                        <h4 className="text-xs font-bold text-white">{b.title}</h4>
-                        <p className="text-[9px] text-zinc-500 mt-1 font-mono">
+                        <h4 className={`text-xs font-bold ${isDark ? "text-white" : "text-zinc-900"}`}>{b.title}</h4>
+                        <p className={`text-[9px] ${isDark ? "text-zinc-400" : "text-zinc-500"} mt-1 font-mono`}>
                           Published: {new Date(b.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
                         </p>
                       </div>
@@ -1353,7 +1479,7 @@ export default function AdminDashboard() {
                         <div className="flex items-center space-x-1.5">
                           <button
                             onClick={() => startEditBlog(b)}
-                            className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg border border-transparent hover:border-white/5 transition-all"
+                            className={`p-1.5 ${isDark ? "text-zinc-400 hover:text-white hover:bg-white/5 hover:border-white/5" : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5 hover:border-black/5"} rounded-lg border border-transparent transition-all`}
                             title="Edit Blog"
                           >
                             <FileText className="w-3.5 h-3.5" />
@@ -1378,12 +1504,12 @@ export default function AdminDashboard() {
         {/* COMMENTS TAB */}
         {activeTab === "comments" && (
           <div className="space-y-6">
-            <div className="glass-card rounded-[24px] border border-white/5 p-6 sm:p-8 relative overflow-hidden">
+            <div className={`rounded-[24px] border ${isDark ? "glass-card border-white/5" : "glass-card-light border-black/5 shadow-sm"} p-6 sm:p-8 relative overflow-hidden`}>
               <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/20 to-transparent pointer-events-none" />
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-2.5">
                   <MessageSquare className="w-5 h-5 text-red-400" />
-                  <h2 className="text-base sm:text-lg font-bold font-outfit tracking-tight text-white animate-pulse">
+                  <h2 className={`text-base sm:text-lg font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
                     Visitor Reflections ({dashboardComments.length})
                   </h2>
                 </div>
@@ -1398,14 +1524,14 @@ export default function AdminDashboard() {
                   {dashboardComments.map((comment) => (
                     <div
                       key={comment._id}
-                      className="p-5 rounded-2xl bg-white/[0.01] hover:bg-white/[0.02] border border-white/5 flex justify-between items-start gap-4 transition-all"
+                      className={`p-5 rounded-2xl ${isDark ? "bg-white/[0.01] hover:bg-white/[0.02] border-white/5" : "bg-black/[0.01] hover:bg-black/[0.02] border-black/5"} border flex justify-between items-start gap-4 transition-all`}
                     >
                       <div className="space-y-2 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
                             Anonymous
                           </span>
-                          <span className="text-[10px] text-zinc-400 font-medium">
+                          <span className={`text-[10px] ${isDark ? "text-zinc-400" : "text-zinc-600"} font-medium`}>
                             on {comment.blogTitle}
                           </span>
                           <span className="text-[9px] text-zinc-500 font-mono">
@@ -1418,7 +1544,7 @@ export default function AdminDashboard() {
                             })}
                           </span>
                         </div>
-                        <p className="text-xs text-zinc-300 leading-relaxed select-text pr-4">
+                        <p className={`text-xs ${isDark ? "text-zinc-300" : "text-zinc-700"} leading-relaxed select-text pr-4`}>
                           {comment.content}
                         </p>
                       </div>
