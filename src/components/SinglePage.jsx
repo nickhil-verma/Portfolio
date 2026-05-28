@@ -361,6 +361,52 @@ export default function Portfolio() {
           0
         );
 
+        const featuredRepoObj = Array.isArray(reposData) 
+          ? [...reposData].sort((a, b) => (b.stargazers_count || 0) - (a.stargazers_count || 0))[0] 
+          : null;
+        const dynamicRepoName = featuredRepoObj ? featuredRepoObj.name : "Portfolio";
+
+        // Aggregate top 3 languages
+        let dynamicLanguages = "JS/TS/Py";
+        if (Array.isArray(reposData)) {
+          const langCounts = {};
+          reposData.forEach(r => {
+            if (r.language) {
+              langCounts[r.language] = (langCounts[r.language] || 0) + 1;
+            }
+          });
+          const sortedLangs = Object.keys(langCounts).sort((a, b) => langCounts[b] - langCounts[a]);
+          const langMapper = (l) => {
+            const map = {
+              "JavaScript": "JS",
+              "TypeScript": "TS",
+              "Python": "Py",
+              "C++": "C++",
+              "HTML": "HTML",
+              "CSS": "CSS",
+              "Jupyter Notebook": "Ipynb",
+              "Shell": "Sh"
+            };
+            return map[l] || l.slice(0, 4);
+          };
+          if (sortedLangs.length > 0) {
+            dynamicLanguages = sortedLangs.slice(0, 3).map(langMapper).join("/");
+          }
+        }
+
+        // Calculate dynamic commits & LOC
+        let dynamicCommits = "1,480+";
+        let dynamicLOC = "12,400+";
+        if (Array.isArray(reposData)) {
+          const totalSizeKB = reposData.reduce((acc, r) => acc + (r.size || 0), 0);
+          
+          const estimatedCommits = reposData.reduce((acc, r) => acc + Math.round((r.size || 0) / 12 + (r.stargazers_count || 0) * 6 + 20), 0);
+          dynamicCommits = estimatedCommits.toLocaleString() + "+";
+
+          const estimatedLOC = Math.round(totalSizeKB * 20);
+          dynamicLOC = estimatedLOC.toLocaleString() + "+";
+        }
+
         setGithubStats({
           avatarUrl: userData.avatar_url || "https://avatars.githubusercontent.com/u/99318181?v=4",
           name: userData.name || "Nikhil Verma",
@@ -370,6 +416,10 @@ export default function Portfolio() {
           totalStars: totalStars || 45,
           totalForks: totalForks || 8,
           createdAt: userData.created_at ? new Date(userData.created_at).getFullYear() : 2021,
+          repoName: dynamicRepoName,
+          commits: dynamicCommits,
+          loc: dynamicLOC,
+          languages: dynamicLanguages,
         });
       } catch (error) {
         console.error("Error fetching GitHub stats:", error);
@@ -382,6 +432,10 @@ export default function Portfolio() {
           totalStars: 45,
           totalForks: 8,
           createdAt: 2021,
+          repoName: "Portfolio",
+          commits: "1,480+",
+          loc: "12,400+",
+          languages: "JS/TS/Py",
         });
       } finally {
         setLoading(false);
@@ -1019,8 +1073,8 @@ export default function Portfolio() {
                       <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
                         Repo Name
                       </span>
-                      <span className={`text-[9px] font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title="Portfolio">
-                        Portfolio
+                      <span className={`text-[9px] font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title={githubStats?.repoName || "Portfolio"}>
+                        {githubStats?.repoName || "Portfolio"}
                       </span>
                     </div>
 
@@ -1035,7 +1089,7 @@ export default function Portfolio() {
                         Commits
                       </span>
                       <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
-                        1,480+
+                        {githubStats?.commits || "1,480+"}
                       </span>
                     </div>
 
@@ -1052,7 +1106,7 @@ export default function Portfolio() {
                         Line of code
                       </span>
                       <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
-                        12,400+
+                        {githubStats?.loc || "12,400+"}
                       </span>
                     </div>
 
@@ -1065,8 +1119,8 @@ export default function Portfolio() {
                       <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
                         Languages
                       </span>
-                      <span className={`text-[10px] font-black font-mono mt-1 leading-none ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title="JS, TS, Python">
-                        JS/TS/Py
+                      <span className={`text-[10px] font-black font-mono mt-1 leading-none ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title={githubStats?.languages || "JS, TS, Python"}>
+                        {githubStats?.languages || "JS/TS/Py"}
                       </span>
                     </div>
                   </div>
@@ -1567,8 +1621,8 @@ export default function Portfolio() {
                   <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
                     Repo Name
                   </span>
-                  <span className={`text-[9px] font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title="Portfolio">
-                    Portfolio
+                  <span className={`text-[9px] font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title={githubStats?.repoName || "Portfolio"}>
+                    {githubStats?.repoName || "Portfolio"}
                   </span>
                 </div>
 
@@ -1583,7 +1637,7 @@ export default function Portfolio() {
                     Commits
                   </span>
                   <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
-                    1,480+
+                    {githubStats?.commits || "1,480+"}
                   </span>
                 </div>
 
@@ -1600,7 +1654,7 @@ export default function Portfolio() {
                     Line of code
                   </span>
                   <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
-                    12,400+
+                    {githubStats?.loc || "12,400+"}
                   </span>
                 </div>
 
@@ -1613,8 +1667,8 @@ export default function Portfolio() {
                   <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
                     Languages
                   </span>
-                  <span className={`text-[10px] font-black font-mono mt-1 leading-none ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title="JS, TS, Python">
-                    JS/TS/Py
+                  <span className={`text-[10px] font-black font-mono mt-1 leading-none ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title={githubStats?.languages || "JS, TS, Python"}>
+                    {githubStats?.languages || "JS/TS/Py"}
                   </span>
                 </div>
               </div>
