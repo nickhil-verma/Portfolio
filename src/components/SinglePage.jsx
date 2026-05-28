@@ -974,7 +974,7 @@ export default function Portfolio() {
                       <span>f(x) = ∑ c_n x^n</span>
                       <span>π ≈ 3.14159</span>
                       <span>i² = -1</span>
-                      <span>∑_{n=1}^∞ 1/n² = π²/6</span>
+                      <span>{"∑_{n=1}^∞ 1/n² = π²/6"}</span>
                       <span>∂u/∂t = α∇²u</span>
                     </div>
 
