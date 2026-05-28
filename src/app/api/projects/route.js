@@ -33,7 +33,7 @@ export async function POST(request) {
     const db = client.db("portfolio");
     const body = await request.json();
 
-    const { title, tech, githubUrl, deployedUrl, description, category } = body;
+    const { title, tech, githubUrl, deployedUrl, description, category, imageUrl } = body;
 
     if (!title || !tech || !githubUrl) {
       return NextResponse.json({ error: "Title, Tech Stack, and GitHub URL are compulsory fields" }, { status: 400 });
@@ -49,6 +49,7 @@ export async function POST(request) {
       description: description || "No description provided.",
       link: githubUrl, // Compulsory GitHub link
       deployedUrl: deployedUrl || null, // Optional deployed link
+      imageUrl: imageUrl || null,
       tech: techArray,
       category: category || "web",
       stars: Math.floor(Math.random() * 15) + 1, // Generate premium initial stars count
@@ -95,7 +96,7 @@ export async function PUT(request) {
       return NextResponse.json({ error: "Database not configured" }, { status: 503 });
     }
     const body = await request.json();
-    const { id, title, tech, githubUrl, deployedUrl, description, category } = body;
+    const { id, title, tech, githubUrl, deployedUrl, description, category, imageUrl } = body;
 
     if (!id || !title || !tech || !githubUrl) {
       return NextResponse.json({ error: "ID, Title, Tech Stack, and GitHub URL are required fields" }, { status: 400 });
@@ -115,6 +116,7 @@ export async function PUT(request) {
           description: description || "No description provided.",
           link: githubUrl,
           deployedUrl: deployedUrl || null,
+          imageUrl: imageUrl || null,
           tech: techArray,
           category: category || "web",
         }

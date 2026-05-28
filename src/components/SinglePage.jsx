@@ -883,127 +883,130 @@ export default function Portfolio() {
 
             {/* Desktop Skillset & Blogs Cards Grid */}
             <div className="grid grid-cols-12 gap-5 mt-5">
-              {/* Skillset Card */}
-              <SpotlightCard isDark={isDark} className="col-span-4 p-5 sm:p-6 flex flex-col justify-between h-[300px]">
-                <div>
-                  <div className="flex items-center space-x-2.5 mb-4 flex-shrink-0">
-                    <Cpu className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
-                    <h2 className={`text-sm sm:text-base font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
-                      Technical Skillset
-                    </h2>
-                  </div>
-                  
-                  {/* Infinite Scrolling Professional Marquees */}
-                  <div className="space-y-4 overflow-hidden relative py-1 mt-2">
-                    {/* Track 1: Left-to-Right Scrolling Marquee */}
-                    <div className="relative w-full overflow-hidden" style={{ maskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)" }}>
-                      <motion.div
-                        animate={{ x: ["0%", "-50%"] }}
-                        transition={{
-                          ease: "linear",
-                          duration: 25,
-                          repeat: Infinity,
-                        }}
-                        className="flex space-x-3 w-max"
-                      >
-                        {[...skillset[0].items, ...skillset[1].items, ...skillset[0].items, ...skillset[1].items].map((item, idx) => (
-                          <span
-                            key={idx}
-                            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
-                              isDark
-                                ? "bg-white/5 text-zinc-300 border border-white/5 hover:bg-white/10 hover:text-white"
-                                : "bg-zinc-100 text-zinc-700 border border-zinc-200 hover:bg-zinc-200 hover:text-zinc-950"
-                            }`}
-                          >
-                            {item}
-                          </span>
-                        ))}
-                      </motion.div>
-                    </div>
-
-                    {/* Track 2: Right-to-Left Scrolling Marquee */}
-                    <div className="relative w-full overflow-hidden" style={{ maskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)" }}>
-                      <motion.div
-                        animate={{ x: ["-50%", "0%"] }}
-                        transition={{
-                          ease: "linear",
-                          duration: 28,
-                          repeat: Infinity,
-                        }}
-                        className="flex space-x-3 w-max"
-                      >
-                        {[...skillset[2].items, ...skillset[3].items, ...skillset[4].items, ...skillset[2].items, ...skillset[3].items, ...skillset[4].items].map((item, idx) => (
-                          <span
-                            key={idx}
-                            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
-                              isDark
-                                ? "bg-white/5 text-zinc-300 border border-white/5 hover:bg-white/10 hover:text-white"
-                                : "bg-zinc-100 text-zinc-700 border border-zinc-200 hover:bg-zinc-200 hover:text-zinc-950"
-                            }`}
-                          >
-                            {item}
-                          </span>
-                        ))}
-                      </motion.div>
-                    </div>
-                  </div>
-                </div>
-              </SpotlightCard>
-
-              {/* GitHub Stats Card - Middle */}
-              <SpotlightCard isDark={isDark} className="col-span-4 p-5 sm:p-6 flex flex-col justify-between h-[300px]">
-                <div>
-                  <div className="flex items-center justify-between mb-4 flex-shrink-0">
-                    <div className="flex items-center space-x-2.5">
-                      <svg viewBox="0 0 24 24" className={`w-5 h-5 fill-current ${isDark ? "text-red-400" : "text-red-600"}`} xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+              {/* Left Stacked Column (Skills & Github) */}
+              <div className="col-span-8 flex flex-col gap-5">
+                {/* Skillset Card */}
+                <SpotlightCard isDark={isDark} className="w-full p-4 sm:p-5 flex flex-col justify-between h-[170px]">
+                  <div>
+                    <div className="flex items-center space-x-2.5 mb-3 flex-shrink-0">
+                      <Cpu className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
                       <h2 className={`text-sm sm:text-base font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
-                        GitHub Stats
+                        Technical Skillset
                       </h2>
                     </div>
-                    <a
-                      href="https://github.com/nickhil-verma"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`text-xs font-bold flex items-center gap-1 transition-colors ${
-                        isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"
-                      }`}
-                    >
-                      <span>Profile</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
+                    
+                    {/* Infinite Scrolling Professional Marquees */}
+                    <div className="space-y-3.5 overflow-hidden relative py-1 mt-1">
+                      {/* Track 1: Left-to-Right Scrolling Marquee */}
+                      <div className="relative w-full overflow-hidden" style={{ maskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)" }}>
+                        <motion.div
+                          animate={{ x: ["0%", "-50%"] }}
+                          transition={{
+                            ease: "linear",
+                            duration: 25,
+                            repeat: Infinity,
+                          }}
+                          className="flex space-x-3 w-max"
+                        >
+                          {[...skillset[0].items, ...skillset[1].items, ...skillset[0].items, ...skillset[1].items].map((item, idx) => (
+                            <span
+                              key={idx}
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
+                                isDark
+                                  ? "bg-white/5 text-zinc-300 border border-white/5 hover:bg-white/10 hover:text-white"
+                                  : "bg-zinc-100 text-zinc-700 border border-zinc-200 hover:bg-zinc-200 hover:text-zinc-950"
+                              }`}
+                            >
+                              {item}
+                            </span>
+                          ))}
+                        </motion.div>
+                      </div>
 
-                  {/* Compact Side-by-Side Horizontal Layout */}
-                  <div className="grid grid-cols-2 gap-3 items-center mt-2">
-                    {/* Main Stats */}
-                    <div className={`rounded-xl overflow-hidden border ${isDark ? "border-white/5 bg-[#121214]/30" : "border-black/5 bg-white/60"} p-1 shadow-sm`}>
-                      <img
-                        src={`https://github-readme-stats.vercel.app/api?username=nickhil-verma&show_icons=true&count_private=true&hide_border=true&bg_color=${isDark ? "0d0d0f" : "ffffff"}&title_color=${isDark ? "f87171" : "dc2626"}&text_color=${isDark ? "a1a1aa" : "52525b"}&icon_color=${isDark ? "f87171" : "dc2626"}&ring_color=ef4444`}
-                        alt="Nikhil Verma GitHub Stats"
-                        className="w-full h-auto object-contain max-h-[155px]"
-                        loading="lazy"
-                      />
+                      {/* Track 2: Right-to-Left Scrolling Marquee */}
+                      <div className="relative w-full overflow-hidden" style={{ maskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)" }}>
+                        <motion.div
+                          animate={{ x: ["-50%", "0%"] }}
+                          transition={{
+                            ease: "linear",
+                            duration: 28,
+                            repeat: Infinity,
+                          }}
+                          className="flex space-x-3 w-max"
+                        >
+                          {[...skillset[2].items, ...skillset[3].items, ...skillset[4].items, ...skillset[2].items, ...skillset[3].items, ...skillset[4].items].map((item, idx) => (
+                            <span
+                              key={idx}
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
+                                isDark
+                                  ? "bg-white/5 text-zinc-300 border border-white/5 hover:bg-white/10 hover:text-white"
+                                  : "bg-zinc-100 text-zinc-700 border border-zinc-200 hover:bg-zinc-200 hover:text-zinc-950"
+                              }`}
+                            >
+                              {item}
+                            </span>
+                          ))}
+                        </motion.div>
+                      </div>
+                    </div>
+                  </div>
+                </SpotlightCard>
+
+                {/* GitHub Stats Card - Middle */}
+                <SpotlightCard isDark={isDark} className="w-full p-4 sm:p-5 flex flex-col justify-between h-[170px]">
+                  <div>
+                    <div className="flex items-center justify-between mb-3 flex-shrink-0">
+                      <div className="flex items-center space-x-2.5">
+                        <svg viewBox="0 0 24 24" className={`w-5 h-5 fill-current ${isDark ? "text-red-400" : "text-red-600"}`} xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                        <h2 className={`text-sm sm:text-base font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                          GitHub Stats
+                        </h2>
+                      </div>
+                      <a
+                        href="https://github.com/nickhil-verma"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`text-xs font-bold flex items-center gap-1 transition-colors ${
+                          isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"
+                        }`}
+                      >
+                        <span>Profile</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </a>
                     </div>
 
-                    {/* Top Languages */}
-                    <div className={`rounded-xl overflow-hidden border ${isDark ? "border-white/5 bg-[#121214]/30" : "border-black/5 bg-white/60"} p-1 shadow-sm`}>
-                      <img
-                        src={`https://github-readme-stats.vercel.app/api/top-langs/?username=nickhil-verma&layout=compact&hide_border=true&bg_color=${isDark ? "0d0d0f" : "ffffff"}&title_color=${isDark ? "f87171" : "dc2626"}&text_color=${isDark ? "a1a1aa" : "52525b"}&langs_count=6`}
-                        alt="Top Languages"
-                        className="w-full h-auto object-contain max-h-[155px]"
-                        loading="lazy"
-                      />
+                    {/* Compact Side-by-Side Horizontal Layout */}
+                    <div className="grid grid-cols-2 gap-4 items-center mt-1">
+                      {/* Main Stats */}
+                      <div className={`rounded-xl overflow-hidden border ${isDark ? "border-white/5 bg-[#121214]/30" : "border-black/5 bg-white/60"} p-1 shadow-sm`}>
+                        <img
+                          src={`https://github-readme-stats.vercel.app/api?username=nickhil-verma&show_icons=true&count_private=true&hide_border=true&bg_color=${isDark ? "0d0d0f" : "ffffff"}&title_color=${isDark ? "f87171" : "dc2626"}&text_color=${isDark ? "a1a1aa" : "52525b"}&icon_color=${isDark ? "f87171" : "dc2626"}&ring_color=ef4444`}
+                          alt="Nikhil Verma GitHub Stats"
+                          className="w-full h-auto object-contain max-h-[85px]"
+                          loading="lazy"
+                        />
+                      </div>
+
+                      {/* Top Languages */}
+                      <div className={`rounded-xl overflow-hidden border ${isDark ? "border-white/5 bg-[#121214]/30" : "border-black/5 bg-white/60"} p-1 shadow-sm`}>
+                        <img
+                          src={`https://github-readme-stats.vercel.app/api/top-langs/?username=nickhil-verma&layout=compact&hide_border=true&bg_color=${isDark ? "0d0d0f" : "ffffff"}&title_color=${isDark ? "f87171" : "dc2626"}&text_color=${isDark ? "a1a1aa" : "52525b"}&langs_count=6`}
+                          alt="Top Languages"
+                          className="w-full h-auto object-contain max-h-[85px]"
+                          loading="lazy"
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </SpotlightCard>
+                </SpotlightCard>
+              </div>
 
               {/* Blogs Card */}
-              <SpotlightCard isDark={isDark} className="col-span-4 p-5 sm:p-6 flex flex-col justify-start h-[300px]">
-                <div className="flex items-center justify-between mb-4 flex-shrink-0">
+              <SpotlightCard isDark={isDark} className="col-span-4 p-6 sm:p-8 flex flex-col justify-start h-[360px]">
+                <div className="flex items-center justify-between mb-5 flex-shrink-0">
                   <div className="flex items-center space-x-2.5">
                     <FileText className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
-                    <h2 className={`text-sm sm:text-base font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                    <h2 className={`text-base sm:text-lg font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
                       Recent Insights
                     </h2>
                   </div>
@@ -1018,18 +1021,18 @@ export default function Portfolio() {
                   </Link>
                 </div>
 
-                <div data-lenis-prevent className="space-y-3 overflow-y-auto pr-1 flex-1 hide-scrollbar max-h-[190px]" onWheel={(e) => e.stopPropagation()}>
+                <div data-lenis-prevent className="space-y-4 overflow-y-auto pr-1 flex-1 hide-scrollbar max-h-[220px]" onWheel={(e) => e.stopPropagation()}>
                   {combinedBlogs.slice(0, 2).map((blog, idx) => (
                     <Link
                       key={idx}
                       href={`/blogs/${blog._id}`}
-                      className={`block p-3 rounded-2xl flex flex-col justify-between transition-all group cursor-pointer ${
+                      className={`block p-4 rounded-2xl flex flex-col justify-between transition-all group cursor-pointer ${
                         isDark 
                           ? "bg-[#121214]/50 border border-white/5 hover:bg-[#18181b]/50 hover:border-red-500/20" 
                           : "bg-white/60 border border-black/5 hover:bg-white hover:border-red-200 shadow-sm"
                       }`}
                     >
-                      <div className="flex justify-between items-center mb-1">
+                      <div className="flex justify-between items-center mb-2">
                         <span className={`px-2 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-wider ${
                           isDark ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-red-50 text-red-600 border border-red-100"
                         }`}>
@@ -1049,12 +1052,17 @@ export default function Portfolio() {
                           <span className="text-[10px] font-bold">{interactions[blog._id || blog.title] !== undefined ? interactions[blog._id || blog.title] : (blog.likes || 0)}</span>
                         </button>
                       </div>
-                      <h3 className={`font-bold font-outfit text-xs sm:text-sm mb-1 group-hover:text-red-400 transition-colors ${isDark ? "text-white" : "text-zinc-900"} line-clamp-1`}>
+                      <h3 className={`font-bold font-outfit text-xs sm:text-sm mb-1 group-hover:text-red-400 transition-colors ${isDark ? "text-white" : "text-zinc-900"}`}>
                         {blog.title}
                       </h3>
-                      <p className={`text-[10px] sm:text-xs leading-normal line-clamp-1 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+                      <p className={`text-[10px] sm:text-xs leading-relaxed line-clamp-2 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
                         {blog.excerpt}
                       </p>
+                      <span className={`mt-2 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 ${
+                        isDark ? "text-red-500/60 group-hover:text-red-400" : "text-red-400 group-hover:text-red-600"
+                      }`}>
+                        Read article <ChevronRight className="w-2.5 h-2.5" />
+                      </span>
                     </Link>
                   ))}
                 </div>

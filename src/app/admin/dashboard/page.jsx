@@ -547,6 +547,7 @@ export default function AdminDashboard() {
   const [newProjDeployed, setNewProjDeployed] = useState("");
   const [newProjDesc, setNewProjDesc] = useState("");
   const [newProjCat, setNewProjCat] = useState("web");
+  const [newProjImageUrl, setNewProjImageUrl] = useState("");
   const [projMsg, setProjMsg] = useState("");
 
   // Form states - Blogs
@@ -718,6 +719,7 @@ export default function AdminDashboard() {
         deployedUrl: newProjDeployed,
         description: newProjDesc,
         category: newProjCat,
+        imageUrl: newProjImageUrl,
       };
       if (editingProjectId) {
         payload.id = editingProjectId;
@@ -737,6 +739,7 @@ export default function AdminDashboard() {
         setNewProjGithub("");
         setNewProjDeployed("");
         setNewProjDesc("");
+        setNewProjImageUrl("");
         setEditingProjectId(null);
         setFullscreenProjectEditor(false);
         fetchData();
@@ -757,6 +760,7 @@ export default function AdminDashboard() {
     setNewProjDeployed(p.deployedUrl || "");
     setNewProjDesc(p.description);
     setNewProjCat(p.category);
+    setNewProjImageUrl(p.imageUrl || "");
     setProjMsg("");
     setFullscreenProjectEditor(true);
   };
@@ -768,6 +772,7 @@ export default function AdminDashboard() {
     setNewProjGithub("");
     setNewProjDeployed("");
     setNewProjDesc("");
+    setNewProjImageUrl("");
     setProjMsg("");
     setFullscreenProjectEditor(false);
   };
@@ -1684,6 +1689,19 @@ export default function AdminDashboard() {
                         className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                      Project Thumbnail Image URL (Optional)
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://images.unsplash.com/photo-..."
+                      value={newProjImageUrl}
+                      onChange={(e) => { setNewProjImageUrl(e.target.value); setProjMsg(""); }}
+                      className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
+                    />
                   </div>
 
                   <div>
