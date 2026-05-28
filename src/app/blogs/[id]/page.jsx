@@ -7,6 +7,9 @@ import { ArrowLeft, Clock, Calendar, Share2, MessageSquare, Eye } from "lucide-r
 import Link from "next/link";
 import BlogLikeButton from "../../../components/BlogLikeButton";
 import CustomToast from "../../../components/CustomToast";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
 // Custom Spotlight wrapper supporting isDark and premium white coordinator glow
 const DetailSpotlightCard = ({ children, isDark, className = "" }) => {
@@ -70,293 +73,65 @@ const DetailSpotlightCard = ({ children, isDark, className = "" }) => {
   );
 };
 
-// Senior-level React-based Markdown-to-HTML parser function with dynamic dark/light colors
-function renderMarkdownContent(md, isDark) {
-  if (!md) return "";
-  
-  // Split content by newlines
-  const lines = md.split(/\r?\n/);
-  const elements = [];
-  let inCodeBlock = false;
-  let codeBlockLines = [];
-  let codeBlockLang = "";
-  let listItems = [];
-  let currentListType = null; // "bullet" or "number"
-
-  const flushList = (key) => {
-    if (listItems.length > 0) {
-      if (currentListType === "bullet") {
-        elements.push(
-          <ul key={`ul-${key}`} className={`list-disc pl-6 mb-4 space-y-1.5 ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>
-            {listItems.map((item, i) => <li key={i}>{item}</li>)}
-          </ul>
-        );
-      } else if (currentListType === "number") {
-        elements.push(
-          <ol key={`ol-${key}`} className={`list-decimal pl-6 mb-4 space-y-1.5 ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>
-            {listItems.map((item, i) => <li key={i}>{item}</li>)}
-          </ol>
-        );
-      }
-      listItems = [];
-      currentListType = null;
-    }
-  };
-
-  const parseInlineStyles = (text) => {
-    if (!text) return "";
-    let parts = [text];
-    
-    // Parse inline code: `code`
-    parts = parts.flatMap((part) => {
-      if (typeof part !== "string") return part;
-      const codeRegex = /`([^`]+)`/g;
-      const subParts = [];
-      let lastIdx = 0;
-      let match;
-      while ((match = codeRegex.exec(part)) !== null) {
-        if (match.index > lastIdx) {
-          subParts.push(part.substring(lastIdx, match.index));
-        }
-        subParts.push(
-          <code key={`code-${match.index}`} className={`px-1.5 py-0.5 rounded text-[11px] font-mono ${
-            isDark ? "bg-white/10 text-red-400" : "bg-black/5 text-red-600"
-          }`}>
-            {match[1]}
-          </code>
-        );
-        lastIdx = codeRegex.lastIndex;
-      }
-      if (lastIdx < part.length) {
-        subParts.push(part.substring(lastIdx));
-      }
-      return subParts;
-    });
-
-    // Parse bold: **text**
-    parts = parts.flatMap((part) => {
-      if (typeof part !== "string") return part;
-      const boldRegex = /\*\*([^*]+)\*\*/g;
-      const subParts = [];
-      let lastIdx = 0;
-      let match;
-      while ((match = boldRegex.exec(part)) !== null) {
-        if (match.index > lastIdx) {
-          subParts.push(part.substring(lastIdx, match.index));
-        }
-        subParts.push(
-          <strong key={`bold-${match.index}`} className={`font-bold ${isDark ? "text-white" : "text-zinc-950"}`}>
-            {match[1]}
-          </strong>
-        );
-        lastIdx = boldRegex.lastIndex;
-      }
-      if (lastIdx < part.length) {
-        subParts.push(part.substring(lastIdx));
-      }
-      return subParts;
-    });
-
-    // Parse italic: *text*
-    parts = parts.flatMap((part) => {
-      if (typeof part !== "string") return part;
-      const italicRegex = /\*([^*]+)\*/g;
-      const subParts = [];
-      let lastIdx = 0;
-      let match;
-      while ((match = italicRegex.exec(part)) !== null) {
-        if (match.index > lastIdx) {
-          subParts.push(part.substring(lastIdx, match.index));
-        }
-        subParts.push(
-          <em key={`italic-${match.index}`} className="italic">
-            {match[1]}
-          </em>
-        );
-        lastIdx = italicRegex.lastIndex;
-      }
-      if (lastIdx < part.length) {
-        subParts.push(part.substring(lastIdx));
-      }
-      return subParts;
-    });
-
-    // Parse links: [text](url)
-    parts = parts.flatMap((part) => {
-      if (typeof part !== "string") return part;
-      const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-      const subParts = [];
-      let lastIdx = 0;
-      let match;
-      while ((match = linkRegex.exec(part)) !== null) {
-        if (match.index > lastIdx) {
-          subParts.push(part.substring(lastIdx, match.index));
-        }
-        subParts.push(
-          <a
-            key={`link-${match.index}`}
-            href={match[2]}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`font-semibold hover:underline transition-colors ${
-              isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"
-            }`}
-          >
-            {match[1]}
-          </a>
-        );
-        lastIdx = linkRegex.lastIndex;
-      }
-      if (lastIdx < part.length) {
-        subParts.push(part.substring(lastIdx));
-      }
-      return subParts;
-    });
-
-    return parts;
-  };
-
-  for (let i = 0; i < lines.length; i++) {
-    const rawLine = lines[i];
-    const trimmed = rawLine.trim();
-
-    // 1. Handle Code Blocks
-    if (trimmed.startsWith("```")) {
-      flushList(i);
-      if (inCodeBlock) {
-        elements.push(
-          <div key={`codeblock-${i}`} className={`p-5 rounded-2xl font-mono text-[11px] overflow-x-auto mb-4 border ${
-            isDark ? "bg-black/40 border-white/5 text-zinc-300" : "bg-zinc-100 border-black/5 text-zinc-800"
-          }`}>
-            {codeBlockLang && (
-              <div className={`text-[9px] uppercase tracking-wider font-bold mb-2 pb-1 border-b ${
-                isDark ? "text-zinc-500 border-white/5" : "text-zinc-400 border-black/5"
-              }`}>
-                {codeBlockLang}
-              </div>
-            )}
-            <pre className="leading-relaxed">{codeBlockLines.join("\n")}</pre>
+// Custom Markdown Component supporting GFM and raw HTML
+function CustomMarkdown({ content, isDark }) {
+  return (
+    <div className="space-y-4">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
+      components={{
+        img: ({ node, className, style, ...props }) => (
+          <span className="flex justify-center w-full my-6">
+            <img 
+              {...props} 
+              style={style} 
+              className={`max-w-full h-auto rounded-[24px] shadow-xl border object-contain ${
+                isDark ? "border-white/5" : "border-black/5"
+              } ${className || ""}`} 
+              loading="lazy" 
+            />
+          </span>
+        ),
+        h1: ({ node, ...props }) => <h2 className={`text-2xl sm:text-3xl font-extrabold font-outfit mt-8 mb-4 tracking-tight leading-tight ${isDark ? "text-white" : "text-zinc-950"}`} {...props} />,
+        h2: ({ node, ...props }) => <h3 className={`text-xl sm:text-2xl font-bold font-outfit mt-6 mb-3 tracking-tight ${isDark ? "text-white" : "text-zinc-950"}`} {...props} />,
+        h3: ({ node, ...props }) => <h4 className={`text-base sm:text-lg font-bold font-outfit mt-5 mb-2.5 ${isDark ? "text-white" : "text-zinc-950"}`} {...props} />,
+        p: ({ node, ...props }) => <p className={`text-xs sm:text-sm leading-relaxed mb-3 ${isDark ? "text-zinc-300" : "text-zinc-700"}`} {...props} />,
+        a: ({ node, ...props }) => <a className={`font-semibold hover:underline transition-colors ${isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"}`} target="_blank" rel="noopener noreferrer" {...props} />,
+        code: ({ node, inline, className, children, ...props }) => {
+          if (inline || !String(children).includes('\n')) {
+            return (
+              <code className={`px-1.5 py-0.5 rounded text-[11px] font-mono ${isDark ? "bg-white/10 text-red-400" : "bg-black/5 text-red-600"}`} {...props}>
+                {children}
+              </code>
+            );
+          }
+          return (
+            <div className={`p-5 rounded-2xl font-mono text-[11px] overflow-x-auto mb-4 border ${isDark ? "bg-black/40 border-white/5 text-zinc-300" : "bg-zinc-100 border-black/5 text-zinc-800"}`}>
+              <pre className="leading-relaxed"><code {...props}>{children}</code></pre>
+            </div>
+          );
+        },
+        blockquote: ({ node, ...props }) => (
+          <blockquote className={`border-l-4 border-red-500 pl-4 py-2 my-4 text-xs sm:text-sm italic rounded-r-lg ${isDark ? "text-zinc-400 bg-white/5" : "text-zinc-600 bg-black/5"}`} {...props} />
+        ),
+        ul: ({ node, ...props }) => <ul className={`list-disc pl-6 mb-4 space-y-1.5 ${isDark ? "text-zinc-300" : "text-zinc-700"}`} {...props} />,
+        ol: ({ node, ...props }) => <ol className={`list-decimal pl-6 mb-4 space-y-1.5 ${isDark ? "text-zinc-300" : "text-zinc-700"}`} {...props} />,
+        table: ({ node, ...props }) => (
+          <div className="w-full overflow-x-auto mb-6 rounded-2xl border border-zinc-200/10 shadow-lg select-text">
+            <table className={`w-full text-left border-collapse text-xs sm:text-sm ${isDark ? "text-zinc-300 bg-[#121214]/40" : "text-zinc-700 bg-white"}`} {...props} />
           </div>
-        );
-        codeBlockLines = [];
-        codeBlockLang = "";
-        inCodeBlock = false;
-      } else {
-        codeBlockLang = trimmed.substring(3).trim();
-        inCodeBlock = true;
-      }
-      continue;
-    }
-
-    if (inCodeBlock) {
-      codeBlockLines.push(rawLine);
-      continue;
-    }
-
-    // 2. Horizontal Rules
-    if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
-      flushList(i);
-      elements.push(
-        <hr key={`hr-${i}`} className={`my-6 border-t ${isDark ? "border-white/5" : "border-black/5"}`} />
-      );
-      continue;
-    }
-
-    // 3. Headers
-    if (trimmed.startsWith("#")) {
-      flushList(i);
-      let depth = 0;
-      while (trimmed[depth] === "#") {
-        depth++;
-      }
-      const headerText = trimmed.substring(depth).trim();
-      const parsedText = parseInlineStyles(headerText);
-
-      if (depth === 1) {
-        elements.push(
-          <h2 key={`h2-${i}`} className={`text-2xl sm:text-3xl font-extrabold font-outfit mt-8 mb-4 tracking-tight leading-tight ${
-            isDark ? "text-white" : "text-zinc-950"
-          }`}>
-            {parsedText}
-          </h2>
-        );
-      } else if (depth === 2) {
-        elements.push(
-          <h3 key={`h3-${i}`} className={`text-xl sm:text-2xl font-bold font-outfit mt-6 mb-3 tracking-tight ${
-            isDark ? "text-white" : "text-zinc-950"
-          }`}>
-            {parsedText}
-          </h3>
-        );
-      } else {
-        elements.push(
-          <h4 key={`h4-${i}`} className={`text-base sm:text-lg font-bold font-outfit mt-5 mb-2.5 ${
-            isDark ? "text-white" : "text-zinc-950"
-          }`}>
-            {parsedText}
-          </h4>
-        );
-      }
-      continue;
-    }
-
-    // 4. Blockquotes
-    if (trimmed.startsWith("> ")) {
-      flushList(i);
-      const quoteText = rawLine.substring(rawLine.indexOf(">") + 1).trim();
-      elements.push(
-        <blockquote key={`quote-${i}`} className={`border-l-4 border-red-500 pl-4 py-2 my-4 text-xs sm:text-sm italic rounded-r-lg ${
-          isDark ? "text-zinc-400 bg-white/5" : "text-zinc-600 bg-black/5"
-        }`}>
-          {parseInlineStyles(quoteText)}
-        </blockquote>
-      );
-      continue;
-    }
-
-    // 5. Bullet Lists
-    const bulletMatch = rawLine.match(/^(\s*)([-*+])\s+(.*)/);
-    if (bulletMatch) {
-      if (currentListType !== "bullet") {
-        flushList(i);
-        currentListType = "bullet";
-      }
-      listItems.push(parseInlineStyles(bulletMatch[3]));
-      continue;
-    }
-
-    // 6. Numbered Lists
-    const numberMatch = rawLine.match(/^(\s*)(\d+)\.\s+(.*)/);
-    if (numberMatch) {
-      if (currentListType !== "number") {
-        flushList(i);
-        currentListType = "number";
-      }
-      listItems.push(parseInlineStyles(numberMatch[3]));
-      continue;
-    }
-
-    // 7. Empty Lines
-    if (trimmed === "") {
-      flushList(i);
-      elements.push(<div key={`empty-${i}`} className="h-3" />);
-      continue;
-    }
-
-    // 8. Normal Paragraph
-    flushList(i);
-    elements.push(
-      <p key={`p-${i}`} className={`text-xs sm:text-sm leading-relaxed mb-3 ${
-        isDark ? "text-zinc-300" : "text-zinc-700"
-      }`}>
-        {parseInlineStyles(rawLine)}
-      </p>
-    );
-  }
-
-  // Flush any remaining lists
-  flushList(lines.length);
-  return elements;
+        ),
+        th: ({ node, ...props }) => <th className="p-3.5 sm:p-4 font-bold tracking-wide font-outfit border-b border-zinc-200/5" {...props} />,
+        td: ({ node, ...props }) => <td className="p-3.5 sm:p-4 leading-relaxed font-sans border-b border-zinc-200/5" {...props} />,
+        tr: ({ node, ...props }) => <tr className={`transition-colors ${isDark ? "hover:bg-white/[0.01]" : "hover:bg-black/[0.01]"}`} {...props} />,
+        hr: ({ node, ...props }) => <hr className={`my-6 border-t ${isDark ? "border-white/5" : "border-black/5"}`} {...props} />
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+    </div>
+  );
 }
 
 // Fallback base blogs with assigned static IDs
@@ -655,7 +430,7 @@ export default function BlogDetailPage() {
 
           {/* Markdown Content Block */}
           <div className="font-sans leading-relaxed select-text border-t border-white/5 pt-10">
-            {renderMarkdownContent(blog.content, isDark)}
+            <CustomMarkdown content={blog.content} isDark={isDark} />
           </div>
 
           {/* Interactive Footer Likes Hook */}

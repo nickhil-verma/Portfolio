@@ -24,289 +24,69 @@ import {
   CartesianGrid
 } from "recharts";
 
-// Senior-level React-based Markdown-to-HTML parser function for dynamic blog preview
-function renderMarkdownContent(md, isDark = true) {
-  if (!md) return "";
-  
-  const lines = md.split(/\r?\n/);
-  const elements = [];
-  let inCodeBlock = false;
-  let codeBlockLines = [];
-  let codeBlockLang = "";
-  let listItems = [];
-  let currentListType = null; // "bullet" or "number"
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
-  const flushList = (key) => {
-    if (listItems.length > 0) {
-      if (currentListType === "bullet") {
-        elements.push(
-          <ul key={`ul-${key}`} className={`list-disc pl-6 mb-4 space-y-1.5 ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>
-            {listItems.map((item, i) => <li key={i}>{item}</li>)}
-          </ul>
-        );
-      } else if (currentListType === "number") {
-        elements.push(
-          <ol key={`ol-${key}`} className={`list-decimal pl-6 mb-4 space-y-1.5 ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>
-            {listItems.map((item, i) => <li key={i}>{item}</li>)}
-          </ol>
-        );
-      }
-      listItems = [];
-      currentListType = null;
-    }
-  };
-
-  const parseInlineStyles = (text) => {
-    if (!text) return "";
-    let parts = [text];
-    
-    // Parse inline code: `code`
-    parts = parts.flatMap((part) => {
-      if (typeof part !== "string") return part;
-      const codeRegex = /`([^`]+)`/g;
-      const subParts = [];
-      let lastIdx = 0;
-      let match;
-      while ((match = codeRegex.exec(part)) !== null) {
-        if (match.index > lastIdx) {
-          subParts.push(part.substring(lastIdx, match.index));
-        }
-        subParts.push(
-          <code key={`code-${match.index}`} className={`px-1.5 py-0.5 rounded text-[11px] font-mono ${
-            isDark ? "bg-white/10 text-red-400" : "bg-black/5 text-red-600"
-          }`}>
-            {match[1]}
-          </code>
-        );
-        lastIdx = codeRegex.lastIndex;
-      }
-      if (lastIdx < part.length) {
-        subParts.push(part.substring(lastIdx));
-      }
-      return subParts;
-    });
-
-    // Parse bold: **text**
-    parts = parts.flatMap((part) => {
-      if (typeof part !== "string") return part;
-      const boldRegex = /\*\*([^*]+)\*\*/g;
-      const subParts = [];
-      let lastIdx = 0;
-      let match;
-      while ((match = boldRegex.exec(part)) !== null) {
-        if (match.index > lastIdx) {
-          subParts.push(part.substring(lastIdx, match.index));
-        }
-        subParts.push(
-          <strong key={`bold-${match.index}`} className={`font-bold ${isDark ? "text-white" : "text-zinc-950"}`}>
-            {match[1]}
-          </strong>
-        );
-        lastIdx = boldRegex.lastIndex;
-      }
-      if (lastIdx < part.length) {
-        subParts.push(part.substring(lastIdx));
-      }
-      return subParts;
-    });
-
-    // Parse italic: *text*
-    parts = parts.flatMap((part) => {
-      if (typeof part !== "string") return part;
-      const italicRegex = /\*([^*]+)\*/g;
-      const subParts = [];
-      let lastIdx = 0;
-      let match;
-      while ((match = italicRegex.exec(part)) !== null) {
-        if (match.index > lastIdx) {
-          subParts.push(part.substring(lastIdx, match.index));
-        }
-        subParts.push(
-          <em key={`italic-${match.index}`} className="italic">
-            {match[1]}
-          </em>
-        );
-        lastIdx = italicRegex.lastIndex;
-      }
-      if (lastIdx < part.length) {
-        subParts.push(part.substring(lastIdx));
-      }
-      return subParts;
-    });
-
-    // Parse links: [text](url)
-    parts = parts.flatMap((part) => {
-      if (typeof part !== "string") return part;
-      const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-      const subParts = [];
-      let lastIdx = 0;
-      let match;
-      while ((match = linkRegex.exec(part)) !== null) {
-        if (match.index > lastIdx) {
-          subParts.push(part.substring(lastIdx, match.index));
-        }
-        subParts.push(
-          <a
-            key={`link-${match.index}`}
-            href={match[2]}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`font-semibold hover:underline transition-colors ${
-              isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"
-            }`}
-          >
-            {match[1]}
-          </a>
-        );
-        lastIdx = linkRegex.lastIndex;
-      }
-      if (lastIdx < part.length) {
-        subParts.push(part.substring(lastIdx));
-      }
-      return subParts;
-    });
-
-    return parts;
-  };
-
-  for (let i = 0; i < lines.length; i++) {
-    const rawLine = lines[i];
-    const trimmed = rawLine.trim();
-
-    // 1. Handle Code Blocks
-    if (trimmed.startsWith("```")) {
-      flushList(i);
-      if (inCodeBlock) {
-        elements.push(
-          <div key={`codeblock-${i}`} className={`p-4 rounded-xl font-mono text-[11px] overflow-x-auto mb-4 border ${
-            isDark ? "bg-black/40 border-white/5 text-zinc-300" : "bg-zinc-100 border-black/5 text-zinc-800"
-          }`}>
-            {codeBlockLang && (
-              <div className={`text-[9px] uppercase tracking-wider font-bold mb-2 pb-1 border-b ${
-                isDark ? "text-zinc-500 border-white/5" : "text-zinc-400 border-black/5"
-              }`}>
-                {codeBlockLang}
-              </div>
-            )}
-            <pre className="leading-relaxed">{codeBlockLines.join("\n")}</pre>
+// Custom Markdown Component supporting GFM and raw HTML
+function CustomMarkdown({ content, isDark }) {
+  return (
+    <div className="space-y-4">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
+      components={{
+        img: ({ node, className, style, ...props }) => (
+          <span className="flex justify-center w-full my-6">
+            <img 
+              {...props} 
+              style={style} 
+              className={`max-w-full h-auto rounded-[24px] shadow-xl border object-contain ${
+                isDark ? "border-white/5" : "border-black/5"
+              } ${className || ""}`} 
+              loading="lazy" 
+            />
+          </span>
+        ),
+        h1: ({ node, ...props }) => <h2 className={`text-2xl sm:text-3xl font-extrabold font-outfit mt-8 mb-4 tracking-tight leading-tight ${isDark ? "text-white" : "text-zinc-950"}`} {...props} />,
+        h2: ({ node, ...props }) => <h3 className={`text-xl sm:text-2xl font-bold font-outfit mt-6 mb-3 tracking-tight ${isDark ? "text-white" : "text-zinc-950"}`} {...props} />,
+        h3: ({ node, ...props }) => <h4 className={`text-base sm:text-lg font-bold font-outfit mt-5 mb-2.5 ${isDark ? "text-white" : "text-zinc-950"}`} {...props} />,
+        p: ({ node, ...props }) => <p className={`text-[10px] sm:text-xs leading-relaxed mb-2 ${isDark ? "text-zinc-300" : "text-zinc-700"}`} {...props} />,
+        a: ({ node, ...props }) => <a className={`font-semibold hover:underline transition-colors ${isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"}`} target="_blank" rel="noopener noreferrer" {...props} />,
+        code: ({ node, inline, className, children, ...props }) => {
+          if (inline || !String(children).includes('\n')) {
+            return (
+              <code className={`px-1.5 py-0.5 rounded text-[11px] font-mono ${isDark ? "bg-white/10 text-red-400" : "bg-black/5 text-red-600"}`} {...props}>
+                {children}
+              </code>
+            );
+          }
+          return (
+            <div className={`p-4 rounded-xl font-mono text-[11px] overflow-x-auto mb-4 border ${isDark ? "bg-black/40 border-white/5 text-zinc-300" : "bg-zinc-100 border-black/5 text-zinc-800"}`}>
+              <pre className="leading-relaxed"><code {...props}>{children}</code></pre>
+            </div>
+          );
+        },
+        blockquote: ({ node, ...props }) => (
+          <blockquote className={`border-l-2 border-red-500 pl-3 py-1 my-3 text-[10px] sm:text-xs text-zinc-400 italic bg-white/5 rounded-r-md`} {...props} />
+        ),
+        ul: ({ node, ...props }) => <ul className={`list-disc pl-6 mb-4 space-y-1.5 ${isDark ? "text-zinc-300" : "text-zinc-700"}`} {...props} />,
+        ol: ({ node, ...props }) => <ol className={`list-decimal pl-6 mb-4 space-y-1.5 ${isDark ? "text-zinc-300" : "text-zinc-700"}`} {...props} />,
+        table: ({ node, ...props }) => (
+          <div className="w-full overflow-x-auto mb-4 rounded-xl border border-zinc-200/10 shadow-md select-text">
+            <table className={`w-full text-left border-collapse text-[10px] sm:text-xs ${isDark ? "text-zinc-300 bg-[#121214]/40" : "text-zinc-700 bg-white"}`} {...props} />
           </div>
-        );
-        codeBlockLines = [];
-        codeBlockLang = "";
-        inCodeBlock = false;
-      } else {
-        codeBlockLang = trimmed.substring(3).trim();
-        inCodeBlock = true;
-      }
-      continue;
-    }
-
-    if (inCodeBlock) {
-      codeBlockLines.push(rawLine);
-      continue;
-    }
-
-    // 2. Horizontal Rules
-    if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
-      flushList(i);
-      elements.push(
-        <hr key={`hr-${i}`} className={`my-6 border-t ${isDark ? "border-white/5" : "border-black/5"}`} />
-      );
-      continue;
-    }
-
-    // 3. Headers
-    if (trimmed.startsWith("#")) {
-      flushList(i);
-      let depth = 0;
-      while (trimmed[depth] === "#") {
-        depth++;
-      }
-      const headerText = trimmed.substring(depth).trim();
-      const parsedText = parseInlineStyles(headerText);
-
-      if (depth === 1) {
-        elements.push(
-          <h2 key={`h2-${i}`} className={`text-base sm:text-lg font-extrabold font-outfit mt-6 mb-3 tracking-tight leading-tight ${
-            isDark ? "text-white" : "text-zinc-950"
-          }`}>
-            {parsedText}
-          </h2>
-        );
-      } else if (depth === 2) {
-        elements.push(
-          <h3 key={`h3-${i}`} className={`text-sm sm:text-base font-bold font-outfit mt-5 mb-2.5 tracking-tight ${
-            isDark ? "text-white" : "text-zinc-950"
-          }`}>
-            {parsedText}
-          </h3>
-        );
-      } else {
-        elements.push(
-          <h4 key={`h4-${i}`} className={`text-xs sm:text-sm font-bold font-outfit mt-4 mb-2 ${
-            isDark ? "text-white" : "text-zinc-950"
-          }`}>
-            {parsedText}
-          </h4>
-        );
-      }
-      continue;
-    }
-
-    // 4. Blockquotes
-    if (trimmed.startsWith("> ")) {
-      flushList(i);
-      const quoteText = rawLine.substring(rawLine.indexOf(">") + 1).trim();
-      elements.push(
-        <blockquote key={`quote-${i}`} className={`border-l-2 border-red-500 pl-3 py-1 my-3 text-[10px] sm:text-xs text-zinc-400 italic bg-white/5 rounded-r-md`}>
-          {parseInlineStyles(quoteText)}
-        </blockquote>
-      );
-      continue;
-    }
-
-    // 5. Bullet Lists
-    const bulletMatch = rawLine.match(/^(\s*)([-*+])\s+(.*)/);
-    if (bulletMatch) {
-      if (currentListType !== "bullet") {
-        flushList(i);
-        currentListType = "bullet";
-      }
-      listItems.push(parseInlineStyles(bulletMatch[3]));
-      continue;
-    }
-
-    // 6. Numbered Lists
-    const numberMatch = rawLine.match(/^(\s*)(\d+)\.\s+(.*)/);
-    if (numberMatch) {
-      if (currentListType !== "number") {
-        flushList(i);
-        currentListType = "number";
-      }
-      listItems.push(parseInlineStyles(numberMatch[3]));
-      continue;
-    }
-
-    // 7. Empty Lines
-    if (trimmed === "") {
-      flushList(i);
-      elements.push(<div key={`empty-${i}`} className="h-2" />);
-      continue;
-    }
-
-    // 8. Normal Paragraph
-    flushList(i);
-    elements.push(
-      <p key={`p-${i}`} className={`text-[10px] sm:text-xs leading-relaxed mb-2 ${
-        isDark ? "text-zinc-300" : "text-zinc-700"
-      }`}>
-        {parseInlineStyles(rawLine)}
-      </p>
-    );
-  }
-
-  flushList(lines.length);
-  return elements;
+        ),
+        th: ({ node, ...props }) => <th className="p-2 sm:p-2.5 font-bold tracking-wide font-outfit border-b border-zinc-200/5" {...props} />,
+        td: ({ node, ...props }) => <td className="p-2 sm:p-2.5 leading-relaxed font-sans border-b border-zinc-200/5" {...props} />,
+        tr: ({ node, ...props }) => <tr className={`transition-colors ${isDark ? "hover:bg-white/[0.01]" : "hover:bg-black/[0.01]"}`} {...props} />,
+        hr: ({ node, ...props }) => <hr className={`my-6 border-t ${isDark ? "border-white/5" : "border-black/5"}`} {...props} />
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+    </div>
+  );
 }
 
 // Dynamic 3D Spinning Globe component using standard 3D orthographic projection
@@ -1917,7 +1697,7 @@ export default function AdminDashboard() {
                 
                 <div className="w-full bg-white/[0.01] border border-white/5 rounded-2xl p-8 min-h-[400px]">
                   {newBlogContent.trim() ? (
-                    renderMarkdownContent(newBlogContent)
+                    <CustomMarkdown content={newBlogContent} isDark={true} />
                   ) : (
                     <p className="text-zinc-500 italic text-center py-40 select-none">No markdown written yet. Enter some text in the left pane to compile.</p>
                   )}
