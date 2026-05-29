@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Lock, User, KeyRound, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Helmet from "../../components/Helmet";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -42,6 +43,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-[#ededed] noise-overlay relative overflow-hidden flex flex-col justify-center items-center p-6">
+      <Helmet title="Admin Login | Nikhil's Console" description="Sign in to manage projects, blogs, and configurations." />
       <div className="absolute inset-0 z-0 grid-mesh pointer-events-none" />
 
       {/* Back to dashboard */}

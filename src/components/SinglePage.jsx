@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import CustomToast from "./CustomToast";
+import Helmet from "./Helmet";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sun,
@@ -563,6 +564,7 @@ export default function Portfolio() {
         isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f8f9fa] text-[#1c1c1e]"
       }`}
     >
+      <Helmet title="Nikhil Verma | Portfolio" description="Passionate React.js Developer crafting responsive, modern web experiences." />
       {/* Background static noise and texture overlay */}
       <div className="absolute inset-0 z-0 noise-overlay pointer-events-none" />
 

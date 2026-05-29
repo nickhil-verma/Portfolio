@@ -7,6 +7,7 @@ import { ArrowLeft, Clock, Calendar, Share2, MessageSquare, Eye } from "lucide-r
 import Link from "next/link";
 import BlogLikeButton from "../../../components/BlogLikeButton";
 import CustomToast from "../../../components/CustomToast";
+import Helmet from "../../../components/Helmet";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -311,6 +312,7 @@ export default function BlogDetailPage() {
       <div className={`min-h-screen flex items-center justify-center ${
         isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f8f9fa] text-[#1c1c1e]"
       }`}>
+        <Helmet title="Loading Blog... | Developer Insights" />
         <div className="flex flex-col items-center space-y-4">
           <div className="w-10 h-10 border-4 border-red-500/20 border-t-red-500 rounded-full animate-spin" />
           <span className="text-xs font-semibold tracking-wider text-zinc-500 animate-pulse uppercase">Assembling article...</span>
@@ -324,6 +326,7 @@ export default function BlogDetailPage() {
       <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${
         isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f8f9fa] text-[#1c1c1e]"
       }`}>
+        <Helmet title="Article Not Found | Developer Insights" />
         <DetailSpotlightCard isDark={isDark} className="max-w-md p-10 text-center">
           <h2 className="text-xl font-bold font-outfit mb-3 text-red-500">Article Not Found</h2>
           <p className={`text-xs mb-8 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
@@ -343,6 +346,7 @@ export default function BlogDetailPage() {
     <div className={`min-h-screen transition-colors duration-0 noise-overlay relative overflow-hidden p-6 sm:p-10 lg:p-16 ${
       isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f8f9fa] text-[#1c1c1e]"
     }`}>
+      <Helmet title={`${blog.title} | Developer Insights`} description={blog.excerpt || "Nikhil's Insight"} />
       {/* Grid Mesh Texture */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className={`absolute inset-0 ${isDark ? "grid-mesh" : "grid-mesh-light"}`} />

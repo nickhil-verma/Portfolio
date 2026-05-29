@@ -10,6 +10,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CustomToast from "../../../components/CustomToast";
+import Helmet from "../../../components/Helmet";
 
 // Recharts components for shadcn-style graphs
 import {
@@ -674,6 +675,7 @@ export default function AdminDashboard() {
   if (!authorized) {
     return (
       <div className="min-h-screen bg-[#050505] text-[#ededed] noise-overlay relative overflow-hidden flex flex-col justify-center items-center p-6">
+        <Helmet title="Verifying Session... | Nikhil's Console" />
         <div className="absolute inset-0 z-0 grid-mesh pointer-events-none" />
         <div className="text-center z-10">
           <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 mx-auto flex items-center justify-center mb-4 animate-pulse">
@@ -689,6 +691,7 @@ export default function AdminDashboard() {
     <div className={`min-h-screen transition-colors duration-0 noise-overlay relative overflow-hidden flex font-sans ${
       isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f5f5f7] text-[#1c1c1e]"
     }`}>
+      <Helmet title="Admin Dashboard | Nikhil's Console" />
       <div className={`absolute inset-0 z-0 ${isDark ? "grid-mesh" : "grid-mesh-light"} pointer-events-none`} />
 
       {/* Sidebar Navigation */}

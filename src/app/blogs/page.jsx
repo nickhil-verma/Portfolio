@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import CustomToast from "../../components/CustomToast";
+import Helmet from "../../components/Helmet";
 import { motion } from "framer-motion";
 import { ArrowLeft, Clock, Heart, Search, ChevronRight, Tag, Calendar, Eye } from "lucide-react";
 import Link from "next/link";
@@ -203,6 +204,7 @@ export default function BlogsPage() {
     <div className={`min-h-screen transition-colors duration-0 noise-overlay relative overflow-hidden p-6 sm:p-10 lg:p-16 ${
       isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f8f9fa] text-[#1c1c1e]"
     }`}>
+      <Helmet title="Blogs | Nikhil's Insights" description="Developer insights, AI chatbot pipelines, frontend performance scaling, and modern developer tooling." />
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className={`absolute inset-0 ${isDark ? "grid-mesh" : "grid-mesh-light"}`} />
       </div>

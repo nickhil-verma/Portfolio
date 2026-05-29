@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import CustomToast from "../../components/CustomToast";
+import Helmet from "../../components/Helmet";
 import { motion } from "framer-motion";
 import { ArrowLeft, ExternalLink, Github, Search, Code, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
@@ -257,6 +258,7 @@ export default function ProjectsPage() {
     <div className={`min-h-screen transition-colors duration-0 noise-overlay relative overflow-hidden p-6 sm:p-10 lg:p-16 ${
       isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f8f9fa] text-[#1c1c1e]"
     }`}>
+      <Helmet title="Projects | Nikhil's Archive" description="A comprehensive archive of engineering projects spanning artificial intelligence, full-stack web applications, and RAG pipelines." />
       {/* Grid Mesh Texture */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className={`absolute inset-0 ${isDark ? "grid-mesh" : "grid-mesh-light"}`} />
