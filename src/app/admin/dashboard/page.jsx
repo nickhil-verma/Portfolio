@@ -1053,6 +1053,7 @@ export default function AdminDashboard() {
                         <th className="pb-3.5 pl-2">Device Profile & Screen</th>
                         <th className="pb-3.5">IP Address & ISP</th>
                         <th className="pb-3.5">Geocoded Location</th>
+                        <th className="pb-3.5">Target Route</th>
                         <th className="pb-3.5">Timestamp</th>
                         <th className="pb-3.5 pr-2 text-right">System Agent</th>
                       </tr>
@@ -1105,6 +1106,13 @@ export default function AdminDashboard() {
                                   </span>
                                 )}
                               </div>
+                            </span>
+                          </td>
+                          <td className="py-3 font-mono text-[11px]">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
+                              isDark ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-red-50 text-red-600 border border-red-100"
+                            }`}>
+                              {log.route || "/"}
                             </span>
                           </td>
                           <td className={`py-3 ${isDark ? "text-zinc-400" : "text-zinc-600"} font-mono text-[10px]`}>

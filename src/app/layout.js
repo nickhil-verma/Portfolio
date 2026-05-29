@@ -1,5 +1,6 @@
 import '../index.css';
 import SmoothScroll from '../components/SmoothScroll';
+import TelemetryTracker from '../components/TelemetryTracker';
 
 export const metadata = {
   title: "Nikhil's Portfolio",
@@ -29,6 +30,7 @@ export default function RootLayout({ children }) {
         }} />
       </head>
       <body className="antialiased font-sans">
+        <TelemetryTracker />
         <SmoothScroll>
           {children}
         </SmoothScroll>

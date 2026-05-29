@@ -79,6 +79,7 @@ export async function POST(request) {
     const windowSize = body.windowSize || "Unknown";
     const language = body.language || "Unknown";
     const referrer = body.referrer || "Unknown";
+    const route = body.route || "/";
 
     // Resolve IP address
     let ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "127.0.0.1";
@@ -159,6 +160,7 @@ export async function POST(request) {
 
     const logEntry = {
       ip,
+      route,
       location,
       lat,
       lon,
