@@ -553,13 +553,13 @@ export default function Portfolio() {
 ],
     },
     {
-      title: "Software Development Intern",
-      company: "Ultra TV Ads, Thailand (Remote)",
-      period: "Feb 2025 – Apr 2025",
+      title: "Webmaster Head",
+      company: "IEEE CEDA Student Chapter (Remote)",
+      period: "Sept 2024 – Present",
       description: [
-        "Migrated WordPress site to React, reducing page load times by 40%.",
-        "Implemented Twilio re-subscribe alerts via n8n automation + NodeMailer.",
-        "Managed DevOps setups and role-based access control (RBAC) with JWT.",
+        "Engineered a high-throughput email broadcasting pipeline reaching 500+ members, leveraging automated workflows with n8n, NodeMailer, and Twilio integrations.",
+        "Developed an automated QR-based certificate generation and authentication system, enabling secure, tamper-resistant verification for event participants.",
+        "Implemented secure JWT-based RBAC and streamlined CI/CD pipelines via GitHub Actions, ensuring reliable and compliant deployments.",
       ],
     },
   ];
