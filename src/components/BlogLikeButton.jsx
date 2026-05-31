@@ -52,6 +52,33 @@ export default function BlogLikeButton({ blogId, initialLikes, isDark, mini = fa
       const data = await res.json();
       if (data.success) {
         setLikesCount(data.count);
+        
+        // Log telemetry like interaction
+        if (action === "like") {
+          try {
+            const isLocalhost =
+              typeof window !== "undefined" &&
+              (window.location.hostname === "localhost" ||
+                window.location.hostname === "127.0.0.1" ||
+                window.location.hostname === "::1");
+
+            if (!isLocalhost) {
+              const payload = {
+                blogId,
+                action: "like",
+                screenResolution: typeof window !== "undefined" ? `${window.screen.width}x${window.screen.height}` : "Unknown",
+                windowSize: typeof window !== "undefined" ? `${window.innerWidth}x${window.innerHeight}` : "Unknown",
+                language: typeof navigator !== "undefined" ? navigator.language : "Unknown",
+                referrer: typeof document !== "undefined" ? (document.referrer || "Direct") : "Direct",
+              };
+              fetch("/api/blogs/analytics", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              }).catch(err => console.error("Failed to log blog like analytics:", err));
+            }
+          } catch (err) {}
+        }
       }
     } catch (err) {
       console.error("Failed to update likes in interactions database:", err);

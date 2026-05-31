@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, LayoutDashboard, FolderKanban, BookHeart, LogOut, 
   Plus, Trash2, Users, Cpu, FileText, CheckCircle2, Globe, Monitor, Smartphone, Tablet,
-  Github, X, MessageSquare, Sun, Moon, GripVertical
+  Github, X, MessageSquare, Sun, Moon, GripVertical, Heart
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -319,6 +319,10 @@ export default function AdminDashboard() {
     logs: [],
   });
 
+  // Blog telemetry analytics states
+  const [blogAnalytics, setBlogAnalytics] = useState({ logs: [] });
+  const [selectedBlogFilter, setSelectedBlogFilter] = useState("all");
+
   const [loading, setLoading] = useState(true);
 
   // Form states - Projects
@@ -460,6 +464,17 @@ export default function AdminDashboard() {
       const analyticsData = await analyticsRes.json();
       if (analyticsData && !analyticsData.error) {
         setAnalytics(analyticsData);
+      }
+
+      // Fetch dynamic blog interactions analytics
+      try {
+        const blogAnalyticsRes = await fetch("/api/blogs/analytics");
+        const blogAnalyticsData = await blogAnalyticsRes.json();
+        if (blogAnalyticsData && !blogAnalyticsData.error) {
+          setBlogAnalytics(blogAnalyticsData);
+        }
+      } catch (e) {
+        console.error("Failed to load blog analytics:", e);
       }
     } catch (err) {
       console.error("Failed to load active data:", err);
@@ -709,6 +724,7 @@ export default function AdminDashboard() {
           <nav className="space-y-1.5">
             {[
               { id: "overview", label: "Overview & Analytics", icon: LayoutDashboard },
+              { id: "blog-analytics", label: "Blog Analytics App", icon: Cpu },
               { id: "projects", label: "Manage Projects", icon: FolderKanban },
               { id: "blogs", label: "Markdown Blogs", icon: BookHeart },
               { id: "comments", label: "Visitor Reflections", icon: MessageSquare },
@@ -768,7 +784,7 @@ export default function AdminDashboard() {
             <button onClick={toggleTheme} className={`px-2 py-1.5 rounded-lg text-[10px] ${isDark ? "text-zinc-400 hover:text-white" : "text-zinc-500 hover:text-zinc-900"}`}>
               {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
-            {["overview", "projects", "blogs", "comments"].map((tab) => (
+            {["overview", "blog-analytics", "projects", "blogs", "comments"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -778,7 +794,7 @@ export default function AdminDashboard() {
                     : `${isDark ? "text-zinc-400 hover:text-white" : "text-zinc-500 hover:text-zinc-900"}`
                 }`}
               >
-                {tab === "overview" ? "Views" : tab === "comments" ? "Reflections" : tab}
+                {tab === "overview" ? "Views" : tab === "comments" ? "Reflections" : tab === "blog-analytics" ? "Blog Telemetry" : tab}
               </button>
             ))}
           </div>
@@ -789,6 +805,7 @@ export default function AdminDashboard() {
           <div>
             <h1 className={`text-3xl font-extrabold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"} flex items-center gap-2`}>
               {activeTab === "overview" && "Analytics Overview"}
+              {activeTab === "blog-analytics" && "Blog Analytics App"}
               {activeTab === "projects" && "Projects Manager"}
               {activeTab === "blogs" && "Blogging Dashboard"}
               {activeTab === "comments" && "Anonymous Comments"}
@@ -1359,6 +1376,230 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {/* BLOG ANALYTICS TAB */}
+        {activeTab === "blog-analytics" && (() => {
+          const blogLogs = blogAnalytics.logs || [];
+          const filteredBlogLogs = blogLogs.filter(log => selectedBlogFilter === "all" || log.blogId === selectedBlogFilter);
+          
+          const viewsCount = filteredBlogLogs.filter(log => log.action === "view").length;
+          const likesCount = filteredBlogLogs.filter(log => log.action === "like").length;
+          const reflectionsCount = filteredBlogLogs.filter(log => log.action === "reflection").length;
+          
+          const engagementRate = viewsCount > 0 
+            ? (((likesCount + reflectionsCount) / viewsCount) * 100).toFixed(1)
+            : "0.0";
+
+          // Group by article for Recharts bar chart
+          const chartData = dashboardBlogs.map(blog => {
+            const blogIdStr = blog._id.toString();
+            const articleLogs = blogLogs.filter(log => log.blogId === blogIdStr);
+            return {
+              name: blog.title.length > 25 ? blog.title.slice(0, 25) + "..." : blog.title,
+              Views: articleLogs.filter(log => log.action === "view").length,
+              Likes: articleLogs.filter(log => log.action === "like").length,
+              Reflections: articleLogs.filter(log => log.action === "reflection").length,
+            };
+          });
+
+          return (
+            <div className="space-y-8 select-text">
+              {/* Blog scope selector */}
+              <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 rounded-[24px] ${
+                isDark ? "glass-card" : "glass-card-light shadow-sm"
+              } relative mb-6`}>
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none" />
+                <div>
+                  <h3 className={`text-sm font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Select Article Scope</h3>
+                  <p className={`text-[10px] ${isDark ? "text-zinc-500" : "text-zinc-400"} font-mono mt-0.5`}>Filter geocoding radar, KPIs, and telemetry logs specifically per article.</p>
+                </div>
+                <select
+                  value={selectedBlogFilter}
+                  onChange={(e) => setSelectedBlogFilter(e.target.value)}
+                  className={`border rounded-xl px-4 py-2 text-xs focus:outline-none transition-all font-sans w-full sm:w-64 ${
+                    isDark 
+                      ? "bg-black/60 border-white/10 focus:border-red-500/50 text-white" 
+                      : "bg-white border-black/10 focus:border-red-500/50 text-zinc-900 shadow-sm"
+                  }`}
+                >
+                  <option value="all">All Blog Articles</option>
+                  {dashboardBlogs.map(b => (
+                    <option key={b._id} value={b._id}>{b.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* KPI metrics grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {[
+                  { label: "Article Views", value: viewsCount, icon: Globe, color: isDark ? "bg-sky-500/10 text-sky-400 border-sky-500/20" : "bg-sky-50 text-sky-600 border-sky-100" },
+                  { label: "Article Likes", value: likesCount, icon: Heart, color: isDark ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : "bg-rose-50 text-rose-600 border-rose-100" },
+                  { label: "Reflections Shared", value: reflectionsCount, icon: MessageSquare, color: isDark ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "bg-amber-50 text-amber-600 border-amber-100" },
+                  { label: "Engagement Rate", value: `${engagementRate}%`, icon: Cpu, color: isDark ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-emerald-50 text-emerald-600 border-emerald-100" },
+                ].map((kpi, idx) => {
+                  const Icon = kpi.icon;
+                  return (
+                    <div key={idx} className={`p-5 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative flex items-center justify-between`}>
+                      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none" />
+                      <div>
+                        <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>{kpi.label}</p>
+                        <h3 className={`text-2xl font-extrabold font-outfit mt-1.5 ${isDark ? "text-white" : "text-zinc-900"}`}>{kpi.value}</h3>
+                      </div>
+                      <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${kpi.color}`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Dynamic visualization layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Recharts chart */}
+                <div className={`lg:col-span-2 p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative h-[450px]`}>
+                  <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none" />
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h3 className={`text-sm font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Dynamic Article Traffic Breakdown</h3>
+                      <p className={`text-[10px] ${isDark ? "text-zinc-500" : "text-zinc-400"} font-mono mt-0.5`}>Views vs Likes vs Comments per dynamic database blog.</p>
+                    </div>
+                  </div>
+                  <div className="h-[340px] w-full font-mono text-[9px]">
+                    {chartData.length === 0 ? (
+                      <div className="h-full flex items-center justify-center text-zinc-500">No blog analytics data recorded.</div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"} />
+                          <XAxis dataKey="name" stroke={isDark ? "#71717a" : "#52525b"} />
+                          <YAxis stroke={isDark ? "#71717a" : "#52525b"} />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: isDark ? "#09090b" : "#ffffff", 
+                              borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+                              color: isDark ? "#ffffff" : "#000000"
+                            }} 
+                          />
+                          <Bar dataKey="Views" fill="#0ea5e9" name="Views" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="Likes" fill="#f43f5e" name="Likes" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="Reflections" fill="#f59e0b" name="Comments" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+                </div>
+
+                {/* 3D Geographic Globe Radar */}
+                <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative h-[450px]`}>
+                  <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none" />
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h3 className={`text-sm font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Active Blog Geocoding Radar</h3>
+                      <p className={`text-[10px] ${isDark ? "text-zinc-500" : "text-zinc-400"} font-mono`}>Dynamic geolocation mapping exact reader profiles.</p>
+                    </div>
+                  </div>
+                  <div className={`h-[340px] relative overflow-hidden rounded-xl border ${isDark ? "border-white/5 bg-black/40" : "border-black/5 bg-white"} shadow-inner`}>
+                    <GeolocationGlobe logs={filteredBlogLogs} isDark={isDark} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Telemetry logs table */}
+              <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none" />
+                <div className="flex justify-between items-center mb-5">
+                  <h3 className={`text-base font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Article Action Telemetry Stream</h3>
+                  <span className={`text-[9px] font-bold uppercase border px-2.5 py-1 rounded-md ${
+                    isDark ? "bg-white/5 border-white/5 text-zinc-400" : "bg-black/5 border-black/5 text-zinc-500"
+                  }`}>
+                    Real-time Blog Analytics Logs
+                  </span>
+                </div>
+
+                {filteredBlogLogs.length === 0 ? (
+                  <div className="py-12 text-center text-xs text-zinc-500 font-mono">No telemetry events logged for this selection scope.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className={`border-b ${isDark ? "border-white/5 text-zinc-400" : "border-black/10 text-zinc-500"} uppercase font-bold tracking-wider text-[9px] pb-3.5`}>
+                          <th className="pb-3.5 pl-2">Article / Scope</th>
+                          <th className="pb-3.5">Action Profile</th>
+                          <th className="pb-3.5">IP Address & ISP</th>
+                          <th className="pb-3.5">Geolocated Location</th>
+                          <th className="pb-3.5">Window / OS</th>
+                          <th className="pb-3.5">Timestamp</th>
+                        </tr>
+                      </thead>
+                      <tbody className={`divide-y ${isDark ? "divide-white/5" : "divide-black/5"}`}>
+                        {filteredBlogLogs.map((log, index) => (
+                          <tr key={index} className={`hover:${isDark ? "bg-white/[0.01]" : "bg-black/[0.01]"} transition-colors`}>
+                            <td className={`py-3 pl-2 font-medium max-w-[150px] truncate ${isDark ? "text-white" : "text-zinc-900"}`} title={log.blogTitle}>
+                              <div>
+                                <span className="block font-semibold text-xs truncate">{log.blogTitle}</span>
+                                <span className="block text-[9px] text-zinc-500 uppercase tracking-widest font-mono mt-0.5">
+                                  {log.action === "reflection" ? "Comment Event" : log.action + " Event"}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-3">
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                                log.action === "view" ? "bg-sky-500/10 text-sky-400 border border-sky-500/20" :
+                                log.action === "like" ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" :
+                                "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              }`}>
+                                {log.action.toUpperCase()}
+                              </span>
+                              {log.action === "reflection" && log.content && (
+                                <p className={`text-[10px] italic p-2 rounded-lg border mt-1.5 max-w-xs break-words ${
+                                  isDark ? "text-zinc-400 bg-white/5 border-white/5" : "text-zinc-600 bg-black/5 border-black/5"
+                                }`} title={log.content}>
+                                  "{log.content}"
+                                </p>
+                              )}
+                            </td>
+                            <td className={`py-3 font-mono text-xs ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>
+                              <div>
+                                <span>{log.ip}</span>
+                                <span className="block text-[9px] text-zinc-500 font-sans mt-0.5 truncate max-w-[120px]" title={log.isp}>{log.isp}</span>
+                              </div>
+                            </td>
+                            <td className={`py-3 ${isDark ? "text-zinc-200" : "text-zinc-800"}`}>
+                              <span className="inline-flex items-center gap-1">
+                                <Globe className="w-3.5 h-3.5 text-zinc-500" />
+                                <div>
+                                  <span className="text-xs font-semibold">{log.location}</span>
+                                  {log.lat && log.lon && (
+                                    <span className="block text-[9px] text-zinc-500 font-mono mt-0.5">{log.lat.toFixed(4)}, {log.lon.toFixed(4)}</span>
+                                  )}
+                                </div>
+                              </span>
+                            </td>
+                            <td className="py-3 font-mono text-[10px]">
+                              <div>
+                                <span className={`block font-semibold ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>{log.os} / {log.browser}</span>
+                                <span className="block text-[9px] text-zinc-500 mt-0.5">{log.windowSize} ({log.screenResolution})</span>
+                              </div>
+                            </td>
+                            <td className={`py-3 font-mono text-[10px] ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>
+                              {new Date(log.timestamp).toLocaleString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                second: "2-digit",
+                              })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </main>
 
       {/* Fullscreen project editor overlay */}

@@ -228,8 +228,36 @@ export default function BlogDetailPage() {
       });
       const data = await res.json();
       if (data.success) {
+        // Capture exact comment text before resetting
+        const commentToLog = commentText.trim();
         setCommentText("");
         setToast({ message: "Thank you! Your reflection was shared anonymously. 💬", type: "success", key: Date.now() });
+
+        // Log reflection telemetry action
+        try {
+          const isLocalhost =
+            typeof window !== "undefined" &&
+            (window.location.hostname === "localhost" ||
+              window.location.hostname === "127.0.0.1" ||
+              window.location.hostname === "::1");
+
+          if (!isLocalhost) {
+            const payload = {
+              blogId: id,
+              action: "reflection",
+              content: commentToLog,
+              screenResolution: typeof window !== "undefined" ? `${window.screen.width}x${window.screen.height}` : "Unknown",
+              windowSize: typeof window !== "undefined" ? `${window.innerWidth}x${window.innerHeight}` : "Unknown",
+              language: typeof navigator !== "undefined" ? navigator.language : "Unknown",
+              referrer: typeof document !== "undefined" ? (document.referrer || "Direct") : "Direct",
+            };
+            fetch("/api/blogs/analytics", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            }).catch(err => console.error("Failed to log blog reflection analytics:", err));
+          }
+        } catch (err) {}
       } else {
         setToast({ message: data.error || "Failed to submit reflection", type: "error", key: Date.now() });
       }
@@ -301,6 +329,31 @@ export default function BlogDetailPage() {
         } catch (e) {
           setViews((activeBlog.views || 0) + 1);
         }
+
+        // Log geocoded view telemetry action
+        try {
+          const isLocalhost =
+            typeof window !== "undefined" &&
+            (window.location.hostname === "localhost" ||
+              window.location.hostname === "127.0.0.1" ||
+              window.location.hostname === "::1");
+
+          if (!isLocalhost) {
+            const payload = {
+              blogId: id,
+              action: "view",
+              screenResolution: typeof window !== "undefined" ? `${window.screen.width}x${window.screen.height}` : "Unknown",
+              windowSize: typeof window !== "undefined" ? `${window.innerWidth}x${window.innerHeight}` : "Unknown",
+              language: typeof navigator !== "undefined" ? navigator.language : "Unknown",
+              referrer: typeof document !== "undefined" ? (document.referrer || "Direct") : "Direct",
+            };
+            fetch("/api/blogs/analytics", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            }).catch(err => console.error("Failed to log blog view analytics:", err));
+          }
+        } catch (err) {}
       }
     };
 
