@@ -560,7 +560,7 @@ export default function Portfolio() {
 
   return (
     <div
-      className={`min-h-screen p-4 sm:p-6 lg:p-8 transition-colors duration-0 relative overflow-hidden select-none font-sans ${
+      className={`min-h-screen p-4 sm:p-6 lg:p-8 transition-colors duration-0 relative overflow-x-hidden select-none font-sans ${
         isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f8f9fa] text-[#1c1c1e]"
       }`}
     >
