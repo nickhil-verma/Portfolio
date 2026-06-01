@@ -255,7 +255,7 @@ export default function ProjectsPage() {
   });
 
   return (
-    <div className={`min-h-screen transition-colors duration-0 noise-overlay relative overflow-hidden p-6 sm:p-10 lg:p-16 ${
+    <div className={`min-h-screen transition-colors duration-0 noise-overlay relative overflow-x-hidden p-6 sm:p-10 lg:p-16 ${
       isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f8f9fa] text-[#1c1c1e]"
     }`}>
       <Helmet title="Projects | Nikhil's Archive" description="A comprehensive archive of engineering projects spanning artificial intelligence, full-stack web applications, and RAG pipelines." />

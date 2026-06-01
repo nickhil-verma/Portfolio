@@ -8,8 +8,12 @@ export default function SmoothScroll({ children }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Bypass smooth scrolling on admin routes to prevent conflicts with dashboard inner scrolling elements
-    if (pathname && pathname.startsWith("/admin")) {
+    // Bypass smooth scrolling on admin routes and the main route page (/)
+    if (pathname === "/" || (pathname && pathname.startsWith("/admin"))) {
+      if (typeof document !== "undefined") {
+        document.documentElement.classList.remove("lenis", "lenis-smooth", "lenis-scrolling");
+        document.documentElement.style.scrollBehavior = "auto";
+      }
       return;
     }
 
