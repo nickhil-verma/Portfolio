@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, LayoutDashboard, FolderKanban, BookHeart, LogOut, 
   Plus, Trash2, Users, Cpu, FileText, CheckCircle2, Globe, Monitor, Smartphone, Tablet,
-  Github, X, MessageSquare, Sun, Moon, GripVertical, Heart
+  Github, X, MessageSquare, Sun, Moon, GripVertical, Heart,
+  Bell, Menu, ChevronLeft, ChevronRight
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -90,11 +91,89 @@ function CustomMarkdown({ content, isDark }) {
   );
 }
 
-// Dynamic 3D Spinning Globe component using standard 3D orthographic projection
-function GeolocationGlobe({ logs, isDark }) {
+// Continental outlines for a high-fidelity 2D flat dotted world map
+const CONTINENTS = [
+  // North America
+  [[-168, 66], [-120, 75], [-60, 75], [-50, 60], [-80, 25], [-85, 8], [-77, 8], [-80, 15], [-100, 15], [-105, 20], [-115, 30], [-125, 48]],
+  // Greenland
+  [[-73, 70], [-60, 80], [-20, 75], [-40, 60]],
+  // South America
+  [[-80, 12], [-45, -5], [-35, -7], [-40, -20], [-70, -55], [-75, -45], [-70, -20]],
+  // Africa
+  [[-17, 15], [30, 30], [32, 31], [50, 12], [40, -15], [20, -35], [15, -34], [8, -5], [-10, 5]],
+  // Europe & Asia (Eurasia)
+  [[-10, 55], [20, 70], [60, 70], [100, 75], [140, 70], [170, 65], [140, 35], [120, 15], [108, 15], [100, 1], [80, 10], [50, 10], [40, 30], [25, 36], [-10, 36]],
+  // India
+  [[68, 23], [78, 8], [88, 22]],
+  // Southeast Asia & Indonesia
+  [[95, 20], [110, 15], [105, -5], [120, -10], [140, -5], [130, 5]],
+  // Australia
+  [[113, -22], [143, -10], [151, -33], [115, -34]],
+  // Japan / Korea
+  [[130, 30], [142, 40], [145, 35], [132, 28]]
+];
+
+// Flat 2D Dot-Matrix World Map component with Visitor Geolocation Radar
+function GeolocationMap({ logs, isDark }) {
   const canvasRef = React.useRef(null);
-  const rotationRef = React.useRef({ x: 0, y: 0 });
-  const mouseRef = React.useRef({ isDown: false, lastX: 0 });
+  const containerRef = React.useRef(null);
+  const [hoveredLog, setHoveredLog] = useState(null);
+
+  // Helper for polygon containment check (ray-casting method)
+  const isPointInPolygon = (point, polygon) => {
+    const x = point[0], y = point[1];
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i][0], yi = polygon[i][1];
+      const xj = polygon[j][0], yj = polygon[j][1];
+      const intersect = ((yi > y) !== (yj > y))
+          && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  };
+
+  // Precompute continent grid dots for efficiency
+  const mapDots = React.useMemo(() => {
+    const dots = [];
+    const cols = 64;
+    const rows = 32;
+    for (let r = 0; r < rows; r++) {
+      const lat = 80 - (r / rows) * 140; // map latitude from 80N to 60S
+      for (let c = 0; c < cols; c++) {
+        const lon = -170 + (c / cols) * 340; // map longitude from 170W to 170E
+        let isLand = false;
+        for (const polygon of CONTINENTS) {
+          if (isPointInPolygon([lon, lat], polygon)) {
+            isLand = true;
+            break;
+          }
+        }
+        if (isLand) {
+          dots.push({ lat, lon });
+        }
+      }
+    }
+    return dots;
+  }, []);
+
+  // Filter valid geocodes (kept stable)
+  const visitors = React.useMemo(() => {
+    return logs.filter(log => {
+      const lat = parseFloat(log.lat);
+      const lon = parseFloat(log.lon);
+      return !isNaN(lat) && !isNaN(lon);
+    });
+  }, [logs]);
+
+  // Coordinate projections mapping (with 24px padding around borders for ticks & margin labels)
+  const pad = 24;
+  const getX = (lon, width) => pad + ((lon + 180) / 360) * (width - pad * 2);
+  const getY = (lat, height) => pad + ((90 - lat) / 180) * (height - pad * 2);
+
+  // Bengaluru owner node coordinates
+  const hubLon = 77.5946;
+  const hubLat = 12.9716;
 
   React.useEffect(() => {
     const canvas = canvasRef.current;
@@ -102,137 +181,212 @@ function GeolocationGlobe({ logs, isDark }) {
     const ctx = canvas.getContext("2d");
     let frameId;
 
-    // Filter valid geocodes
-    const visitors = logs.filter(log => {
-      const lat = parseFloat(log.lat);
-      const lon = parseFloat(log.lon);
-      return !isNaN(lat) && !isNaN(lon);
-    });
-
-    let autoRot = 0.3; // auto rotation velocity (in degrees per frame)
-
     const render = () => {
-      // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const radius = canvas.width / 2.3;
-      const cx = canvas.width / 2;
-      const cy = canvas.height / 2;
+      const width = canvas.width;
+      const height = canvas.height;
+      const bx = getX(hubLon, width);
+      const by = getY(hubLat, height);
 
-      // Draw sphere shadow glow
-      const sphereGlow = ctx.createRadialGradient(cx, cy, radius * 0.8, cx, cy, radius * 1.05);
-      sphereGlow.addColorStop(0, "transparent");
-      sphereGlow.addColorStop(1, isDark ? "rgba(239, 68, 68, 0.06)" : "rgba(220, 38, 38, 0.03)");
-      ctx.fillStyle = sphereGlow;
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius * 1.1, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Draw sphere outline
-      ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)";
+      // Draw digital HUD scanlines
+      ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.015)" : "rgba(0, 0, 0, 0.015)";
       ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-      ctx.stroke();
+      for (let y = pad; y < height - pad; y += 4) {
+        ctx.beginPath();
+        ctx.moveTo(pad, y);
+        ctx.lineTo(width - pad, y);
+        ctx.stroke();
+      }
 
-      // Draw meridians & parallels (grid lines)
-      ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.025)" : "rgba(0, 0, 0, 0.025)";
+      // Draw digital coordinates background grid
+      ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.03)" : "rgba(0, 0, 0, 0.03)";
       ctx.lineWidth = 0.5;
-
-      const currentRotX = rotationRef.current.x;
-
-      // Draw parallels
+      
+      // Latitude grid lines
       for (let lat = -60; lat <= 60; lat += 30) {
-        const r = radius * Math.cos((lat * Math.PI) / 180);
-        const y = cy - radius * Math.sin((lat * Math.PI) / 180);
+        const y = getY(lat, height);
         ctx.beginPath();
-        ctx.ellipse(cx, y, r, r * 0.2, 0, 0, Math.PI * 2);
+        ctx.moveTo(pad, y);
+        ctx.lineTo(width - pad, y);
         ctx.stroke();
       }
 
-      // Draw meridians
-      for (let lon = 0; lon < 360; lon += 30) {
-        const radLon = ((lon + currentRotX) * Math.PI) / 180;
+      // Longitude grid lines
+      for (let lon = -120; lon <= 120; lon += 60) {
+        const x = getX(lon, width);
         ctx.beginPath();
-        ctx.ellipse(cx, cy, radius * Math.abs(Math.sin(radLon)), radius, 0, 0, Math.PI * 2);
+        ctx.moveTo(x, pad);
+        ctx.lineTo(x, height - pad);
         ctx.stroke();
       }
 
-      // Draw stylized world dot-matrix map for continent outlines
-      const landPoints = [
-        // North America
-        { lat: 45, lon: -100 }, { lat: 55, lon: -120 }, { lat: 35, lon: -90 }, { lat: 60, lon: -80 }, { lat: 25, lon: -100 },
-        // South America
-        { lat: -10, lon: -60 }, { lat: -20, lon: -50 }, { lat: -30, lon: -60 }, { lat: 0, lon: -70 }, { lat: -40, lon: -70 },
-        // Africa
-        { lat: 10, lon: 20 }, { lat: 20, lon: 10 }, { lat: 0, lon: 25 }, { lat: -20, lon: 20 }, { lat: -30, lon: 25 }, { lat: 25, lon: 25 },
-        // Eurasia
-        { lat: 50, lon: 40 }, { lat: 60, lon: 60 }, { lat: 40, lon: 80 }, { lat: 55, lon: 100 }, { lat: 45, lon: 120 }, { lat: 35, lon: 105 },
-        { lat: 30, font: "bold", lon: 70 }, { lat: 20, lon: 80 }, { lat: 50, lon: 10 }, { lat: 45, lon: 25 },
-        // Australia
-        { lat: -25, lon: 135 }, { lat: -30, lon: 140 }, { lat: -20, lon: 120 }, { lat: -30, lon: 115 }
-      ];
+      // Draw digital ticks & border lines
+      ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(pad, pad, width - pad * 2, height - pad * 2);
 
-      ctx.fillStyle = isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.08)";
-      landPoints.forEach(pt => {
-        const radLat = (pt.lat * Math.PI) / 180;
-        const radLon = ((pt.lon + currentRotX) * Math.PI) / 180;
+      // Draw Longitude bottom ticks & digital labels
+      const lonTicks = [-120, -60, 0, 60, 120];
+      lonTicks.forEach(lon => {
+        const x = getX(lon, width);
+        ctx.beginPath();
+        ctx.moveTo(x, height - pad);
+        ctx.lineTo(x, height - pad + 5);
+        ctx.stroke();
 
-        const xSphere = Math.cos(radLat) * Math.sin(radLon);
-        const ySphere = Math.sin(radLat);
-        const zSphere = Math.cos(radLat) * Math.cos(radLon);
-
-        if (zSphere > 0) { // front hemisphere
-          const x = cx + xSphere * radius;
-          const y = cy - ySphere * radius;
-          ctx.beginPath();
-          ctx.arc(x, y, 2.5, 0, Math.PI * 2);
-          ctx.fill();
-        }
+        ctx.fillStyle = isDark ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.4)";
+        ctx.font = "7px monospace";
+        ctx.textAlign = "center";
+        const label = lon === 0 ? "000°" : `${Math.abs(lon).toString().padStart(3, "0")}°${lon < 0 ? "W" : "E"}`;
+        ctx.fillText(label, x, height - pad + 14);
       });
 
-      // Draw visitor coords as flashing/pulsing beacons
-      visitors.forEach(visitor => {
+      // Draw Latitude left ticks & digital labels
+      const latTicks = [-60, -30, 0, 30, 60];
+      latTicks.forEach(lat => {
+        const y = getY(lat, height);
+        ctx.beginPath();
+        ctx.moveTo(pad - 5, y);
+        ctx.lineTo(pad, y);
+        ctx.stroke();
+
+        ctx.fillStyle = isDark ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.4)";
+        ctx.font = "7px monospace";
+        ctx.textAlign = "right";
+        const label = lat === 0 ? "EQ" : `${Math.abs(lat).toString().padStart(2, "0")}°${lat < 0 ? "S" : "N"}`;
+        ctx.fillText(label, pad - 8, y + 2.5);
+      });
+
+      // Draw stylized world dot-matrix continents
+      ctx.fillStyle = isDark ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.13)";
+      mapDots.forEach(pt => {
+        const x = getX(pt.lon, width);
+        const y = getY(pt.lat, height);
+        
+        ctx.beginPath();
+        ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Draw connection telemetry arcs + packet animation
+      visitors.forEach((visitor, idx) => {
         const lat = parseFloat(visitor.lat);
         const lon = parseFloat(visitor.lon);
-        const radLat = (lat * Math.PI) / 180;
-        const radLon = ((visitor.lon || lon + currentRotX) * Math.PI) / 180; // use raw or adjusted
-        const actualRadLon = ((lon + currentRotX) * Math.PI) / 180;
+        const vx = getX(lon, width);
+        const vy = getY(lat, height);
 
-        const xSphere = Math.cos(radLat) * Math.sin(actualRadLon);
-        const ySphere = Math.sin(radLat);
-        const zSphere = Math.cos(radLat) * Math.cos(actualRadLon);
+        // Control point pulling upwards proportional to horizontal delta to make a gorgeous geodesic arc
+        const mx = (bx + vx) / 2;
+        const my = (by + vy) / 2;
+        const cx = mx;
+        const cy = my - Math.abs(bx - vx) * 0.22 - 15;
 
-        if (zSphere > 0) {
-          const x = cx + xSphere * radius;
-          const y = cy - ySphere * radius;
+        // Draw connection arc line
+        ctx.strokeStyle = isDark ? "rgba(239, 68, 68, 0.18)" : "rgba(239, 68, 68, 0.12)";
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.quadraticCurveTo(cx, cy, vx, vy);
+        ctx.stroke();
 
-          // Glowing pulse ring
-          const time = Date.now() / 1000;
-          const pulseRadius = 3 + (time * 12) % 10;
-          const alpha = 1 - (pulseRadius / 10);
-          
-          ctx.strokeStyle = `rgba(239, 68, 68, ${alpha})`;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.arc(x, y, pulseRadius, 0, Math.PI * 2);
-          ctx.stroke();
+        // Draw animated packet streams flowing on the arc
+        const time = Date.now() / 2000 + idx * 0.15;
+        const t = time % 1.0;
+        
+        // Quadratic Bezier interpolation
+        const px = (1 - t) * (1 - t) * bx + 2 * (1 - t) * t * cx + t * t * vx;
+        const py = (1 - t) * (1 - t) * by + 2 * (1 - t) * t * cy + t * t * vy;
 
-          // Center solid point
-          ctx.fillStyle = "#ef4444";
-          ctx.beginPath();
-          ctx.arc(x, y, 3, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Border for center point
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = 0.5;
-          ctx.stroke();
-        }
+        ctx.beginPath();
+        ctx.arc(px, py, 2, 0, Math.PI * 2);
+        ctx.fillStyle = "#ef4444";
+        ctx.shadowColor = "#ef4444";
+        ctx.shadowBlur = 3;
+        ctx.fill();
+        ctx.shadowBlur = 0; // reset glow
       });
 
-      // Update rotationRef
-      if (!mouseRef.current.isDown) {
-        rotationRef.current.x = (rotationRef.current.x + autoRot) % 360;
+      // Draw developer hub center point (Bengaluru, India)
+      ctx.beginPath();
+      ctx.arc(bx, by, 3, 0, Math.PI * 2);
+      ctx.fillStyle = "#ef4444";
+      ctx.shadowColor = "#ef4444";
+      ctx.shadowBlur = 6;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(bx, by, 5, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Draw visitor beacons with flashing pulse rings
+      visitors.forEach((visitor, idx) => {
+        const lat = parseFloat(visitor.lat);
+        const lon = parseFloat(visitor.lon);
+        const vx = getX(lon, width);
+        const vy = getY(lat, height);
+
+        // Flashing radar pulse ring
+        const time = Date.now() / 1200 + idx * 0.25;
+        const pulseRadius = 3 + (time * 8) % 9;
+        const alpha = 1 - (pulseRadius - 3) / 9;
+
+        ctx.strokeStyle = `rgba(239, 68, 68, ${alpha * 0.85})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(vx, vy, pulseRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Beacon center core
+        ctx.fillStyle = "#ef4444";
+        ctx.beginPath();
+        ctx.arc(vx, vy, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.arc(vx, vy, 2, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+
+      // Draw high-tech HUD cursor crosshair if hovered
+      if (hoveredLog) {
+        ctx.strokeStyle = "#ef4444";
+        ctx.lineWidth = 1;
+        const hx = hoveredLog.canvasX;
+        const hy = hoveredLog.canvasY;
+        const rSize = 5;
+
+        // Top-left bracket
+        ctx.beginPath();
+        ctx.moveTo(hx - rSize, hy - rSize + 2);
+        ctx.lineTo(hx - rSize, hy - rSize);
+        ctx.lineTo(hx - rSize + 2, hy - rSize);
+        ctx.stroke();
+
+        // Top-right bracket
+        ctx.beginPath();
+        ctx.moveTo(hx + rSize, hy - rSize + 2);
+        ctx.lineTo(hx + rSize, hy - rSize);
+        ctx.lineTo(hx + rSize - 2, hy - rSize);
+        ctx.stroke();
+
+        // Bottom-left bracket
+        ctx.beginPath();
+        ctx.moveTo(hx - rSize, hy + rSize - 2);
+        ctx.lineTo(hx - rSize, hy + rSize);
+        ctx.lineTo(hx - rSize + 2, hy + rSize);
+        ctx.stroke();
+
+        // Bottom-right bracket
+        ctx.beginPath();
+        ctx.moveTo(hx + rSize, hy + rSize - 2);
+        ctx.lineTo(hx + rSize, hy + rSize);
+        ctx.lineTo(hx + rSize - 2, hy + rSize);
+        ctx.stroke();
       }
 
       frameId = requestAnimationFrame(render);
@@ -243,36 +397,83 @@ function GeolocationGlobe({ logs, isDark }) {
     return () => {
       cancelAnimationFrame(frameId);
     };
-  }, [logs, isDark]);
-
-  const handleMouseDown = (e) => {
-    mouseRef.current.isDown = true;
-    mouseRef.current.lastX = e.clientX;
-  };
+  }, [visitors, isDark, mapDots, hoveredLog]);
 
   const handleMouseMove = (e) => {
-    if (!mouseRef.current.isDown) return;
-    const deltaX = e.clientX - mouseRef.current.lastX;
-    rotationRef.current.x = (rotationRef.current.x + deltaX * 0.4) % 360;
-    mouseRef.current.lastX = e.clientX;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    
+    // Convert client screen mouse coordinates into canvas coordinates
+    const clientX = e.clientX - rect.left;
+    const clientY = e.clientY - rect.top;
+    const x = (clientX / rect.width) * canvas.width;
+    const y = (clientY / rect.height) * canvas.height;
+
+    let closestLog = null;
+    let minDistance = 10; // hover threshold in canvas pixels
+
+    visitors.forEach(visitor => {
+      const lat = parseFloat(visitor.lat);
+      const lon = parseFloat(visitor.lon);
+      const vx = getX(lon, canvas.width);
+      const vy = getY(lat, canvas.height);
+
+      const d = Math.hypot(x - vx, y - vy);
+      if (d < minDistance) {
+        minDistance = d;
+        closestLog = {
+          ...visitor,
+          canvasX: vx,
+          canvasY: vy,
+          clientX: e.clientX - rect.left,
+          clientY: e.clientY - rect.top
+        };
+      }
+    });
+
+    setHoveredLog(closestLog);
   };
 
-  const handleMouseUpOrLeave = () => {
-    mouseRef.current.isDown = false;
+  const handleMouseLeave = () => {
+    setHoveredLog(null);
   };
 
   return (
-    <div className="w-full flex flex-col items-center justify-center relative cursor-grab active:cursor-grabbing select-none py-1">
+    <div ref={containerRef} className="w-full flex flex-col items-center justify-center relative select-none py-1">
       <canvas
         ref={canvasRef}
-        width={240}
-        height={240}
-        onMouseDown={handleMouseDown}
+        width={380}
+        height={210}
         onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUpOrLeave}
-        onMouseLeave={handleMouseUpOrLeave}
-        className="max-w-full h-auto"
+        onMouseLeave={handleMouseLeave}
+        className="max-w-full h-auto rounded-xl bg-black/10 dark:bg-black/25 border border-white/5 shadow-inner cursor-crosshair transition-colors duration-300"
       />
+      
+      {/* High-Tech Overlay Telemetry Tooltip */}
+      {hoveredLog && (
+        <div 
+          style={{ 
+            left: hoveredLog.clientX + 14, 
+            top: hoveredLog.clientY - 65
+          }} 
+          className={`absolute z-30 pointer-events-none p-3 rounded-xl border text-[9px] font-mono shadow-2xl backdrop-blur-md transition-all flex flex-col gap-1 min-w-[170px] ${
+            isDark 
+              ? "bg-[#09090b]/95 border-red-500/30 text-zinc-300 shadow-red-950/20" 
+              : "bg-white/95 border-zinc-200 text-zinc-700 shadow-zinc-300/30"
+          }`}
+        >
+          <div className="font-bold text-red-500 border-b border-red-500/20 pb-1 flex items-center gap-1.5 justify-between">
+            <span className="truncate max-w-[120px]">IP: {hoveredLog.ip || "0.0.0.0"}</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping flex-shrink-0" />
+          </div>
+          <div className="truncate">📍 Loc: <span className="font-bold text-zinc-950 dark:text-white">{hoveredLog.location || "Unknown"}</span></div>
+          <div>🕒 Time: <span className="text-zinc-400 font-semibold">{new Date(hoveredLog.timestamp).toLocaleTimeString()}</span></div>
+          <div className="uppercase tracking-wider text-[7px] text-red-400 font-bold bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20 self-start mt-0.5">
+            {hoveredLog.action || "Visit"} Event
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -283,6 +484,67 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [isDark, setIsDark] = useState(true);
   const [toast, setToast] = useState({ message: "", type: "success", key: 0 });
+
+  const [dashboardProjects, setDashboardProjects] = useState([]);
+  const [dashboardBlogs, setDashboardBlogs] = useState([]);
+  const [dashboardComments, setDashboardComments] = useState([]);
+  
+  // Traffic analytics state
+  const [analytics, setAnalytics] = useState({
+    totalViews: 0,
+    uniqueViews: 0,
+    logs: [],
+  });
+
+  // Blog telemetry analytics states
+  const [blogAnalytics, setBlogAnalytics] = useState({ logs: [] });
+  const [selectedBlogFilter, setSelectedBlogFilter] = useState("all");
+
+  const [loading, setLoading] = useState(true);
+
+  const [readReflectionIds, setReadReflectionIds] = useState([]);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedIds = localStorage.getItem("read_reflection_ids");
+        if (savedIds) {
+          setReadReflectionIds(JSON.parse(savedIds));
+        }
+        const savedCollapse = localStorage.getItem("sidebar_collapsed");
+        if (savedCollapse) {
+          setIsSidebarCollapsed(savedCollapse === "true");
+        }
+      } catch (e) {
+        console.error("Error reading localStorage:", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "comments" && dashboardComments && dashboardComments.length > 0) {
+      const currentIds = dashboardComments.map(c => c._id);
+      const newReadIds = Array.from(new Set([...readReflectionIds, ...currentIds]));
+      const hasNew = currentIds.some(id => !readReflectionIds.includes(id));
+      if (hasNew) {
+        setReadReflectionIds(newReadIds);
+        localStorage.setItem("read_reflection_ids", JSON.stringify(newReadIds));
+      }
+    }
+  }, [activeTab, dashboardComments, readReflectionIds]);
+
+  const unreadCount = React.useMemo(() => {
+    if (!dashboardComments || !Array.isArray(dashboardComments)) return 0;
+    return dashboardComments.filter(c => !readReflectionIds.includes(c._id)).length;
+  }, [dashboardComments, readReflectionIds]);
+
+  const toggleSidebarCollapse = () => {
+    const next = !isSidebarCollapsed;
+    setIsSidebarCollapsed(next);
+    localStorage.setItem("sidebar_collapsed", next ? "true" : "false");
+  };
 
   const triggerToast = (message, type = "success") => {
     setToast({ message, type, key: Date.now() });
@@ -306,24 +568,6 @@ export default function AdminDashboard() {
       triggerToast("Error deleting reflection", "error");
     }
   };
-  
-  // Dynamic states loaded from APIs
-  const [dashboardProjects, setDashboardProjects] = useState([]);
-  const [dashboardBlogs, setDashboardBlogs] = useState([]);
-  const [dashboardComments, setDashboardComments] = useState([]);
-  
-  // Traffic analytics state
-  const [analytics, setAnalytics] = useState({
-    totalViews: 0,
-    uniqueViews: 0,
-    logs: [],
-  });
-
-  // Blog telemetry analytics states
-  const [blogAnalytics, setBlogAnalytics] = useState({ logs: [] });
-  const [selectedBlogFilter, setSelectedBlogFilter] = useState("all");
-
-  const [loading, setLoading] = useState(true);
 
   // Form states - Projects
   const [newProjTitle, setNewProjTitle] = useState("");
@@ -710,96 +954,203 @@ export default function AdminDashboard() {
       <div className={`absolute inset-0 z-0 ${isDark ? "grid-mesh" : "grid-mesh-light"} pointer-events-none`} />
 
       {/* Sidebar Navigation */}
-      <aside className={`w-64 border-r ${isDark ? "border-white/5 bg-[#09090b]/80" : "border-black/10 bg-white/85"} backdrop-blur-xl z-10 p-6 flex flex-col justify-between hidden md:flex`}>
+      <aside className={`transition-all duration-300 ease-in-out ${isSidebarCollapsed ? "w-20 px-3 py-6" : "w-64 p-6"} border-r ${isDark ? "border-white/5 bg-[#09090b]/80" : "border-black/10 bg-white/85"} backdrop-blur-xl z-10 flex flex-col justify-between hidden md:flex`}>
         <div>
           {/* Logo Heading */}
-          <div className="flex items-center space-x-3 mb-10">
-            <div className={`w-8 h-8 rounded-xl ${isDark ? "bg-red-500/10 border-red-500/20" : "bg-red-50 border-red-200"} border flex items-center justify-center`}>
+          <div className={`flex items-center ${isSidebarCollapsed ? "justify-center" : "space-x-3"} mb-10`}>
+            <div className={`w-8 h-8 rounded-xl ${isDark ? "bg-red-500/10 border-red-500/20" : "bg-red-50 border-red-200"} border flex items-center justify-center flex-shrink-0`}>
               <Cpu className="w-4 h-4 text-red-500" />
             </div>
-            <span className={`font-extrabold font-outfit text-base tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>Nikhil Console</span>
+            {!isSidebarCollapsed && (
+              <span className={`font-extrabold font-outfit text-base tracking-tight ${isDark ? "text-white" : "text-zinc-900"} truncate`}>Nikhil Console</span>
+            )}
           </div>
-
+ 
           {/* Menu Items */}
           <nav className="space-y-1.5">
             {[
               { id: "overview", label: "Overview & Analytics", icon: LayoutDashboard },
               { id: "blog-analytics", label: "Blog Analytics App", icon: Cpu },
-              { id: "projects", label: "Manage Projects", icon: FolderKanban },
+               { id: "projects", label: "Manage Projects", icon: FolderKanban },
               { id: "blogs", label: "Markdown Blogs", icon: BookHeart },
               { id: "comments", label: "Visitor Reflections", icon: MessageSquare },
             ].map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
+              const showBadge = item.id === "comments" && unreadCount > 0;
               return (
                 <button
                    key={item.id}
                    onClick={() => setActiveTab(item.id)}
-                   className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
+                   title={isSidebarCollapsed ? item.label : undefined}
+                   className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "space-x-3 px-4"} py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all relative ${
                      isActive 
                        ? "bg-red-500/20 text-red-400 border border-red-500/20 shadow-lg shadow-red-500/5" 
                        : `${isDark ? "text-zinc-400 hover:text-white hover:bg-white/5" : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5"} border border-transparent`
                    }`}
                 >
-                  <Icon className="w-4.5 h-4.5" />
-                  <span>{item.label}</span>
+                  <Icon className="w-4.5 h-4.5 flex-shrink-0" />
+                  {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
+                  {showBadge && (
+                    <span className={`flex items-center justify-center bg-red-500 text-white rounded-full text-[9px] font-bold ${
+                      isSidebarCollapsed 
+                        ? "absolute top-1 right-1 w-4.5 h-4.5 animate-bounce shadow-md" 
+                        : "ml-auto px-2 py-0.5"
+                    }`}>
+                      {unreadCount}
+                    </span>
+                  )}
                 </button>
               );
             })}
           </nav>
         </div>
-
-        {/* Quick LogOut + Theme Toggle */}
+ 
+        {/* Quick LogOut + Theme Toggle + Collapse Toggle */}
         <div className="space-y-2">
           <button
             onClick={toggleTheme}
-            className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wide border border-transparent transition-all ${
+            title={isSidebarCollapsed ? (isDark ? "Light Mode" : "Dark Mode") : undefined}
+            className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "space-x-3 px-4"} py-2.5 rounded-xl text-xs font-semibold tracking-wide border border-transparent transition-all ${
               isDark ? "text-zinc-400 hover:text-white hover:bg-white/5" : "text-zinc-600 hover:text-zinc-900 hover:bg-black/5"
             }`}
           >
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
+            {isDark ? <Sun className="w-4 h-4 flex-shrink-0" /> : <Moon className="w-4 h-4 flex-shrink-0" />}
+            {!isSidebarCollapsed && <span>{isDark ? "Light Mode" : "Dark Mode"}</span>}
           </button>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wide text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent transition-all"
+            title={isSidebarCollapsed ? "Sign Out" : undefined}
+            className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "space-x-3 px-4"} py-2.5 rounded-xl text-xs font-semibold tracking-wide text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent transition-all`}
           >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
+            <LogOut className="w-4 h-4 flex-shrink-0" />
+            {!isSidebarCollapsed && <span>Sign Out</span>}
+          </button>
+          <button
+            onClick={toggleSidebarCollapse}
+            title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "space-x-3 px-4"} py-2.5 rounded-xl text-xs font-semibold tracking-wide text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent transition-all`}
+          >
+            {isSidebarCollapsed ? <ChevronRight className="w-4 h-4 flex-shrink-0" /> : <ChevronLeft className="w-4 h-4 flex-shrink-0" />}
+            {!isSidebarCollapsed && <span>Collapse</span>}
           </button>
         </div>
       </aside>
-
+ 
+      {/* Mobile Drawer Navigation sheet portal */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          {/* Backdrop overlay */}
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+            onClick={() => setIsMobileOpen(false)}
+          />
+          {/* Slide-out Panel */}
+          <aside className={`relative flex flex-col justify-between w-64 max-w-xs h-full p-6 border-r z-50 shadow-2xl transition-transform duration-300 ease-in-out ${
+            isDark ? "border-white/5 bg-[#09090b]" : "border-black/10 bg-white"
+          }`}>
+            <div>
+              {/* Header with Close */}
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-8 h-8 rounded-xl ${isDark ? "bg-red-500/10 border-red-500/20" : "bg-red-50 border-red-200"} border flex items-center justify-center`}>
+                    <Cpu className="w-4 h-4 text-red-500" />
+                  </div>
+                  <span className={`font-extrabold font-outfit text-base tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>Nikhil Console</span>
+                </div>
+                <button
+                  onClick={() => setIsMobileOpen(false)}
+                  className={`p-1.5 rounded-lg border transition-all ${
+                    isDark ? "text-zinc-400 border-white/5 hover:bg-white/5" : "text-zinc-600 border-black/10 hover:bg-black/5"
+                  }`}
+                >
+                  <X className="w-4.5 h-4.5" />
+                </button>
+              </div>
+ 
+              {/* Drawer Menu Navigation */}
+              <nav className="space-y-1.5">
+                {[
+                  { id: "overview", label: "Overview & Analytics", icon: LayoutDashboard },
+                  { id: "blog-analytics", label: "Blog Analytics App", icon: Cpu },
+                  { id: "projects", label: "Manage Projects", icon: FolderKanban },
+                  { id: "blogs", label: "Markdown Blogs", icon: BookHeart },
+                  { id: "comments", label: "Visitor Reflections", icon: MessageSquare },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  const showBadge = item.id === "comments" && unreadCount > 0;
+                  return (
+                    <button
+                       key={item.id}
+                       onClick={() => {
+                         setActiveTab(item.id);
+                         setIsMobileOpen(false);
+                       }}
+                       className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
+                         isActive 
+                           ? "bg-red-500/20 text-red-400 border border-red-500/20 shadow-lg shadow-red-500/5" 
+                           : `${isDark ? "text-zinc-400 hover:text-white hover:bg-white/5" : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5"} border border-transparent`
+                       }`}
+                    >
+                      <Icon className="w-4.5 h-4.5" />
+                      <span>{item.label}</span>
+                      {showBadge && (
+                        <span className="ml-auto flex items-center justify-center bg-red-500 text-white rounded-full text-[9px] font-bold px-2 py-0.5">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+ 
+            {/* Drawer Logout */}
+            <div className="space-y-2">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wide text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent transition-all"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+ 
       {/* Main Content Area */}
       <main className={`flex-1 z-10 p-6 sm:p-10 overflow-y-auto max-h-screen ${
         isDark ? "" : "bg-[#f5f5f7]"
       }`}>
-        {/* Mobile menu bar */}
+        {/* Mobile menu bar (Professional Hamburger header) */}
         <div className={`flex md:hidden items-center justify-between p-4 mb-6 border ${isDark ? "glass-card border-white/5" : "bg-white/90 border-black/5 shadow-sm"} rounded-2xl`}>
           <div className="flex items-center space-x-2">
             <Cpu className="w-4.5 h-4.5 text-red-500" />
             <span className={`font-bold text-xs tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>Nikhil Console</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <button onClick={toggleTheme} className={`px-2 py-1.5 rounded-lg text-[10px] ${isDark ? "text-zinc-400 hover:text-white" : "text-zinc-500 hover:text-zinc-900"}`}>
-              {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+          <div className="flex items-center space-x-1.5">
+            <button
+              onClick={() => setActiveTab("comments")}
+              className={`p-2 rounded-xl border transition-all ${
+                isDark ? "text-zinc-400 hover:text-white bg-white/5 border-white/5" : "text-zinc-600 hover:text-zinc-900 bg-white border-black/10 shadow-sm"
+              }`}
+            >
+              <Bell className={`w-4 h-4 ${unreadCount > 0 ? "text-red-400 animate-bounce" : ""}`} />
             </button>
-            {["overview", "blog-analytics", "projects", "blogs", "comments"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase ${
-                  activeTab === tab 
-                    ? "bg-red-500/20 text-red-400" 
-                    : `${isDark ? "text-zinc-400 hover:text-white" : "text-zinc-500 hover:text-zinc-900"}`
-                }`}
-              >
-                {tab === "overview" ? "Views" : tab === "comments" ? "Reflections" : tab === "blog-analytics" ? "Blog Telemetry" : tab}
-              </button>
-            ))}
+            <button onClick={toggleTheme} className={`p-2 rounded-xl border transition-all ${isDark ? "text-zinc-400 hover:text-white bg-white/5 border-white/5" : "text-zinc-600 hover:text-zinc-900 bg-white border-black/10 shadow-sm"}`}>
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={() => setIsMobileOpen(true)}
+              className="p-2 bg-red-500/15 border border-red-500/20 text-red-400 rounded-xl transition-all"
+            >
+              <Menu className="w-4.5 h-4.5" />
+            </button>
           </div>
         </div>
-
+ 
         {/* Header bar */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-10">
           <div>
@@ -814,15 +1165,33 @@ export default function AdminDashboard() {
               Manage database assets and monitor traffic geocoding telemetry.
             </p>
           </div>
-
-          <Link href="/">
-            <button className={`flex items-center space-x-2 text-xs font-semibold tracking-wide border transition-all py-2 px-3 rounded-xl ${
-              isDark ? "text-zinc-400 hover:text-white bg-white/5 border-white/5" : "text-zinc-600 hover:text-zinc-900 bg-white border-black/10 shadow-sm"
-            }`}>
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Portfolio</span>
+ 
+          <div className="flex items-center gap-3">
+            {/* Bell notification button */}
+            <button
+              onClick={() => setActiveTab("comments")}
+              title={unreadCount > 0 ? `You have ${unreadCount} unread reflections!` : "View Reflections"}
+              className={`relative p-2.5 rounded-xl border transition-all ${
+                isDark ? "text-zinc-400 hover:text-white bg-white/5 border-white/5" : "text-zinc-600 hover:text-zinc-900 bg-white border-black/10 shadow-sm"
+              }`}
+            >
+              <Bell className={`w-4 h-4 ${unreadCount > 0 ? "text-red-400 animate-bounce" : ""}`} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-md animate-pulse">
+                  {unreadCount}
+                </span>
+              )}
             </button>
-          </Link>
+ 
+            <Link href="/">
+              <button className={`flex items-center space-x-2 text-xs font-semibold tracking-wide border transition-all py-2.5 px-4 rounded-xl ${
+                isDark ? "text-zinc-400 hover:text-white bg-white/5 border-white/5" : "text-zinc-600 hover:text-zinc-900 bg-white border-black/10 shadow-sm"
+              }`}>
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Portfolio</span>
+              </button>
+            </Link>
+          </div>
         </div>
 
         {/* OVERVIEW TAB */}
@@ -939,13 +1308,13 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="flex-1 flex flex-col justify-center items-center relative py-2">
-                  {/* Styled Cyber Spinning Globe */}
-                  <GeolocationGlobe logs={analytics.logs} isDark={isDark} />
+                  {/* Styled Cyber Dotted World Map */}
+                  <GeolocationMap logs={analytics.logs} isDark={isDark} />
                   
                   {/* Latest visitor telemetry banner */}
                   <div className={`mt-3 w-full py-2 px-3 rounded-xl border ${isDark ? "bg-[#0c0c0e]/80 border-white/5 text-zinc-400" : "bg-black/[0.02] border-black/5 text-zinc-600"} text-[10px] font-mono flex items-center justify-between`}>
                     <span className="font-bold text-red-400 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse inline-block" /> Live 3D Globe Radar
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse inline-block" /> Live 2D Radar Map
                     </span>
                     <span className="truncate max-w-[200px] text-right">
                       {(() => {
@@ -1489,7 +1858,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* 3D Geographic Globe Radar */}
+                {/* 2D Geographic Map Radar */}
                 <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative h-[450px]`}>
                   <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none" />
                   <div className="flex justify-between items-center mb-4">
@@ -1498,8 +1867,8 @@ export default function AdminDashboard() {
                       <p className={`text-[10px] ${isDark ? "text-zinc-500" : "text-zinc-400"} font-mono`}>Dynamic geolocation mapping exact reader profiles.</p>
                     </div>
                   </div>
-                  <div className={`h-[340px] relative overflow-hidden rounded-xl border ${isDark ? "border-white/5 bg-black/40" : "border-black/5 bg-white"} shadow-inner`}>
-                    <GeolocationGlobe logs={filteredBlogLogs} isDark={isDark} />
+                  <div className={`h-[340px] flex items-center justify-center relative overflow-hidden rounded-xl border ${isDark ? "border-white/5 bg-black/40" : "border-black/5 bg-white"} shadow-inner`}>
+                    <GeolocationMap logs={filteredBlogLogs} isDark={isDark} />
                   </div>
                 </div>
               </div>

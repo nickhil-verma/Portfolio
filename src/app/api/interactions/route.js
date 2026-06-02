@@ -4,14 +4,26 @@ import clientPromise from "../../../lib/mongodb";
 
 export const dynamic = "force-dynamic";
 
+// Server-side in-memory cache
+let interactionsCache = null;
+
 export async function GET() {
   try {
+    // Return cached interactions instantly
+    if (interactionsCache) {
+      return NextResponse.json(interactionsCache, { status: 200 });
+    }
+
     if (!clientPromise) {
       return NextResponse.json([], { status: 200 });
     }
     const client = await clientPromise;
     const db = client.db("portfolio");
     const docs = await db.collection("interactions").find({}).toArray();
+    
+    // Cache the retrieved interactions
+    interactionsCache = docs;
+
     return NextResponse.json(docs, { status: 200 });
   } catch (error) {
     console.error("Error in GET /api/interactions:", error);
@@ -21,6 +33,7 @@ export async function GET() {
 
 export async function PATCH(request) {
   try {
+    interactionsCache = null; // Clear cache on database writes
     if (!clientPromise) {
       return NextResponse.json({ error: "Database not configured" }, { status: 503 });
     }

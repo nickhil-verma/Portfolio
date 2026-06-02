@@ -4,8 +4,16 @@ import clientPromise from "../../../lib/mongodb";
 
 export const dynamic = "force-dynamic";
 
+// Server-side in-memory cache
+let blogsCache = null;
+
 export async function GET() {
   try {
+    // Serve cached blogs instantly
+    if (blogsCache) {
+      return NextResponse.json(blogsCache, { status: 200 });
+    }
+
     if (!clientPromise) {
       return NextResponse.json({ error: "Database not configured", fallback: true }, { status: 200 });
     }
@@ -17,6 +25,9 @@ export async function GET() {
       .sort({ created_at: -1 })
       .toArray();
 
+    // Cache the retrieved blogs
+    blogsCache = blogs;
+
     return NextResponse.json(blogs, { status: 200 });
   } catch (error) {
     console.error("Error in GET /api/blogs:", error);
@@ -26,6 +37,7 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    blogsCache = null; // Clear cache on database writes
     if (!clientPromise) {
       return NextResponse.json({ error: "Database not configured" }, { status: 503 });
     }
@@ -64,6 +76,7 @@ export async function POST(request) {
 
 export async function DELETE(request) {
   try {
+    blogsCache = null; // Clear cache on database writes
     if (!clientPromise) {
       return NextResponse.json({ error: "Database not configured" }, { status: 503 });
     }
@@ -90,6 +103,7 @@ export async function DELETE(request) {
 
 export async function PUT(request) {
   try {
+    blogsCache = null; // Clear cache on database writes
     if (!clientPromise) {
       return NextResponse.json({ error: "Database not configured" }, { status: 503 });
     }
@@ -133,6 +147,7 @@ export async function PUT(request) {
 
 export async function PATCH(request) {
   try {
+    blogsCache = null; // Clear cache on database writes
     if (!clientPromise) {
       return NextResponse.json({ error: "Database not configured" }, { status: 503 });
     }

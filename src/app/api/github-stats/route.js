@@ -2,11 +2,35 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+// Server-side in-memory cache variables
+let statsCache = null;
+let statsCacheTime = 0;
+const CACHE_DURATION = 3600 * 1000; // Cache for 1 hour
+
 export async function GET() {
   try {
+    const now = Date.now();
+    // Return cached version if valid
+    if (statsCache && now - statsCacheTime < CACHE_DURATION) {
+      return NextResponse.json(statsCache, { status: 200 });
+    }
+
     const token = process.env.GITHUB_TOKEN;
     if (!token) {
-      return NextResponse.json({ error: "GITHUB_TOKEN not found in environment" }, { status: 400 });
+      console.warn("GITHUB_TOKEN not found in environment, returning static fallback stats");
+      const fallbackStats = {
+        name: "Nikhil Verma",
+        avatarUrl: "https://avatars.githubusercontent.com/u/99318181?v=4",
+        repoCount: 77,
+        commits: "1,480+",
+        loc: "12,400+",
+        languages: "JS/TS/Py",
+        totalStars: 45,
+      };
+      // Keep a fallback cache
+      statsCache = fallbackStats;
+      statsCacheTime = now;
+      return NextResponse.json(fallbackStats, { status: 200 });
     }
 
     const query = `
@@ -45,11 +69,16 @@ export async function GET() {
     const result = await response.json();
     if (result.errors) {
       console.error("GraphQL errors:", result.errors);
+      if (statsCache) {
+        // Return stale cache if GraphQL fails
+        return NextResponse.json(statsCache, { status: 200 });
+      }
       return NextResponse.json({ error: "GraphQL query failed", details: result.errors }, { status: 500 });
     }
 
     const user = result.data?.user;
     if (!user) {
+      if (statsCache) return NextResponse.json(statsCache, { status: 200 });
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
@@ -92,7 +121,7 @@ export async function GET() {
     // Dynamic Commits
     const dynamicCommits = totalCommitContributions > 0 ? totalCommitContributions.toLocaleString() + "+" : "1,480+";
 
-    return NextResponse.json({
+    const payload = {
       name: user.name || "Nikhil Verma",
       avatarUrl: user.avatarUrl || "https://avatars.githubusercontent.com/u/99318181?v=4",
       repoCount: publicReposCount,
@@ -100,10 +129,21 @@ export async function GET() {
       loc: dynamicLOC,
       languages: dynamicLanguages,
       totalStars: totalStars,
-    }, { status: 200 });
+    };
+
+    // Save to cache
+    statsCache = payload;
+    statsCacheTime = now;
+
+    return NextResponse.json(payload, { status: 200 });
 
   } catch (error) {
     console.error("Error in GET /api/github-stats:", error);
+    // Serve stale cache if available
+    if (statsCache) {
+      console.warn("Serving stale GitHub stats cache due to request error");
+      return NextResponse.json(statsCache, { status: 200 });
+    }
     return NextResponse.json({ error: "Internal Server Error", message: error.message }, { status: 500 });
   }
 }

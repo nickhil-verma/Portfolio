@@ -26,6 +26,13 @@ import {
 } from "lucide-react";
 import { SiLeetcode, SiCodeforces } from "react-icons/si";
 import Link from "next/link";
+import {
+  fallbackBlogs,
+  staticFallbackProjects,
+  experiences,
+  achievements,
+  skillset
+} from "../data/staticFallbacks";
 
 // macOS-like Spring Dock Item Wrapper
 const DockItem = ({ href, target, rel, children, isDark }) => {
@@ -124,71 +131,29 @@ const SpotlightCard = ({ children, isDark, className = "", style = {} }) => {
   );
 };
 
-const fallbackBlogs = [
-  {
-    _id: "fb1",
-    title: "Building Scalable AI Search Engines with FAISS",
-    category: "AI & Search",
-    likes: 18,
-    excerpt: "An in-depth exploration of vector databases, similarity indexing, and building blazingly fast semantic search architectures...",
-    created_at: new Date("2024-01-01")
-  },
-  {
-    _id: "fb2",
-    title: "Architecting High-Performance Next.js Serverless Routers",
-    category: "Web Engineering",
-    likes: 24,
-    excerpt: "Demystifying connection pools, route compiler trees, force-dynamic exports, and securing serverless executions under modern Vercel constraints...",
-    created_at: new Date("2024-01-02")
-  }
-];
-
-const staticFallbackProjects = [
-  {
-    title: "Hireonova – AI Job Engine",
-    description: "Crawled 200K+ jobs, AI resume matcher with Ollama 3B",
-    link: "https://github.com/Hireonova",
-    deployedLink: null,
-    tech: ["Python", "Playwright", "MERN", "NLP"],
-    stars: 12
-  },
-  {
-    title: "MOSDAC ISRO Chatbot",
-    description: "FAISS + Gemma 3B based chatbot for ISRO queries",
-    link: "https://github.com/nickhil-verma/MOSDAC_PARENT_REPO/tree/main",
-    deployedLink: null,
-    tech: ["React", "Node.js", "Gemma 3B", "MongoDB"],
-    stars: 8
-  },
-  {
-    title: "Eternalan Concerts",
-    description: "Concert booking platform tailored for Chinese and US audiences.",
-    link: "https://github.com/nickhil-verma/eternalan",
-    deployedLink: "https://eternalan.vercel.app",
-    tech: ["React", "Tailwind CSS", "JavaScript"],
-    stars: 15
-  },
-  {
-    title: "Plant Disease Detection",
-    description: "95% accuracy CNN model for 15 leaf diseases",
-    link: "https://github.com/nickhil-verma/Plant-disease-detection-model",
-    deployedLink: null,
-    tech: ["TensorFlow", "Keras", "NumPy", "HuggingFace"],
-    stars: 9
-  },
-  {
-    title: "CEDAXDSU Club Website",
-    description: "IEEE Bangalore Chapter × DSU – Frontend Portal",
-    link: "https://github.com/nickhil-verma/CEDAXDSU",
-    deployedLink: "https://dsuieeeceda.vercel.app/",
-    tech: ["React", "Tailwind CSS", "framer-motion", "Node js"],
-    stars: 11
-  }
-];
+// Fallback static data loaded from data module
 
 export default function Portfolio() {
   const [isDark, setIsDark] = useState(true);
-  const [githubStats, setGithubStats] = useState(null);
+  const [githubStats, setGithubStats] = useState({
+    avatarUrl: "https://avatars.githubusercontent.com/u/99318181?v=4",
+    name: "Nikhil Verma",
+    repoCount: 77,
+    commits: "1,480+",
+    loc: "12,400+",
+    languages: "JS/TS/Py",
+    totalStars: 45,
+  });
+  const [isSyncing, setIsSyncing] = useState(true);
+  const [showSyncSuccess, setShowSyncSuccess] = useState(false);
+
+  useEffect(() => {
+    if (showSyncSuccess) {
+      const timer = setTimeout(() => setShowSyncSuccess(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSyncSuccess]);
+
   const [loading, setLoading] = useState(true);
   const [expandedExperience, setExpandedExperience] = useState(0); // Index 0 expanded by default
   const [liveProjects, setLiveProjects] = useState([]);
@@ -339,39 +304,36 @@ export default function Portfolio() {
 
   const toggleTheme = () => setIsDark(!isDark);
 
-  // Fetch GitHub stats
+  // Fetch telemetry & dynamic data in a coordinated, unified sync hook
   useEffect(() => {
-    const fetchGitHubStats = async () => {
+    const synchronizeLiveTelemetry = async () => {
+      let isGithubOk = false;
+      let isProjectsOk = false;
+      let isBlogsOk = false;
+
+      // 1. Fetch GitHub stats
       try {
         const response = await fetch("/api/github-stats");
         const statsData = await response.json();
 
-        if (statsData.error) {
-          throw new Error(statsData.error);
+        if (statsData && !statsData.error) {
+          setGithubStats({
+            avatarUrl: statsData.avatarUrl || "https://avatars.githubusercontent.com/u/99318181?v=4",
+            name: statsData.name || "Nikhil Verma",
+            repoCount: statsData.repoCount || 77,
+            commits: statsData.commits || "1,480+",
+            loc: statsData.loc || "12,400+",
+            languages: statsData.languages || "JS/TS/Py",
+            totalStars: statsData.totalStars || 45,
+          });
+          isGithubOk = true;
         }
-
-        setGithubStats({
-          avatarUrl: statsData.avatarUrl || "https://avatars.githubusercontent.com/u/99318181?v=4",
-          name: statsData.name || "Nikhil Verma",
-          repoCount: statsData.repoCount || 77,
-          commits: statsData.commits || "1,480+",
-          loc: statsData.loc || "12,400+",
-          languages: statsData.languages || "JS/TS/Py",
-          totalStars: statsData.totalStars || 45,
-        });
       } catch (error) {
-        console.error("Error fetching GitHub stats via API route, falling back to REST:", error);
-        
-        // REST API client-side fallback
+        console.error("Error fetching GitHub stats via API, falling back to REST:", error);
         try {
-          const response = await fetch(
-            "https://api.github.com/users/nickhil-verma"
-          );
+          const response = await fetch("https://api.github.com/users/nickhil-verma");
           const userData = await response.json();
-
-          const reposResponse = await fetch(
-            "https://api.github.com/users/nickhil-verma/repos?per_page=100"
-          );
+          const reposResponse = await fetch("https://api.github.com/users/nickhil-verma/repos?per_page=100");
           const reposData = await reposResponse.json();
 
           const totalStars = Array.isArray(reposData)
@@ -379,15 +341,12 @@ export default function Portfolio() {
             : 0;
 
           const publicReposCount = userData.public_repos || 77;
-
-          // Estimate commits & LOC dynamically from REST fallback
           let dynamicCommits = "1,480+";
           let dynamicLOC = "12,400+";
           let dynamicLanguages = "JS/TS/Py";
 
           if (Array.isArray(reposData)) {
             const totalSizeKB = reposData.reduce((acc, r) => acc + (r.size || 0), 0);
-            
             const estimatedCommits = reposData.reduce((acc, r) => acc + Math.round((r.size || 0) / 12 + (r.stargazers_count || 0) * 6 + 20), 0);
             dynamicCommits = estimatedCommits.toLocaleString() + "+";
 
@@ -428,51 +387,37 @@ export default function Portfolio() {
             languages: dynamicLanguages,
             totalStars: totalStars || 45,
           });
+          isGithubOk = true;
         } catch (fallbackError) {
           console.error("Error in REST fallback:", fallbackError);
-          setGithubStats({
-            avatarUrl: "https://avatars.githubusercontent.com/u/99318181?v=4",
-            name: "Nikhil Verma",
-            repoCount: 77,
-            commits: "1,480+",
-            loc: "12,400+",
-            languages: "JS/TS/Py",
-            totalStars: 45,
-          });
         }
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchGitHubStats();
-  }, []);
-
-  // Log visit and fetch dynamic projects on mount
-  useEffect(() => {
-    const logVisitAndFetchProjects = async () => {
-
-
+      // 2. Fetch projects
       try {
         const res = await fetch("/api/projects");
         const data = await res.json();
         if (Array.isArray(data)) {
           setLiveProjects(data);
+          isProjectsOk = true;
         }
       } catch (err) {
         console.error("Failed to fetch live projects from MongoDB:", err);
       }
 
+      // 3. Fetch blogs
       try {
         const res = await fetch("/api/blogs");
         const data = await res.json();
         if (Array.isArray(data)) {
           setLiveBlogs(data);
+          isBlogsOk = true;
         }
       } catch (err) {
         console.error("Failed to fetch live blogs from MongoDB:", err);
       }
 
+      // 4. Fetch interactions
       try {
         const res = await fetch("/api/interactions");
         const data = await res.json();
@@ -486,8 +431,16 @@ export default function Portfolio() {
       } catch (err) {
         console.error("Failed to load interactions:", err);
       }
+
+      // De-escalate loading and syncing animations
+      setIsSyncing(false);
+      setLoading(false);
+      if (isGithubOk || isProjectsOk || isBlogsOk) {
+        setShowSyncSuccess(true);
+      }
     };
-    logVisitAndFetchProjects();
+
+    synchronizeLiveTelemetry();
   }, []);
 
   // Theme Sync with standard class modifiers
@@ -518,45 +471,7 @@ export default function Portfolio() {
   const combinedProjects = [...liveProjects, ...staticFallbackProjects];
   const combinedBlogs = [...liveBlogs, ...fallbackBlogs].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-  const experiences = [
-    {
-      title: "Full Stack Intern",
-      company: "Donald Hans, LA (Remote)",
-      period: "Jun 2025 – Sept 2025",
-      description: [
-  "Advanced SEO Engineering: Architected structured microdata schematics and dynamic sitemap topologies, accelerating organic discoverability and elevating the SEO score from 71% to 94%.",
-  "Intelligent Agentic Chatbots: Engineered a high-fidelity chatbot MVP powered by the Google Gemini API, integrating a custom RAG (Retrieval-Augmented Generation) pipeline anchored by a Knowledge Graph to achieve context-aware, deterministic responses.",
-  "Latency Optimization: Restructured runtime Express middleware and request-handling topologies, yielding a 30% reduction in form processing latency.",
-  "Automated GitOps & Deployment: Orchestrated production-grade CI/CD automation blueprints utilizing GitHub Actions and Vercel to enforce seamless, zero-downtime deployment workflows."
-],
-    },
-    {
-      title: "Webmaster Head",
-      company: "IEEE CEDA Student Chapter (Remote)",
-      period: "Sept 2024 – Present",
-      description: [
-        "Engineered a high-throughput email broadcasting pipeline reaching 500+ members, leveraging automated workflows with n8n, NodeMailer, and Twilio integrations.",
-        "Developed an automated QR-based certificate generation and authentication system, enabling secure, tamper-resistant verification for event participants.",
-        "Implemented secure JWT-based RBAC and streamlined CI/CD pipelines via GitHub Actions, ensuring reliable and compliant deployments.",
-      ],
-    },
-  ];
-
-  const achievements = [
-    "Grand Finalist – SIH 2024 (Top 5/500 nationally)",
-    "IEEE AVINYA Hackathon Winner",
-    "Built a 500+ user university club site with broadcast system",
-    "Global Rank 1097/35K – LeetCode Weekly Contest 408",
-    "1700+ LeetCode rating, 300+ problems solved",
-  ];
-
-  const skillset = [
-    { category: "Languages", items: ["JavaScript", "TypeScript", "Python", "C++", "HTML/CSS"] },
-    { category: "Frontend", items: ["React", "Next.js", "Tailwind CSS", "Framer Motion", "Redux"] },
-    { category: "Backend", items: ["Node.js", "Express", "MongoDB", "PostgreSQL", "REST APIs"] },
-    { category: "AI & ML", items: ["TensorFlow", "Keras", "NLP", "Ollama", "FAISS", "Gemini API"] },
-    { category: "Tools", items: ["Git", "GitHub Actions", "Vercel", "Docker", "Playwright"] }
-  ];
+// Loaded static lists from staticFallbacks data module
 
   return (
     <div
@@ -571,6 +486,47 @@ export default function Portfolio() {
       {/* Grid Mesh Texture */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className={`absolute inset-0 ${isDark ? "grid-mesh" : "grid-mesh-light"}`} />
+      </div>
+
+      {/* Telemetry Sync Status Badge */}
+      <div className="fixed top-4 right-4 z-50 pointer-events-none">
+        <AnimatePresence>
+          {isSyncing && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-[10px] font-mono border backdrop-blur-md shadow-lg pointer-events-auto ${
+                isDark 
+                  ? "bg-[#09090b]/90 text-red-400 border-red-500/25 shadow-red-950/20" 
+                  : "bg-white/95 text-red-600 border-red-500/20 shadow-red-100/30"
+              }`}
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+              </span>
+              <span className="font-extrabold uppercase tracking-widest animate-pulse">Fetching Update...</span>
+            </motion.div>
+          )}
+          {!isSyncing && showSyncSuccess && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-[10px] font-mono border backdrop-blur-md shadow-lg pointer-events-auto ${
+                isDark 
+                  ? "bg-[#09090b]/90 text-emerald-400 border-emerald-500/25 shadow-emerald-950/20" 
+                  : "bg-white/95 text-emerald-600 border-emerald-500/20 shadow-emerald-100/30"
+              }`}
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="font-extrabold uppercase tracking-widest">Recent Portfolio Fetched</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Soft Ambient Floating Blurred Gradient Blobs */}
@@ -766,6 +722,12 @@ export default function Portfolio() {
                     }`}>
                       {combinedProjects.length} Total
                     </span>
+                    {isSyncing && (
+                      <span className="text-[9px] font-mono uppercase tracking-widest text-red-400/80 animate-pulse flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping" />
+                        Syncing...
+                      </span>
+                    )}
                   </div>
                   <Link
                     href="/projects"
@@ -780,95 +742,104 @@ export default function Portfolio() {
 
                 {/* Fixed height scrollable projects container with visible premium custom scrollbar */}
                 <div data-lenis-prevent className="overflow-y-auto pr-2 h-[260px] sm:h-[300px]" onWheel={(e) => e.stopPropagation()}>
-                  <div className="grid grid-cols-3 gap-4 pb-2">
-                    {combinedProjects.map((project, index) => (
-                      <div
-                        key={index}
-                        className={`p-4 rounded-2xl flex flex-col justify-between group transition-all duration-300 min-h-[220px] ${
-                          isDark 
-                            ? "bg-[#121214]/50 border border-white/5 hover:bg-[#18181b]/50" 
-                            : "bg-white/60 border border-black/5 hover:bg-white shadow-sm"
-                        }`}
-                      >
-                        <div>
-                          <h3 className={`font-bold font-outfit text-xs sm:text-sm mb-1.5 group-hover:text-red-400 transition-colors ${
-                            isDark ? "text-white" : "text-zinc-900"
-                          }`}>
-                            {project.title}
-                          </h3>
-                          <p className={`text-[11px] sm:text-xs leading-relaxed mb-3 font-normal ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                            {project.description && project.description.length > 60
-                              ? project.description.slice(0, 60) + "..."
-                              : project.description}
-                          </p>
-                        </div>
-
-                        <div>
-                          <div className="flex flex-wrap gap-1 mb-3">
-                            {project.tech.map((tech, idx) => (
-                              <span
-                                key={idx}
-                                className={`px-2 py-0.5 rounded-full text-[8px] font-semibold uppercase tracking-wider ${
-                                  isDark ? "bg-white/5 text-zinc-400 border border-white/5" : "bg-zinc-100 text-zinc-600"
-                                }`}
-                              >
-                                {tech}
-                              </span>
-                            ))}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={isSyncing ? "loading" : "synced"}
+                      initial={{ opacity: 0.8, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0.8, y: -5 }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                      className="grid grid-cols-3 gap-4 pb-2"
+                    >
+                      {combinedProjects.map((project, index) => (
+                        <div
+                          key={index}
+                          className={`p-4 rounded-2xl flex flex-col justify-between group transition-all duration-300 min-h-[220px] ${
+                            isDark 
+                              ? "bg-[#121214]/50 border border-white/5 hover:bg-[#18181b]/50" 
+                              : "bg-white/60 border border-black/5 hover:bg-white shadow-sm"
+                          }`}
+                        >
+                          <div>
+                            <h3 className={`font-bold font-outfit text-xs sm:text-sm mb-1.5 group-hover:text-red-400 transition-colors ${
+                              isDark ? "text-white" : "text-zinc-900"
+                            }`}>
+                              {project.title}
+                            </h3>
+                            <p className={`text-[11px] sm:text-xs leading-relaxed mb-3 font-normal ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+                              {project.description && project.description.length > 60
+                                ? project.description.slice(0, 60) + "..."
+                                : project.description}
+                            </p>
                           </div>
 
-                          <div className="flex items-center justify-between w-full mt-2">
-                            <div className="flex items-center gap-1.5">
-                              <a
-                                href={project.link}
-                                className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-[10px] font-semibold tracking-wide transition-all ${
-                                  isDark 
-                                    ? "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5" 
-                                    : "bg-zinc-100 hover:bg-zinc-200 text-zinc-600 border border-zinc-200"
-                                }`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title="GitHub"
-                              >
-                                <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 fill-current" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-                                <span>Code</span>
-                              </a>
-                              {(project.deployedUrl || project.deployedLink || project.liveLink) && (
+                          <div>
+                            <div className="flex flex-wrap gap-1 mb-3">
+                              {project.tech.map((tech, idx) => (
+                                <span
+                                  key={idx}
+                                  className={`px-2 py-0.5 rounded-full text-[8px] font-semibold uppercase tracking-wider ${
+                                    isDark ? "bg-white/5 text-zinc-400 border border-white/5" : "bg-zinc-100 text-zinc-600"
+                                  }`}
+                                >
+                                  {tech}
+                                </span>
+                              ))}
+                            </div>
+
+                            <div className="flex items-center justify-between w-full mt-2">
+                              <div className="flex items-center gap-1.5">
                                 <a
-                                  href={project.deployedUrl || project.deployedLink || project.liveLink}
+                                  href={project.link}
                                   className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-[10px] font-semibold tracking-wide transition-all ${
                                     isDark 
-                                      ? "bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20" 
-                                      : "bg-red-50 hover:bg-red-100 text-red-600 border border-red-200"
+                                      ? "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5" 
+                                      : "bg-zinc-100 hover:bg-zinc-200 text-zinc-600 border border-zinc-200"
                                   }`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  title="Live Demo"
+                                  title="GitHub"
                                 >
-                                  <ExternalLink className="w-2.5 h-2.5" />
-                                  <span>Live</span>
+                                  <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 fill-current" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                                  <span>Code</span>
                                 </a>
-                              )}
-                            </div>
+                                {(project.deployedUrl || project.deployedLink || project.liveLink) && (
+                                  <a
+                                    href={project.deployedUrl || project.deployedLink || project.liveLink}
+                                    className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-[10px] font-semibold tracking-wide transition-all ${
+                                      isDark 
+                                        ? "bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20" 
+                                        : "bg-red-50 hover:bg-red-100 text-red-600 border border-red-200"
+                                    }`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title="Live Demo"
+                                  >
+                                    <ExternalLink className="w-2.5 h-2.5" />
+                                    <span>Live</span>
+                                  </a>
+                                )}
+                              </div>
 
-                            <button
-                              onClick={() => handleToggleStarProject(project)}
-                              className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-all ${
-                                starredProjectIds.includes(project._id || project.title)
-                                  ? "bg-[#ef4444]/10 text-red-400 border-red-500/30"
-                                  : isDark
-                                    ? "bg-white/5 text-zinc-400 hover:text-white border-white/5"
-                                    : "bg-zinc-100 text-zinc-500 hover:text-zinc-800 border-zinc-200"
-                              }`}
-                            >
-                              <Star className={`w-3 h-3 ${starredProjectIds.includes(project._id || project.title) ? "fill-current" : ""}`} />
-                              <span>{interactions[project._id || project.title] !== undefined ? interactions[project._id || project.title] : (project.stars || 0)}</span>
-                            </button>
+                              <button
+                                onClick={() => handleToggleStarProject(project)}
+                                className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-all ${
+                                  starredProjectIds.includes(project._id || project.title)
+                                    ? "bg-[#ef4444]/10 text-red-400 border-red-500/30"
+                                    : isDark
+                                      ? "bg-white/5 text-zinc-400 hover:text-white border-white/5"
+                                      : "bg-zinc-100 text-zinc-500 hover:text-zinc-800 border-zinc-200"
+                                }`}
+                              >
+                                <Star className={`w-3 h-3 ${starredProjectIds.includes(project._id || project.title) ? "fill-current" : ""}`} />
+                                <span>{interactions[project._id || project.title] !== undefined ? interactions[project._id || project.title] : (project.stars || 0)}</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
               </SpotlightCard>
 
@@ -993,6 +964,13 @@ export default function Portfolio() {
 
                 {/* GitHub Stats Card - Middle */}
                 <SpotlightCard isDark={isDark} className="w-full p-3 sm:p-4 flex flex-col justify-between h-[190px] relative overflow-hidden">
+                  {/* Glowing cyber scanline scanning overlay while syncing */}
+                  {isSyncing && (
+                    <div className="absolute inset-0 bg-red-500/5 backdrop-blur-[0.5px] z-30 pointer-events-none transition-all duration-500">
+                      <div className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent top-0 animate-scan z-40" />
+                    </div>
+                  )}
+
                   {/* Decorative Cover Image background banner at top */}
                   <div className={`absolute top-0 inset-x-0 h-[76px] ${
                     isDark 
@@ -1045,68 +1023,74 @@ export default function Portfolio() {
                   <div className="h-[76px] flex-shrink-0" />
 
                   {/* 4 Column Bottom Stats Grid */}
-                  <div className="grid grid-cols-4 gap-2 items-center flex-1 py-3 px-2 z-10">
-                    {/* Repo Count Metric */}
-                    <div className="flex flex-col items-center justify-center text-center">
-                      <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                      </svg>
-                      <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
-                        Repo Count
-                      </span>
-                      <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
-                        {githubStats?.repoCount || 77}
-                      </span>
-                    </div>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={isSyncing ? "loading" : "synced"}
+                      initial={{ opacity: 0.8, scale: 0.99 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.4 }}
+                      className="grid grid-cols-4 gap-2 items-center flex-1 py-3 px-2 z-10"
+                    >
+                      {/* Repo Count Metric */}
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
+                          Repo Count
+                        </span>
+                        <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                          {githubStats?.repoCount || 77}
+                        </span>
+                      </div>
 
-                    {/* Commits Metric */}
-                    <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
-                      <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="4"/>
-                        <line x1="1.05" y1="12" x2="8" y2="12"/>
-                        <line x1="16" y1="12" x2="22.95" y2="12"/>
-                      </svg>
-                      <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
-                        Commits
-                      </span>
-                      <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
-                        {githubStats?.commits || "0"}
-                      </span>
-                    </div>
+                      {/* Commits Metric */}
+                      <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
+                        <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="12" cy="12" r="4"/>
+                          <line x1="1.05" y1="12" x2="8" y2="12"/>
+                          <line x1="16" y1="12" x2="22.95" y2="12"/>
+                        </svg>
+                        <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
+                          Commits
+                        </span>
+                        <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                          {githubStats?.commits || "0"}
+                        </span>
+                      </div>
 
-                    {/* Lines of Code Metric */}
-                    <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
-                      <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                        <polyline points="10 9 9 9 8 9"/>
-                      </svg>
-                      <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
-                        Line of code
-                      </span>
-                      <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
-                        {githubStats?.loc || "0"}
-                      </span>
-                    </div>
+                      {/* Lines of Code Metric */}
+                      <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
+                        <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                          <line x1="16" y1="13" x2="8" y2="13"/>
+                          <line x1="16" y1="17" x2="8" y2="17"/>
+                          <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                        <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
+                          Line of code
+                        </span>
+                        <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                          {githubStats?.loc || "0"}
+                        </span>
+                      </div>
 
-                    {/* Languages Metric */}
-                    <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
-                      <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-                        <polyline points="16 18 22 12 16 6"/>
-                        <polyline points="8 6 2 12 8 18"/>
-                      </svg>
-                      <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
-                        Languages
-                      </span>
-                      <span className={`text-[10px] font-black font-mono mt-1 leading-none ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title={githubStats?.languages || "JS, TS, Python"}>
-                        {githubStats?.languages || "Null"}
-                      </span>
-                    </div>
-                  </div>
-
-
+                      {/* Languages Metric */}
+                      <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
+                        <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                          <polyline points="16 18 22 12 16 6"/>
+                          <polyline points="8 6 2 12 8 18"/>
+                        </svg>
+                        <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
+                          Languages
+                        </span>
+                        <span className={`text-[10px] font-black font-mono mt-1 leading-none ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title={githubStats?.languages || "JS, TS, Python"}>
+                          {githubStats?.languages || "Null"}
+                        </span>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
                 </SpotlightCard>
               </div>
 
@@ -1118,6 +1102,12 @@ export default function Portfolio() {
                     <h2 className={`text-base sm:text-lg font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
                       Recent Insights
                     </h2>
+                    {isSyncing && (
+                      <span className="text-[9px] font-mono uppercase tracking-widest text-red-400/80 animate-pulse flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping" />
+                        Syncing...
+                      </span>
+                    )}
                   </div>
                   <Link
                     href="/blogs"
@@ -1131,49 +1121,60 @@ export default function Portfolio() {
                 </div>
 
                 <div data-lenis-prevent className="space-y-4 overflow-y-auto pr-1 flex-1 hide-scrollbar max-h-[240px]" onWheel={(e) => e.stopPropagation()}>
-                  {combinedBlogs.slice(0, 2).map((blog, idx) => (
-                    <Link
-                      key={idx}
-                      href={`/blogs/${blog._id}`}
-                      className={`block p-4 rounded-2xl flex flex-col justify-between transition-all group cursor-pointer ${
-                        isDark 
-                          ? "bg-[#121214]/50 border border-white/5 hover:bg-[#18181b]/50 hover:border-red-500/20" 
-                          : "bg-white/60 border border-black/5 hover:bg-white hover:border-red-200 shadow-sm"
-                      }`}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={isSyncing ? "loading" : "synced"}
+                      initial={{ opacity: 0.8, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0.8, y: -5 }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                      className="space-y-4"
                     >
-                      <div className="flex justify-between items-center mb-2">
-                        <span className={`px-2 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-wider ${
-                          isDark ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-red-50 text-red-600 border border-red-100"
-                        }`}>
-                          {blog.category}
-                        </span>
-                        <button
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleToggleLikeBlog(blog); }}
-                          className={`flex items-center space-x-1 px-2 py-0.5 rounded-lg border transition-all ${
-                            likedBlogIds.includes(blog._id || blog.title)
-                              ? "bg-red-500/10 text-red-400 border-red-500/30"
-                              : isDark 
-                                ? "bg-white/5 text-zinc-500 hover:text-white border-white/5" 
-                                : "bg-zinc-100 text-zinc-500 border-zinc-200"
+                      {combinedBlogs.slice(0, 2).map((blog, idx) => (
+                        <Link
+                          key={idx}
+                          href={`/blogs/${blog._id}`}
+                          className={`block p-4 rounded-2xl flex flex-col justify-between transition-all group cursor-pointer ${
+                            isDark 
+                              ? "bg-[#121214]/50 border border-white/5 hover:bg-[#18181b]/50 hover:border-red-500/20" 
+                              : "bg-white/60 border border-black/5 hover:bg-white hover:border-red-200 shadow-sm"
                           }`}
                         >
-                          <Heart className={`w-3 h-3 ${likedBlogIds.includes(blog._id || blog.title) ? "fill-current" : ""}`} />
-                          <span className="text-[10px] font-bold">{interactions[blog._id || blog.title] !== undefined ? interactions[blog._id || blog.title] : (blog.likes || 0)}</span>
-                        </button>
-                      </div>
-                      <h3 className={`font-bold font-outfit text-xs sm:text-sm mb-1 group-hover:text-red-400 transition-colors ${isDark ? "text-white" : "text-zinc-900"}`}>
-                        {blog.title}
-                      </h3>
-                      <p className={`text-[10px] sm:text-xs leading-relaxed line-clamp-2 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                        {blog.excerpt}
-                      </p>
-                      <span className={`mt-2 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 ${
-                        isDark ? "text-red-500/60 group-hover:text-red-400" : "text-red-400 group-hover:text-red-600"
-                      }`}>
-                        Read article <ChevronRight className="w-2.5 h-2.5" />
-                      </span>
-                    </Link>
-                  ))}
+                          <div className="flex justify-between items-center mb-2">
+                            <span className={`px-2 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-wider ${
+                              isDark ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-red-50 text-red-600 border border-red-100"
+                            }`}>
+                              {blog.category}
+                            </span>
+                            <button
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleToggleLikeBlog(blog); }}
+                              className={`flex items-center space-x-1 px-2 py-0.5 rounded-lg border transition-all ${
+                                likedBlogIds.includes(blog._id || blog.title)
+                                  ? "bg-red-500/10 text-red-400 border-red-500/30"
+                                  : isDark 
+                                    ? "bg-white/5 text-zinc-500 hover:text-white border-white/5" 
+                                    : "bg-zinc-100 text-zinc-500 border-zinc-200"
+                              }`}
+                            >
+                              <Heart className={`w-3 h-3 ${likedBlogIds.includes(blog._id || blog.title) ? "fill-current" : ""}`} />
+                              <span className="text-[10px] font-bold">{interactions[blog._id || blog.title] !== undefined ? interactions[blog._id || blog.title] : (blog.likes || 0)}</span>
+                            </button>
+                          </div>
+                          <h3 className={`font-bold font-outfit text-xs sm:text-sm mb-1 group-hover:text-red-400 transition-colors ${isDark ? "text-white" : "text-zinc-900"}`}>
+                            {blog.title}
+                          </h3>
+                          <p className={`text-[10px] sm:text-xs leading-relaxed line-clamp-2 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+                            {blog.excerpt}
+                          </p>
+                          <span className={`mt-2 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 ${
+                            isDark ? "text-red-500/60 group-hover:text-red-400" : "text-red-400 group-hover:text-red-600"
+                          }`}>
+                            Read article <ChevronRight className="w-2.5 h-2.5" />
+                          </span>
+                        </Link>
+                      ))}
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
               </SpotlightCard>
             </div>
@@ -1325,9 +1326,17 @@ export default function Portfolio() {
             {/* Featured Projects (Mobile) */}
             <SpotlightCard isDark={isDark} className="p-6">
               <div className="flex items-center justify-between mb-5">
-                <h2 className={`text-xl font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
-                  Featured Projects
-                </h2>
+                <div className="flex items-center space-x-2">
+                  <h2 className={`text-xl font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
+                    Featured Projects
+                  </h2>
+                  {isSyncing && (
+                    <span className="text-[9px] font-mono uppercase tracking-widest text-red-400/80 animate-pulse flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping" />
+                      Syncing...
+                    </span>
+                  )}
+                </div>
                 <Link
                   href="/projects"
                   className={`text-xs font-bold transition-all hover:underline flex items-center space-x-1 ${
@@ -1339,83 +1348,94 @@ export default function Portfolio() {
                 </Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {combinedProjects.map((project, index) => (
-                  <div
-                    key={index}
-                    className={`p-4 rounded-2xl flex flex-col justify-between group ${
-                      isDark ? "bg-[#121214]/50 border border-white/5" : "bg-white/60 border border-black/5"
-                    }`}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={isSyncing ? "loading" : "synced"}
+                    initial={{ opacity: 0.8, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0.8, y: -5 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full col-span-2"
                   >
-                    <div>
-                      <h3 className={`font-bold font-outfit text-sm mb-1.5 group-hover:text-red-400 transition-colors ${isDark ? "text-white" : "text-zinc-900"}`}>
-                        {project.title}
-                      </h3>
-                      <p className={`text-xs leading-relaxed mb-3 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                        {project.description && project.description.length > 70
-                          ? project.description.slice(0, 70) + "..."
-                          : project.description}
-                      </p>
-                    </div>
-
-                    <div>
-                      <div className="flex flex-wrap gap-1 mb-3.5">
-                        {project.tech.map((tech, idx) => (
-                          <span
-                            key={idx}
-                            className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider ${
-                              isDark ? "bg-white/5 text-zinc-400" : "bg-zinc-100 text-zinc-600"
-                            }`}
-                          >
-                            {tech}
-                          </span>
-                        ))}
-                      </div>
-
-                      <div className="flex items-center justify-between w-full mt-2">
-                        <div className="flex items-center gap-2">
-                          <a
-                            href={project.link}
-                            className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                              isDark ? "bg-white/5 text-zinc-400 hover:text-white" : "bg-zinc-100 text-zinc-600"
-                            }`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-                            <span>Code</span>
-                          </a>
-                          {(project.deployedUrl || project.deployedLink || project.liveLink) && (
-                            <a
-                              href={project.deployedUrl || project.deployedLink || project.liveLink}
-                              className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                                isDark ? "bg-red-500/10 text-red-400 hover:bg-red-500/20" : "bg-red-50 text-red-600 hover:bg-red-100"
-                              }`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <ExternalLink className="w-3 h-3" />
-                              <span>Live</span>
-                            </a>
-                          )}
+                    {combinedProjects.map((project, index) => (
+                      <div
+                        key={index}
+                        className={`p-4 rounded-2xl flex flex-col justify-between group ${
+                          isDark ? "bg-[#121214]/50 border border-white/5" : "bg-white/60 border border-black/5"
+                        }`}
+                      >
+                        <div>
+                          <h3 className={`font-bold font-outfit text-sm mb-1.5 group-hover:text-red-400 transition-colors ${isDark ? "text-white" : "text-zinc-900"}`}>
+                            {project.title}
+                          </h3>
+                          <p className={`text-xs leading-relaxed mb-3 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+                            {project.description && project.description.length > 70
+                              ? project.description.slice(0, 70) + "..."
+                              : project.description}
+                          </p>
                         </div>
 
-                        <button
-                          onClick={() => handleToggleStarProject(project)}
-                          className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-xs font-bold border transition-all ${
-                            starredProjectIds.includes(project._id || project.title)
-                              ? "bg-[#ef4444]/10 text-red-400 border-red-500/30"
-                              : isDark
-                                ? "bg-white/5 text-zinc-400 hover:text-white border-white/5"
-                                : "bg-zinc-100 text-zinc-500 hover:text-zinc-800 border-zinc-200"
-                          }`}
-                        >
-                          <Star className={`w-3.5 h-3.5 ${starredProjectIds.includes(project._id || project.title) ? "fill-current" : ""}`} />
-                          <span>{interactions[project._id || project.title] !== undefined ? interactions[project._id || project.title] : (project.stars || 0)}</span>
-                        </button>
+                        <div>
+                          <div className="flex flex-wrap gap-1 mb-3.5">
+                            {project.tech.map((tech, idx) => (
+                              <span
+                                key={idx}
+                                className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider ${
+                                  isDark ? "bg-white/5 text-zinc-400" : "bg-zinc-100 text-zinc-600"
+                                }`}
+                              >
+                                {tech}
+                              </span>
+                            ))}
+                          </div>
+
+                          <div className="flex items-center justify-between w-full mt-2">
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={project.link}
+                                className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                                  isDark ? "bg-white/5 text-zinc-400 hover:text-white" : "bg-zinc-100 text-zinc-600"
+                                }`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                                <span>Code</span>
+                              </a>
+                              {(project.deployedUrl || project.deployedLink || project.liveLink) && (
+                                <a
+                                  href={project.deployedUrl || project.deployedLink || project.liveLink}
+                                  className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                                    isDark ? "bg-red-500/10 text-red-400 hover:bg-red-500/20" : "bg-red-50 text-red-600 hover:bg-red-100"
+                                  }`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                  <span>Live</span>
+                                </a>
+                              )}
+                            </div>
+
+                            <button
+                              onClick={() => handleToggleStarProject(project)}
+                              className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-xs font-bold border transition-all ${
+                                starredProjectIds.includes(project._id || project.title)
+                                  ? "bg-[#ef4444]/10 text-red-400 border-red-500/30"
+                                  : isDark
+                                    ? "bg-white/5 text-zinc-400 hover:text-white border-white/5"
+                                    : "bg-zinc-100 text-zinc-500 hover:text-zinc-800 border-zinc-200"
+                              }`}
+                            >
+                              <Star className={`w-3.5 h-3.5 ${starredProjectIds.includes(project._id || project.title) ? "fill-current" : ""}`} />
+                              <span>{interactions[project._id || project.title] !== undefined ? interactions[project._id || project.title] : (project.stars || 0)}</span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    ))}
+                  </motion.div>
+                </AnimatePresence>
               </div>
             </SpotlightCard>
 
@@ -1541,6 +1561,13 @@ export default function Portfolio() {
 
             {/* GitHub Stats (Mobile) */}
             <SpotlightCard isDark={isDark} className="p-3 sm:p-4 flex flex-col justify-between h-[190px] relative overflow-hidden">
+              {/* Glowing cyber scanline scanning overlay while syncing */}
+              {isSyncing && (
+                <div className="absolute inset-0 bg-red-500/5 backdrop-blur-[0.5px] z-30 pointer-events-none transition-all duration-500">
+                  <div className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent top-0 animate-scan z-40" />
+                </div>
+              )}
+
               {/* Decorative Cover Image background banner at top */}
               <div className={`absolute top-0 inset-x-0 h-[76px] ${
                 isDark 
@@ -1593,66 +1620,74 @@ export default function Portfolio() {
               <div className="h-[76px] flex-shrink-0" />
 
               {/* 4 Column Bottom Stats Grid */}
-              <div className="grid grid-cols-4 gap-2 items-center flex-1 py-3 px-2 z-10">
-                {/* Repo Count Metric */}
-                <div className="flex flex-col items-center justify-center text-center">
-                  <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                  </svg>
-                  <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
-                    Repo Count
-                  </span>
-                  <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
-                    {githubStats?.repoCount || 77}
-                  </span>
-                </div>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={isSyncing ? "loading" : "synced"}
+                  initial={{ opacity: 0.8, scale: 0.99 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4 }}
+                  className="grid grid-cols-4 gap-2 items-center flex-1 py-3 px-2 z-10"
+                >
+                  {/* Repo Count Metric */}
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
+                      Repo Count
+                    </span>
+                    <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                      {githubStats?.repoCount || 77}
+                    </span>
+                  </div>
 
-                {/* Commits Metric */}
-                <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
-                  <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="4"/>
-                    <line x1="1.05" y1="12" x2="8" y2="12"/>
-                    <line x1="16" y1="12" x2="22.95" y2="12"/>
-                  </svg>
-                  <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
-                    Commits
-                  </span>
-                  <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
-                    {githubStats?.commits || "1,480+"}
-                  </span>
-                </div>
+                  {/* Commits Metric */}
+                  <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
+                    <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="4"/>
+                      <line x1="1.05" y1="12" x2="8" y2="12"/>
+                      <line x1="16" y1="12" x2="22.95" y2="12"/>
+                    </svg>
+                    <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
+                      Commits
+                    </span>
+                    <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                      {githubStats?.commits || "1,480+"}
+                    </span>
+                  </div>
 
-                {/* Lines of Code Metric */}
-                <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
-                  <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                    <polyline points="10 9 9 9 8 9"/>
-                  </svg>
-                  <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
-                    Line of code
-                  </span>
-                  <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
-                    {githubStats?.loc || "12,400+"}
-                  </span>
-                </div>
+                  {/* Lines of Code Metric */}
+                  <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
+                    <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="16" y1="13" x2="8" y2="13"/>
+                      <line x1="16" y1="17" x2="8" y2="17"/>
+                      <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
+                      Line of code
+                    </span>
+                    <span className={`text-xs font-black font-mono mt-1 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                      {githubStats?.loc || "12,400+"}
+                    </span>
+                  </div>
 
-                {/* Languages Metric */}
-                <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
-                  <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-                    <polyline points="16 18 22 12 16 6"/>
-                    <polyline points="8 6 2 12 8 18"/>
-                  </svg>
-                  <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
-                    Languages
-                  </span>
-                  <span className={`text-[10px] font-black font-mono mt-1 leading-none ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title={githubStats?.languages || "JS, TS, Python"}>
-                    {githubStats?.languages || "JS/TS/Py"}
-                  </span>
-                </div>
-              </div>
+                  {/* Languages Metric */}
+                  <div className="flex flex-col items-center justify-center text-center border-l border-dashed border-zinc-700/20">
+                    <svg viewBox="0 0 24 24" className={`w-4 h-4 mb-1.5 ${isDark ? "text-red-400" : "text-red-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                      <polyline points="16 18 22 12 16 6"/>
+                      <polyline points="8 6 2 12 8 18"/>
+                    </svg>
+                    <span className={`text-[8px] font-extrabold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-500"}`}>
+                      Languages
+                    </span>
+                    <span className={`text-[10px] font-black font-mono mt-1 leading-none ${isDark ? "text-white" : "text-zinc-900"} truncate max-w-full px-1`} title={githubStats?.languages || "JS, TS, Python"}>
+                      {githubStats?.languages || "JS/TS/Py"}
+                    </span>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             </SpotlightCard>
 
             {/* Recent Insights (Mobile) */}
@@ -1663,6 +1698,12 @@ export default function Portfolio() {
                   <h2 className={`text-xl font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
                     Recent Insights
                   </h2>
+                  {isSyncing && (
+                    <span className="text-[9px] font-mono uppercase tracking-widest text-red-400/80 animate-pulse flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping" />
+                      Syncing...
+                    </span>
+                  )}
                 </div>
                 <Link
                   href="/blogs"
@@ -1676,49 +1717,60 @@ export default function Portfolio() {
               </div>
 
               <div className="space-y-4">
-                {combinedBlogs.slice(0, 2).map((blog, idx) => (
-                  <Link
-                    key={idx}
-                    href={`/blogs/${blog._id}`}
-                    className={`block p-4 rounded-2xl flex flex-col justify-between transition-all group cursor-pointer ${
-                      isDark 
-                        ? "bg-[#121214]/50 border border-white/5 hover:bg-[#18181b]/50 hover:border-red-500/20" 
-                        : "bg-white/60 border border-black/5 hover:bg-white hover:border-red-200 shadow-sm"
-                    }`}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={isSyncing ? "loading" : "synced"}
+                    initial={{ opacity: 0.8, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0.8, y: -5 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className="space-y-4"
                   >
-                    <div className="flex justify-between items-center mb-2">
-                      <span className={`px-2 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-wider ${
-                        isDark ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-red-50 text-red-600 border border-red-100"
-                      }`}>
-                        {blog.category}
-                      </span>
-                      <button
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleToggleLikeBlog(blog); }}
-                        className={`flex items-center space-x-1 px-2 py-0.5 rounded-lg border transition-all ${
-                          likedBlogIds.includes(blog._id || blog.title)
-                            ? "bg-red-500/10 text-red-400 border-red-500/30"
-                            : isDark 
-                              ? "bg-white/5 text-zinc-500 hover:text-white border-white/5" 
-                              : "bg-zinc-100 text-zinc-500 border-zinc-200"
+                    {combinedBlogs.slice(0, 2).map((blog, idx) => (
+                      <Link
+                        key={idx}
+                        href={`/blogs/${blog._id}`}
+                        className={`block p-4 rounded-2xl flex flex-col justify-between transition-all group cursor-pointer ${
+                          isDark 
+                            ? "bg-[#121214]/50 border border-white/5 hover:bg-[#18181b]/50 hover:border-red-500/20" 
+                            : "bg-white/60 border border-black/5 hover:bg-white hover:border-red-200 shadow-sm"
                         }`}
                       >
-                        <Heart className={`w-3 h-3 ${likedBlogIds.includes(blog._id || blog.title) ? "fill-current" : ""}`} />
-                        <span className="text-[10px] font-bold">{interactions[blog._id || blog.title] !== undefined ? interactions[blog._id || blog.title] : (blog.likes || 0)}</span>
-                      </button>
-                    </div>
-                    <h3 className={`font-bold font-outfit text-sm mb-1 group-hover:text-red-400 transition-colors ${isDark ? "text-white" : "text-zinc-900"}`}>
-                      {blog.title}
-                    </h3>
-                    <p className={`text-xs leading-relaxed line-clamp-2 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                      {blog.excerpt}
-                    </p>
-                    <span className={`mt-2 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 ${
-                      isDark ? "text-red-500/60 group-hover:text-red-400" : "text-red-400 group-hover:text-red-600"
-                    }`}>
-                      Read article <ChevronRight className="w-2.5 h-2.5" />
-                    </span>
-                  </Link>
-                ))}
+                        <div className="flex justify-between items-center mb-2">
+                          <span className={`px-2 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-wider ${
+                            isDark ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-red-50 text-red-600 border border-red-100"
+                          }`}>
+                            {blog.category}
+                          </span>
+                          <button
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleToggleLikeBlog(blog); }}
+                            className={`flex items-center space-x-1 px-2 py-0.5 rounded-lg border transition-all ${
+                              likedBlogIds.includes(blog._id || blog.title)
+                                ? "bg-red-500/10 text-red-400 border-red-500/30"
+                                : isDark 
+                                  ? "bg-white/5 text-zinc-500 hover:text-white border-white/5" 
+                                  : "bg-zinc-100 text-zinc-500 border-zinc-200"
+                            }`}
+                          >
+                            <Heart className={`w-3 h-3 ${likedBlogIds.includes(blog._id || blog.title) ? "fill-current" : ""}`} />
+                            <span className="text-[10px] font-bold">{interactions[blog._id || blog.title] !== undefined ? interactions[blog._id || blog.title] : (blog.likes || 0)}</span>
+                          </button>
+                        </div>
+                        <h3 className={`font-bold font-outfit text-sm mb-1 group-hover:text-red-400 transition-colors ${isDark ? "text-white" : "text-zinc-900"}`}>
+                          {blog.title}
+                        </h3>
+                        <p className={`text-xs leading-relaxed line-clamp-2 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+                          {blog.excerpt}
+                        </p>
+                        <span className={`mt-2 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 ${
+                          isDark ? "text-red-500/60 group-hover:text-red-400" : "text-red-400 group-hover:text-red-600"
+                        }`}>
+                          Read article <ChevronRight className="w-2.5 h-2.5" />
+                        </span>
+                      </Link>
+                    ))}
+                  </motion.div>
+                </AnimatePresence>
               </div>
             </SpotlightCard>
 

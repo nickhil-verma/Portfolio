@@ -4,8 +4,16 @@ import clientPromise from "../../../lib/mongodb";
 
 export const dynamic = "force-dynamic";
 
+// Server-side in-memory cache
+let projectsCache = null;
+
 export async function GET() {
   try {
+    // Return cached projects instantly
+    if (projectsCache) {
+      return NextResponse.json(projectsCache, { status: 200 });
+    }
+
     if (!clientPromise) {
       return NextResponse.json({ error: "Database not configured", fallback: true }, { status: 200 });
     }
@@ -17,6 +25,9 @@ export async function GET() {
       .sort({ created_at: -1 })
       .toArray();
 
+    // Cache the retrieved projects
+    projectsCache = projects;
+
     return NextResponse.json(projects, { status: 200 });
   } catch (error) {
     console.error("Error in GET /api/projects:", error);
@@ -26,6 +37,7 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    projectsCache = null; // Clear cache on database writes
     if (!clientPromise) {
       return NextResponse.json({ error: "Database not configured" }, { status: 503 });
     }
@@ -66,6 +78,7 @@ export async function POST(request) {
 
 export async function DELETE(request) {
   try {
+    projectsCache = null; // Clear cache on database writes
     if (!clientPromise) {
       return NextResponse.json({ error: "Database not configured" }, { status: 503 });
     }
@@ -92,6 +105,7 @@ export async function DELETE(request) {
 
 export async function PUT(request) {
   try {
+    projectsCache = null; // Clear cache on database writes
     if (!clientPromise) {
       return NextResponse.json({ error: "Database not configured" }, { status: 503 });
     }
@@ -136,6 +150,7 @@ export async function PUT(request) {
 
 export async function PATCH(request) {
   try {
+    projectsCache = null; // Clear cache on database writes
     if (!clientPromise) {
       return NextResponse.json({ error: "Database not configured" }, { status: 503 });
     }

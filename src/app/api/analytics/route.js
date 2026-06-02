@@ -35,8 +35,15 @@ function parseUserAgent(ua) {
   return { browser, os, device };
 }
 
+// Server-side in-memory cache
+let analyticsCache = null;
+
 export async function GET() {
   try {
+    if (analyticsCache) {
+      return NextResponse.json(analyticsCache, { status: 200 });
+    }
+
     if (!clientPromise) {
       return NextResponse.json({ error: "Database not configured", totalViews: 0, uniqueViews: 0, logs: [] }, { status: 200 });
     }
@@ -53,7 +60,10 @@ export async function GET() {
     const totalViews = logs.length;
     const uniqueIPs = new Set(logs.map(log => log.ip)).size;
 
-    return NextResponse.json({ totalViews, uniqueViews: uniqueIPs, logs }, { status: 200 });
+    const payload = { totalViews, uniqueViews: uniqueIPs, logs };
+    analyticsCache = payload;
+
+    return NextResponse.json(payload, { status: 200 });
   } catch (error) {
     console.error("Error in GET /api/analytics:", error);
     return NextResponse.json({ error: "Failed to fetch traffic logs" }, { status: 500 });
@@ -62,6 +72,7 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    analyticsCache = null; // Clear cache on new analytics log insertion
     if (!clientPromise) {
       return NextResponse.json({ success: false, message: "Database not configured" }, { status: 200 });
     }
