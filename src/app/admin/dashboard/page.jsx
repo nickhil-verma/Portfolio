@@ -6,7 +6,7 @@ import {
   ArrowLeft, LayoutDashboard, FolderKanban, BookHeart, LogOut, 
   Plus, Trash2, Users, Cpu, FileText, CheckCircle2, Globe, Monitor, Smartphone, Tablet,
   Github, X, MessageSquare, Sun, Moon, GripVertical, Heart,
-  Bell, Menu, ChevronLeft, ChevronRight
+  Bell, Menu, ChevronLeft, ChevronRight, RefreshCw
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -484,6 +484,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [isDark, setIsDark] = useState(true);
   const [toast, setToast] = useState({ message: "", type: "success", key: 0 });
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [dashboardProjects, setDashboardProjects] = useState([]);
   const [dashboardBlogs, setDashboardBlogs] = useState([]);
@@ -726,6 +727,21 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchData();
+    setIsRefreshing(false);
+    triggerToast("Dashboard telemetry refreshed! 🔄", "success");
+  };
+
+  useEffect(() => {
+    if (!authorized) return;
+    const interval = setInterval(() => {
+      fetchData();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [authorized]);
 
   useEffect(() => {
     const isLoggedIn = localStorage.getItem("admin_logged_in");
@@ -1423,11 +1439,25 @@ export default function AdminDashboard() {
             {/* Geolocation visitor logs table */}
             <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
               <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none" />
-              <div className="flex justify-between items-center mb-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                 <h3 className={`text-lg font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Live Visitor Geolocation Telemetry</h3>
-                <span className={`text-[10px] font-bold uppercase ${isDark ? "bg-white/5 border-white/5 text-zinc-400" : "bg-black/5 border-black/5 text-zinc-500"} border px-2.5 py-1 rounded-md`}>
-                  Real-time Database Logs
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-[10px] font-semibold transition-all ${
+                      isDark
+                        ? "bg-white/5 text-zinc-400 hover:text-white border-white/5 disabled:text-zinc-600"
+                        : "bg-white text-zinc-600 hover:text-zinc-950 border-black/10 shadow-sm disabled:text-zinc-400"
+                    }`}
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-red-500" : ""}`} />
+                    <span>{isRefreshing ? "Refreshing..." : "Refresh"}</span>
+                  </button>
+                  <span className={`text-[10px] font-bold uppercase ${isDark ? "bg-white/5 border-white/5 text-zinc-400" : "bg-black/5 border-black/5 text-zinc-500"} border px-2.5 py-1.5 rounded-xl`}>
+                    Auto-Refreshing (15s)
+                  </span>
+                </div>
               </div>
 
               {analytics.logs.length === 0 ? (
