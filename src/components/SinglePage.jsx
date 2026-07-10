@@ -859,7 +859,7 @@ export default function Portfolio() {
                     Dayananda Sagar University, Bengaluru
                   </p>
                   <p className={`text-[11px] sm:text-xs font-semibold mt-1 ${isDark ? "text-red-400" : "text-red-600"}`}>
-                    GPA: 8.0/10.0
+                    GPA: 9.0/10.0
                   </p>
                   <span className={`inline-block px-2.5 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider mt-2 ${
                     isDark ? "bg-[#1e1e24] text-red-400 border border-white/5" : "bg-red-50 text-red-600"
