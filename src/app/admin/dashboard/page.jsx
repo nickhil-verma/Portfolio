@@ -2060,7 +2060,7 @@ export default function AdminDashboard() {
                     <input
                       type="text"
                       required
-                      placeholder="E.g. Hireonova RAG Engine"
+                      placeholder="E.g. HireNova Job Scraper & Engine"
                       value={newProjTitle}
                       onChange={(e) => { setNewProjTitle(e.target.value); setProjMsg(""); }}
                       className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"

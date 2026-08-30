@@ -19,12 +19,14 @@ export const fallbackBlogs = [
 
 export const staticFallbackProjects = [
   {
-    title: "Hireonova – AI Job Engine",
-    description: "Crawled 200K+ jobs, AI resume matcher with Ollama 3B",
-    link: "https://github.com/Hireonova",
-    deployedLink: null,
-    tech: ["React", "Python", "Docker", "Ollama"],
-    stars: 14
+    title: "HireNova – AI Job Search & Auto-Apply Engine",
+    description: "Job search engine and automated job application browser extension powered by smart web scrapers and Ollama AI resume matching.",
+    link: "https://github.com/nickhil-verma/hirenova_jobscraper",
+    deployedLink: "https://hirenova-jobscraper.vercel.app/",
+    tech: ["Python", "Browser Extension", "Playwright", "Ollama AI", "React"],
+    stars: 28,
+    pinned: true,
+    category: "ai"
   },
   {
     title: "DocuQuery AI RAG Engine",

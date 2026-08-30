@@ -23,6 +23,8 @@ import {
   BookOpen,
   Heart,
   FileText,
+  Pin,
+  Sparkles,
 } from "lucide-react";
 import { SiLeetcode, SiCodeforces } from "react-icons/si";
 import Link from "next/link";
@@ -468,7 +470,13 @@ export default function Portfolio() {
     }
   };
 
-  const combinedProjects = [...liveProjects, ...staticFallbackProjects];
+  const combinedProjects = [...liveProjects, ...staticFallbackProjects].sort((a, b) => {
+    const isAPinned = a.pinned || a.title?.toLowerCase().includes("hirenova");
+    const isBPinned = b.pinned || b.title?.toLowerCase().includes("hirenova");
+    if (isAPinned && !isBPinned) return -1;
+    if (!isAPinned && isBPinned) return 1;
+    return (b.stars || 0) - (a.stars || 0);
+  });
   const combinedBlogs = [...liveBlogs, ...fallbackBlogs].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
 // Loaded static lists from staticFallbacks data module
@@ -751,21 +759,34 @@ export default function Portfolio() {
                       transition={{ duration: 0.4, ease: "easeOut" }}
                       className="grid grid-cols-3 gap-4 pb-2"
                     >
-                      {combinedProjects.map((project, index) => (
-                        <div
-                          key={index}
-                          className={`p-4 rounded-2xl flex flex-col justify-between group transition-all duration-300 min-h-[220px] ${
-                            isDark 
-                              ? "bg-[#121214]/50 border border-white/5 hover:bg-[#18181b]/50" 
-                              : "bg-white/60 border border-black/5 hover:bg-white shadow-sm"
-                          }`}
-                        >
-                          <div>
-                            <h3 className={`font-bold font-outfit text-xs sm:text-sm mb-1.5 group-hover:text-red-400 transition-colors ${
-                              isDark ? "text-white" : "text-zinc-900"
-                            }`}>
-                              {project.title}
-                            </h3>
+                      {combinedProjects.map((project, index) => {
+                        const isPinned = project.pinned || project.title?.toLowerCase().includes("hirenova");
+                        return (
+                          <div
+                            key={index}
+                            className={`p-4 rounded-2xl flex flex-col justify-between group transition-all duration-300 min-h-[220px] ${
+                              isPinned
+                                ? isDark
+                                  ? "bg-gradient-to-br from-red-950/40 via-[#121214]/90 to-[#18181b] border-2 border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.2)] hover:border-red-400"
+                                  : "bg-gradient-to-br from-red-50/90 via-white to-amber-50/40 border-2 border-red-400/50 shadow-[0_4px_20px_rgba(239,68,68,0.12)] hover:border-red-500"
+                                : isDark 
+                                  ? "bg-[#121214]/50 border border-white/5 hover:bg-[#18181b]/50" 
+                                  : "bg-white/60 border border-black/5 hover:bg-white shadow-sm"
+                            }`}
+                          >
+                            <div>
+                              {isPinned && (
+                                <div className="flex items-center mb-1.5">
+                                  <span className="px-2 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider bg-gradient-to-r from-red-600 via-rose-500 to-amber-500 text-white flex items-center gap-1 shadow-sm">
+                                    <Pin className="w-2 h-2 fill-current" /> Pinned Project
+                                  </span>
+                                </div>
+                              )}
+                              <h3 className={`font-bold font-outfit text-xs sm:text-sm mb-1.5 group-hover:text-red-400 transition-colors ${
+                                isDark ? "text-white" : "text-zinc-900"
+                              }`}>
+                                {project.title}
+                              </h3>
                             <p className={`text-[11px] sm:text-xs leading-relaxed mb-3 font-normal ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
                               {project.description && project.description.length > 60
                                 ? project.description.slice(0, 60) + "..."
@@ -837,7 +858,8 @@ export default function Portfolio() {
                             </div>
                           </div>
                         </div>
-                      ))}
+                      );
+                    })}
                     </motion.div>
                   </AnimatePresence>
                 </div>
@@ -1357,83 +1379,97 @@ export default function Portfolio() {
                     transition={{ duration: 0.4, ease: "easeOut" }}
                     className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full col-span-2"
                   >
-                    {combinedProjects.map((project, index) => (
-                      <div
-                        key={index}
-                        className={`p-4 rounded-2xl flex flex-col justify-between group ${
-                          isDark ? "bg-[#121214]/50 border border-white/5" : "bg-white/60 border border-black/5"
-                        }`}
-                      >
-                        <div>
-                          <h3 className={`font-bold font-outfit text-sm mb-1.5 group-hover:text-red-400 transition-colors ${isDark ? "text-white" : "text-zinc-900"}`}>
-                            {project.title}
-                          </h3>
-                          <p className={`text-xs leading-relaxed mb-3 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                            {project.description && project.description.length > 70
-                              ? project.description.slice(0, 70) + "..."
-                              : project.description}
-                          </p>
-                        </div>
-
-                        <div>
-                          <div className="flex flex-wrap gap-1 mb-3.5">
-                            {project.tech.map((tech, idx) => (
-                              <span
-                                key={idx}
-                                className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider ${
-                                  isDark ? "bg-white/5 text-zinc-400" : "bg-zinc-100 text-zinc-600"
-                                }`}
-                              >
-                                {tech}
-                              </span>
-                            ))}
+                    {combinedProjects.map((project, index) => {
+                      const isPinned = project.pinned || project.title?.toLowerCase().includes("hirenova");
+                      return (
+                        <div
+                          key={index}
+                          className={`p-4 rounded-2xl flex flex-col justify-between group transition-all duration-300 ${
+                            isPinned
+                              ? isDark
+                                ? "bg-gradient-to-br from-red-950/40 via-[#121214]/90 to-[#18181b] border-2 border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+                                : "bg-gradient-to-br from-red-50/90 via-white to-amber-50/40 border-2 border-red-400/50 shadow-[0_4px_20px_rgba(239,68,68,0.12)]"
+                              : isDark ? "bg-[#121214]/50 border border-white/5" : "bg-white/60 border border-black/5"
+                          }`}
+                        >
+                          <div>
+                            {isPinned && (
+                              <div className="flex items-center mb-1.5">
+                                <span className="px-2 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider bg-gradient-to-r from-red-600 via-rose-500 to-amber-500 text-white flex items-center gap-1 shadow-sm">
+                                  <Pin className="w-2 h-2 fill-current" /> Pinned Project
+                                </span>
+                              </div>
+                            )}
+                            <h3 className={`font-bold font-outfit text-sm mb-1.5 group-hover:text-red-400 transition-colors ${isDark ? "text-white" : "text-zinc-900"}`}>
+                              {project.title}
+                            </h3>
+                            <p className={`text-xs leading-relaxed mb-3 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+                              {project.description && project.description.length > 70
+                                ? project.description.slice(0, 70) + "..."
+                                : project.description}
+                            </p>
                           </div>
 
-                          <div className="flex items-center justify-between w-full mt-2">
-                            <div className="flex items-center gap-2">
-                              <a
-                                href={project.link}
-                                className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                                  isDark ? "bg-white/5 text-zinc-400 hover:text-white" : "bg-zinc-100 text-zinc-600"
-                                }`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-                                <span>Code</span>
-                              </a>
-                              {(project.deployedUrl || project.deployedLink || project.liveLink) && (
+                          <div>
+                            <div className="flex flex-wrap gap-1 mb-3.5">
+                              {project.tech.map((tech, idx) => (
+                                <span
+                                  key={idx}
+                                  className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider ${
+                                    isDark ? "bg-white/5 text-zinc-400" : "bg-zinc-100 text-zinc-600"
+                                  }`}
+                                >
+                                  {tech}
+                                </span>
+                              ))}
+                            </div>
+
+                            <div className="flex items-center justify-between w-full mt-2">
+                              <div className="flex items-center gap-2">
                                 <a
-                                  href={project.deployedUrl || project.deployedLink || project.liveLink}
+                                  href={project.link}
                                   className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                                    isDark ? "bg-red-500/10 text-red-400 hover:bg-red-500/20" : "bg-red-50 text-red-600 hover:bg-red-100"
+                                    isDark ? "bg-white/5 text-zinc-400 hover:text-white" : "bg-zinc-100 text-zinc-600"
                                   }`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                 >
-                                  <ExternalLink className="w-3 h-3" />
-                                  <span>Live</span>
+                                  <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                                  <span>Code</span>
                                 </a>
-                              )}
-                            </div>
+                                {(project.deployedUrl || project.deployedLink || project.liveLink) && (
+                                  <a
+                                    href={project.deployedUrl || project.deployedLink || project.liveLink}
+                                    className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                                      isDark ? "bg-red-500/10 text-red-400 hover:bg-red-500/20" : "bg-red-50 text-red-600 hover:bg-red-100"
+                                    }`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <ExternalLink className="w-3 h-3" />
+                                    <span>Live</span>
+                                  </a>
+                                )}
+                              </div>
 
-                            <button
-                              onClick={() => handleToggleStarProject(project)}
-                              className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-xs font-bold border transition-all ${
-                                starredProjectIds.includes(project._id || project.title)
-                                  ? "bg-[#ef4444]/10 text-red-400 border-red-500/30"
-                                  : isDark
-                                    ? "bg-white/5 text-zinc-400 hover:text-white border-white/5"
-                                    : "bg-zinc-100 text-zinc-500 hover:text-zinc-800 border-zinc-200"
-                              }`}
-                            >
-                              <Star className={`w-3.5 h-3.5 ${starredProjectIds.includes(project._id || project.title) ? "fill-current" : ""}`} />
-                              <span>{interactions[project._id || project.title] !== undefined ? interactions[project._id || project.title] : (project.stars || 0)}</span>
-                            </button>
+                              <button
+                                onClick={() => handleToggleStarProject(project)}
+                                className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-xs font-bold border transition-all ${
+                                  starredProjectIds.includes(project._id || project.title)
+                                    ? "bg-[#ef4444]/10 text-red-400 border-red-500/30"
+                                    : isDark
+                                      ? "bg-white/5 text-zinc-400 hover:text-white border-white/5"
+                                      : "bg-zinc-100 text-zinc-500 hover:text-zinc-800 border-zinc-200"
+                                }`}
+                              >
+                                <Star className={`w-3.5 h-3.5 ${starredProjectIds.includes(project._id || project.title) ? "fill-current" : ""}`} />
+                                <span>{interactions[project._id || project.title] !== undefined ? interactions[project._id || project.title] : (project.stars || 0)}</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </motion.div>
                 </AnimatePresence>
               </div>

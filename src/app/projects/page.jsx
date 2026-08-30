@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import CustomToast from "../../components/CustomToast";
 import Helmet from "../../components/Helmet";
 import { motion } from "framer-motion";
-import { ArrowLeft, ExternalLink, Github, Search, Code, Star, ChevronRight } from "lucide-react";
+import { ArrowLeft, ExternalLink, Github, Search, Code, Star, ChevronRight, Pin, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 // Custom Spotlight wrapper supporting isDark
@@ -71,13 +71,15 @@ const ProjectSpotlightCard = ({ children, isDark, className = "" }) => {
 
 const baseProjects = [
   {
-    title: "Hireonova – AI Job Engine",
-    description: "A comprehensive jobs crawling engine and smart resume parser matching algorithm powered by Ollama 3B. Processes massive datasets with precision and ranks candidates contextually.",
-    link: "https://github.com/Hireonova",
+    title: "HireNova – AI Job Search & Auto-Apply Engine",
+    description: "Job search engine and automated job application browser extension powered by smart web scrapers and Ollama AI resume matching.",
+    link: "https://github.com/nickhil-verma/hirenova_jobscraper",
+    deployedUrl: "https://hirenova-jobscraper.vercel.app/",
     imageUrl: "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=800&q=80",
-    tech: ["Python", "Playwright", "MERN", "NLP", "Ollama"],
+    tech: ["Python", "Browser Extension", "Playwright", "Ollama AI", "React"],
     category: "ai",
-    stars: 12,
+    stars: 28,
+    pinned: true,
     created_at: new Date("2026-05-10"),
   },
   {
@@ -240,8 +242,12 @@ export default function ProjectsPage() {
     fetchProjectsAndInteractions();
   }, []);
 
-  // Merge lists and sort by created_at in descending order (most recent first)
+  // Merge lists and sort with pinned projects prioritized at the top, then by created_at
   const combinedProjects = [...liveProjects, ...baseProjects].sort((a, b) => {
+    const isAPinned = a.pinned || a.title?.toLowerCase().includes("hirenova");
+    const isBPinned = b.pinned || b.title?.toLowerCase().includes("hirenova");
+    if (isAPinned && !isBPinned) return -1;
+    if (!isAPinned && isBPinned) return 1;
     return new Date(b.created_at) - new Date(a.created_at);
   });
 
@@ -337,54 +343,80 @@ export default function ProjectsPage() {
 
         {/* Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredProjects.map((project, idx) => (
-            <ProjectSpotlightCard key={idx} isDark={isDark} className="flex flex-col justify-between overflow-hidden">
-              {/* Thumbnail */}
-              {(project.imageUrl || project.thumbnailUrl) && (
-                <div className="w-full h-48 overflow-hidden relative flex-shrink-0">
-                  <img
-                    src={project.imageUrl || project.thumbnailUrl}
-                    alt={project.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className={`absolute inset-0 bg-gradient-to-b ${isDark ? "from-transparent to-black/80" : "from-transparent to-black/50"}`} />
-                  <span className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                    project.category === "ai" 
-                      ? "bg-violet-500/80 text-white" 
-                      : "bg-red-500/80 text-white"
-                  }`}>
-                    {project.category === "ai" ? "AI & Data" : "Web"}
-                  </span>
-                </div>
-              )}
-
-              <div className="p-7 flex flex-col flex-1 justify-between">
-                <div>
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center space-x-2">
-                      {!(project.imageUrl || project.thumbnailUrl) && (
-                        <><Code className={`w-4 h-4 ${isDark ? "text-red-400" : "text-red-600"}`} />
-                        <span className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? "text-red-400" : "text-red-600"}`}>{project.category}</span></>
+          {filteredProjects.map((project, idx) => {
+            const isPinned = project.pinned || project.title?.toLowerCase().includes("hirenova");
+            return (
+              <ProjectSpotlightCard 
+                key={idx} 
+                isDark={isDark} 
+                className={`flex flex-col justify-between overflow-hidden transition-all duration-300 ${
+                  isPinned 
+                    ? isDark 
+                      ? "ring-2 ring-red-500/50 bg-gradient-to-br from-red-950/25 via-[#121214] to-[#18181b] shadow-[0_0_35px_rgba(239,68,68,0.2)]" 
+                      : "ring-2 ring-red-500/50 bg-gradient-to-br from-red-50/80 via-white to-amber-50/30 shadow-[0_8px_30px_rgba(239,68,68,0.15)]"
+                    : ""
+                }`}
+              >
+                {/* Thumbnail */}
+                {(project.imageUrl || project.thumbnailUrl) && (
+                  <div className="w-full h-48 overflow-hidden relative flex-shrink-0">
+                    <img
+                      src={project.imageUrl || project.thumbnailUrl}
+                      alt={project.title}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className={`absolute inset-0 bg-gradient-to-b ${isDark ? "from-transparent to-black/80" : "from-transparent to-black/50"}`} />
+                    <div className="absolute top-3 inset-x-3 flex items-center justify-between pointer-events-none">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                        project.category === "ai" 
+                          ? "bg-violet-500/80 text-white" 
+                          : "bg-red-500/80 text-white"
+                      }`}>
+                        {project.category === "ai" ? "AI & Data" : "Web"}
+                      </span>
+                      {isPinned && (
+                        <span className="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-gradient-to-r from-red-600 via-rose-500 to-amber-500 text-white flex items-center gap-1 shadow-lg shadow-red-500/40">
+                          <Pin className="w-2.5 h-2.5 fill-current" /> Pinned Project
+                        </span>
                       )}
                     </div>
-
-                    {/* Star count */}
-                    <button
-                      onClick={() => handleToggleStarProject(project)}
-                      className={`flex items-center space-x-1 px-2 py-0.5 rounded-lg border transition-all ${
-                        starredProjectIds.includes(project._id || project.title)
-                          ? "bg-[#ef4444]/10 text-red-400 border-red-500/30"
-                          : isDark ? "bg-white/5 text-zinc-500 hover:text-white border-white/5" : "bg-zinc-100 text-zinc-500 border-zinc-200"
-                      }`}
-                    >
-                      <Star className={`w-3.5 h-3.5 ${starredProjectIds.includes(project._id || project.title) ? "fill-current" : ""}`} />
-                      <span className="text-xs font-bold font-outfit">{interactions[project._id || project.title] !== undefined ? interactions[project._id || project.title] : (project.stars || 0)}</span>
-                    </button>
                   </div>
+                )}
 
-                  <h3 className={`text-xl font-bold font-outfit mb-2 ${isDark ? "text-white" : "text-zinc-900"}`}>{project.title}</h3>
-                  <p className={`text-xs leading-relaxed mb-6 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>{project.description}</p>
-                </div>
+                <div className="p-7 flex flex-col flex-1 justify-between">
+                  <div>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center space-x-2">
+                        {!(project.imageUrl || project.thumbnailUrl) && (
+                          <><Code className={`w-4 h-4 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                          <span className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? "text-red-400" : "text-red-600"}`}>{project.category}</span></>
+                        )}
+                        {isPinned && !(project.imageUrl || project.thumbnailUrl) && (
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-gradient-to-r from-red-600 to-amber-500 text-white flex items-center gap-1">
+                            <Pin className="w-2.5 h-2.5 fill-current" /> Pinned Project
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Star count */}
+                      <button
+                        onClick={() => handleToggleStarProject(project)}
+                        className={`flex items-center space-x-1 px-2 py-0.5 rounded-lg border transition-all ${
+                          starredProjectIds.includes(project._id || project.title)
+                            ? "bg-[#ef4444]/10 text-red-400 border-red-500/30"
+                            : isDark ? "bg-white/5 text-zinc-500 hover:text-white border-white/5" : "bg-zinc-100 text-zinc-500 border-zinc-200"
+                        }`}
+                      >
+                        <Star className={`w-3.5 h-3.5 ${starredProjectIds.includes(project._id || project.title) ? "fill-current" : ""}`} />
+                        <span className="text-xs font-bold font-outfit">{interactions[project._id || project.title] !== undefined ? interactions[project._id || project.title] : (project.stars || 0)}</span>
+                      </button>
+                    </div>
+
+                    <h3 className={`text-xl font-bold font-outfit mb-2 flex items-center gap-2 ${isDark ? "text-white" : "text-zinc-900"}`}>
+                      {project.title}
+                    </h3>
+                    <p className={`text-xs leading-relaxed mb-6 ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>{project.description}</p>
+                  </div>
 
                 <div>
                   {/* Tech Pills */}
@@ -422,7 +454,8 @@ export default function ProjectsPage() {
                 </div>
               </div>
             </ProjectSpotlightCard>
-          ))}
+          );
+        })}
         </div>
 
 
