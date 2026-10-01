@@ -145,6 +145,7 @@ export default function BlogDetailClient({ blog: initialBlog, initialViews, id: 
   const [toast, setToast] = useState({ message: "", type: "success", key: 0 });
   const [commentText, setCommentText] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [reflectionsList, setReflectionsList] = useState([]);
   const [views, setViews] = useState(initialViews || 0);
   const viewTracked = React.useRef(false);
 
@@ -274,6 +275,18 @@ export default function BlogDetailClient({ blog: initialBlog, initialViews, id: 
         setBlog(activeBlog);
       }
       setLoading(false);
+
+      // Fetch reflections for this blog
+      try {
+        const cRes = await fetch("/api/blogs/comments");
+        const cData = await cRes.json();
+        if (Array.isArray(cData)) {
+          const matched = cData.filter((c) => c.blogId === id || c.blogTitle === activeBlog?.title);
+          setReflectionsList(matched);
+        }
+      } catch (e) {
+        console.error("Failed to load reflections:", e);
+      }
 
       // Track view once per page load
       if (!viewTracked.current && activeBlog) {
@@ -514,6 +527,41 @@ export default function BlogDetailClient({ blog: initialBlog, initialViews, id: 
               </button>
             </div>
           </form>
+
+          {/* Published Visitor Reflections List */}
+          <div className="mt-8 space-y-4 pt-6 border-t border-white/5">
+            <h3 className={`text-xs font-bold uppercase tracking-wider ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
+              Visitor Reflections ({reflectionsList.length})
+            </h3>
+            {reflectionsList.length === 0 ? (
+              <p className={`text-xs italic ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>
+                No reflections left yet. Be the first to share your thoughts!
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {reflectionsList.map((c, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-4 rounded-2xl border transition-all ${
+                      isDark
+                        ? "bg-[#121214]/60 border-white/5 text-zinc-300"
+                        : "bg-white border-black/10 text-zinc-800 shadow-sm"
+                    }`}
+                  >
+                    <div className="flex justify-between items-center mb-1.5">
+                      <span className={`text-xs font-bold ${isDark ? "text-red-400" : "text-red-600"}`}>
+                        {c.name || "Anonymous Visitor"}
+                      </span>
+                      <span className="text-[10px] font-mono text-zinc-500">
+                        {c.created_at ? new Date(c.created_at).toLocaleDateString() : "Recent"}
+                      </span>
+                    </div>
+                    <p className="text-xs leading-relaxed font-sans">{c.content || c.message}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </DetailSpotlightCard>
 
         {/* Global Footer component with Admin Portal Link */}

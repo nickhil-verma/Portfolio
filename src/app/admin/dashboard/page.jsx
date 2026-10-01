@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
@@ -25,8 +25,10 @@ import {
   Calendar,
   MapPin,
   Image as ImageIcon,
-  ArrowUpRight,
-  TrendingUp,
+  ArrowLeft,
+  GripVertical,
+  Monitor,
+  Smartphone,
 } from "lucide-react";
 import Helmet from "../../../components/Helmet";
 import CustomToast from "../../../components/CustomToast";
@@ -66,8 +68,9 @@ const CustomMarkdown = dynamic(
 export default function AdminDashboardPage() {
   const router = useRouter();
 
-  // Auth & Navigation States
+  // Theme & Auth States
   const [authorized, setAuthorized] = useState(false);
+  const [isDark, setIsDark] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ message: "", type: "success", key: 0 });
@@ -82,17 +85,18 @@ export default function AdminDashboardPage() {
 
   // Filter & Search States
   const [analyticsTimeRange, setAnalyticsTimeRange] = useState("30d");
+  const [telemetrySearch, setTelemetrySearch] = useState("");
   const [blogSearchQuery, setBlogSearchQuery] = useState("");
-  const [projSearchQuery, setProjSearchQuery] = useState("");
-  const [expSearchQuery, setExpSearchQuery] = useState("");
-  const [commentSearchQuery, setCommentSearchQuery] = useState("");
-  const [selectedBlogAnalyticsFilter, setSelectedBlogAnalyticsFilter] = useState("all");
 
-  // Dialog & Drawer States
+  // Dialog & Fullscreen Workspace States
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, title: "", id: null, type: "" });
 
+  // Fullscreen Editors
+  const [fullscreenExpEditor, setFullscreenExpEditor] = useState(false);
+  const [fullscreenProjectEditor, setFullscreenProjectEditor] = useState(false);
+  const [fullscreenBlogEditor, setFullscreenBlogEditor] = useState(false);
+
   // Form States - Experience
-  const [expDrawerOpen, setExpDrawerOpen] = useState(false);
   const [editingExpId, setEditingExpId] = useState(null);
   const [expTitle, setExpTitle] = useState("");
   const [expCompany, setExpCompany] = useState("");
@@ -105,7 +109,6 @@ export default function AdminDashboardPage() {
   const [expOrder, setExpOrder] = useState(1);
 
   // Form States - Project
-  const [projDrawerOpen, setProjDrawerOpen] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState(null);
   const [newProjTitle, setNewProjTitle] = useState("");
   const [newProjTech, setNewProjTech] = useState("");
@@ -118,7 +121,6 @@ export default function AdminDashboardPage() {
   const [newProjDate, setNewProjDate] = useState("");
 
   // Form States - Blog
-  const [blogDrawerOpen, setBlogDrawerOpen] = useState(false);
   const [editingBlogId, setEditingBlogId] = useState(null);
   const [newBlogTitle, setNewBlogTitle] = useState("");
   const [newBlogExcerpt, setNewBlogExcerpt] = useState("");
@@ -136,7 +138,7 @@ export default function AdminDashboardPage() {
     return () => clearTimeout(handler);
   }, [newBlogContent]);
 
-  // Auth Verification
+  // Auth & Theme Verification
   useEffect(() => {
     if (typeof window !== "undefined") {
       const isLogged = localStorage.getItem("admin_logged_in") === "true";
@@ -145,28 +147,28 @@ export default function AdminDashboardPage() {
       } else {
         setAuthorized(true);
       }
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme) {
+        setIsDark(savedTheme === "dark");
+      }
     }
   }, [router]);
 
-  // Trigger Toast helper
   const triggerToast = (message, type = "success") => {
     setToast({ message, type, key: Date.now() });
   };
 
-  // Fetch telemetry & dynamic collections
+  // Fetch all live data
   const fetchData = async () => {
     try {
-      // Projects
       const projRes = await fetch("/api/projects");
       const projData = await projRes.json();
       if (Array.isArray(projData)) setDashboardProjects(projData);
 
-      // Blogs
       const blogRes = await fetch("/api/blogs");
       const blogData = await blogRes.json();
       if (Array.isArray(blogData)) setDashboardBlogs(blogData);
 
-      // Experiences
       try {
         const expRes = await fetch("/api/experiences");
         const expData = await expRes.json();
@@ -175,7 +177,6 @@ export default function AdminDashboardPage() {
         console.error("Failed loading experiences:", e);
       }
 
-      // Visitor Reflections
       try {
         const commentsRes = await fetch("/api/blogs/comments");
         const commentsData = await commentsRes.json();
@@ -184,7 +185,6 @@ export default function AdminDashboardPage() {
         console.error("Failed loading reflections:", e);
       }
 
-      // Site Traffic Analytics
       try {
         const analyticsRes = await fetch("/api/analytics");
         const analyticsData = await analyticsRes.json();
@@ -193,7 +193,6 @@ export default function AdminDashboardPage() {
         console.error("Failed loading analytics:", e);
       }
 
-      // Blog Analytics
       try {
         const blogAnalyticsRes = await fetch("/api/blogs/analytics");
         const blogAnalyticsData = await blogAnalyticsRes.json();
@@ -266,11 +265,11 @@ export default function AdminDashboardPage() {
 
       const data = await res.json();
       if (data.success) {
-        triggerToast(editingExpId ? "Experience updated successfully" : "Experience added successfully", "success");
+        triggerToast(editingExpId ? "Experience updated" : "Experience published", "success");
         cancelEditExperience();
         fetchData();
       } else {
-        triggerToast(data.error || "Failed submitting experience data", "error");
+        triggerToast(data.error || "Failed submitting experience", "error");
       }
     } catch (err) {
       console.error(err);
@@ -289,7 +288,7 @@ export default function AdminDashboardPage() {
     setExpLocation(exp.location || "");
     setExpDescription(Array.isArray(exp.description) ? exp.description.join("\n") : exp.description || "");
     setExpOrder(exp.order !== undefined ? exp.order : 1);
-    setExpDrawerOpen(true);
+    setFullscreenExpEditor(true);
   };
 
   const cancelEditExperience = () => {
@@ -303,7 +302,7 @@ export default function AdminDashboardPage() {
     setExpLocation("");
     setExpDescription("");
     setExpOrder(1);
-    setExpDrawerOpen(false);
+    setFullscreenExpEditor(false);
   };
 
   const handleDeleteExperience = async (id) => {
@@ -314,7 +313,7 @@ export default function AdminDashboardPage() {
         triggerToast("Experience deleted", "success");
         fetchData();
       } else {
-        triggerToast(data.error || "Failed to delete experience", "error");
+        triggerToast(data.error || "Failed deleting experience", "error");
       }
     } catch (err) {
       console.error(err);
@@ -402,7 +401,7 @@ export default function AdminDashboardPage() {
 
       const data = await res.json();
       if (data.success) {
-        triggerToast(editingProjectId ? "Project updated" : "Project uploaded", "success");
+        triggerToast(editingProjectId ? "Project updated" : "Project published", "success");
         cancelEditProject();
         fetchData();
       } else {
@@ -425,7 +424,7 @@ export default function AdminDashboardPage() {
     setNewProjImageUrl(p.imageUrl || "");
     setNewProjPinned(Boolean(p.pinned));
     setNewProjDate(p.created_at ? new Date(p.created_at).toISOString().split("T")[0] : "");
-    setProjDrawerOpen(true);
+    setFullscreenProjectEditor(true);
   };
 
   const cancelEditProject = () => {
@@ -439,7 +438,7 @@ export default function AdminDashboardPage() {
     setNewProjImageUrl("");
     setNewProjPinned(false);
     setNewProjDate("");
-    setProjDrawerOpen(false);
+    setFullscreenProjectEditor(false);
   };
 
   const handleDeleteProject = async (id) => {
@@ -450,7 +449,7 @@ export default function AdminDashboardPage() {
         triggerToast("Project deleted", "success");
         fetchData();
       } else {
-        triggerToast(data.error || "Failed to delete project", "error");
+        triggerToast(data.error || "Failed deleting project", "error");
       }
     } catch (err) {
       console.error(err);
@@ -491,7 +490,7 @@ export default function AdminDashboardPage() {
         cancelEditBlog();
         fetchData();
       } else {
-        triggerToast(data.error || "Failed to save blog", "error");
+        triggerToast(data.error || "Failed saving blog", "error");
       }
     } catch (err) {
       console.error(err);
@@ -507,7 +506,7 @@ export default function AdminDashboardPage() {
     setNewBlogBanner(b.bannerUrl || "");
     setNewBlogCat(b.category || "Tech");
     setNewBlogContent(b.content || "");
-    setBlogDrawerOpen(true);
+    setFullscreenBlogEditor(true);
   };
 
   const cancelEditBlog = () => {
@@ -518,7 +517,7 @@ export default function AdminDashboardPage() {
     setNewBlogBanner("");
     setNewBlogCat("Tech");
     setNewBlogContent("");
-    setBlogDrawerOpen(false);
+    setFullscreenBlogEditor(false);
   };
 
   const handleDeleteBlog = async (id) => {
@@ -529,7 +528,7 @@ export default function AdminDashboardPage() {
         triggerToast("Blog deleted", "success");
         fetchData();
       } else {
-        triggerToast(data.error || "Failed to delete blog", "error");
+        triggerToast(data.error || "Failed deleting blog", "error");
       }
     } catch (err) {
       console.error(err);
@@ -546,7 +545,7 @@ export default function AdminDashboardPage() {
         triggerToast("Reflection deleted", "success");
         fetchData();
       } else {
-        triggerToast(data.error || "Failed to delete reflection", "error");
+        triggerToast(data.error || "Failed deleting reflection", "error");
       }
     } catch (err) {
       console.error(err);
@@ -589,6 +588,20 @@ export default function AdminDashboardPage() {
     }));
   }, [analytics]);
 
+  // Telemetry IP Logs filtered list
+  const filteredTelemetryLogs = useMemo(() => {
+    const logs = blogAnalytics.logs || [];
+    if (!telemetrySearch.trim()) return logs;
+    const q = telemetrySearch.toLowerCase();
+    return logs.filter(
+      (l) =>
+        (l.ip && l.ip.toLowerCase().includes(q)) ||
+        (l.location && l.location.toLowerCase().includes(q)) ||
+        (l.blogTitle && l.blogTitle.toLowerCase().includes(q)) ||
+        (l.action && l.action.toLowerCase().includes(q))
+    );
+  }, [blogAnalytics, telemetrySearch]);
+
   // Blog analytics computation
   const blogMetricsTable = useMemo(() => {
     const logs = blogAnalytics.logs || [];
@@ -623,7 +636,7 @@ export default function AdminDashboardPage() {
 
   if (!authorized) {
     return (
-      <div className="min-h-screen bg-[#0A0A0B] text-zinc-100 flex items-center justify-center p-6 font-sans">
+      <div className={`min-h-screen flex items-center justify-center p-6 font-sans ${isDark ? "bg-[#0A0A0B] text-zinc-100" : "bg-[#F4F4F6] text-zinc-900"}`}>
         <Helmet title="Verifying Session... | Nikhil Console" />
         <div className="text-center space-y-3">
           <Skeleton className="w-10 h-10 rounded-lg mx-auto" />
@@ -640,6 +653,8 @@ export default function AdminDashboardPage() {
       unreadCount={dashboardComments.length}
       unreadComments={dashboardComments}
       onLogout={handleLogout}
+      isDark={isDark}
+      setIsDark={setIsDark}
     >
       <Helmet title="Admin Dashboard | Nikhil Console" />
 
@@ -674,7 +689,7 @@ export default function AdminDashboardPage() {
             />
           </div>
 
-          {/* Traffic Overview & Top Locations */}
+          {/* Traffic Trends & Top Locations */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2 space-y-4">
               <div className="flex items-center justify-between">
@@ -753,6 +768,73 @@ export default function AdminDashboardPage() {
               )}
             </Card>
           </div>
+
+          {/* VISITOR IP ADDRESS & TELEMETRY STREAM TABLE */}
+          <Card className="space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-100">Visitor IP Telemetry & Action Stream</h3>
+                <p className="text-[11px] text-zinc-500">Real-time IP address logs, geolocations, ISP providers, and browser signatures</p>
+              </div>
+              <div className="w-full sm:w-64">
+                <Input
+                  placeholder="Filter by IP, location, or article..."
+                  value={telemetrySearch}
+                  onChange={(e) => setTelemetrySearch(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Article / Scope</TableHead>
+                  <TableHead>Action</TableHead>
+                  <TableHead>IP Address & ISP</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>OS / Browser</TableHead>
+                  <TableHead>Timestamp</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTelemetryLogs.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-zinc-500 font-mono">
+                      No IP telemetry events recorded matching criteria.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredTelemetryLogs.map((log, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="font-medium text-zinc-200 max-w-[160px] truncate" title={log.blogTitle}>
+                        {log.blogTitle || "Site View"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={log.action === "view" ? "brand" : log.action === "like" ? "danger" : "warning"}>
+                          {(log.action || "view").toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        <div>
+                          <span className="text-zinc-200 font-semibold">{log.ip || "127.0.0.1"}</span>
+                          <span className="block text-[10px] text-zinc-500 font-sans truncate max-w-[130px]">{log.isp || "Local Network"}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs text-zinc-300">{log.location || "Unknown"}</span>
+                      </TableCell>
+                      <TableCell className="font-mono text-[11px] text-zinc-400">
+                        {log.os || "Web"} / {log.browser || "Client"}
+                      </TableCell>
+                      <TableCell className="font-mono text-[11px] text-zinc-500">
+                        {log.timestamp ? new Date(log.timestamp).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "Recent"}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </Card>
         </div>
       )}
 
@@ -829,7 +911,7 @@ export default function AdminDashboardPage() {
               size="sm"
               onClick={() => {
                 cancelEditExperience();
-                setExpDrawerOpen(true);
+                setFullscreenExpEditor(true);
               }}
             >
               <Plus className="w-3.5 h-3.5" />
@@ -841,9 +923,9 @@ export default function AdminDashboardPage() {
             <EmptyState
               icon={Briefcase}
               title="No work experiences"
-              description="Click Add Experience to create your first work history entry."
+              description="Click Add Experience to launch the split workspace editor."
               action={
-                <Button size="sm" onClick={() => setExpDrawerOpen(true)}>
+                <Button size="sm" onClick={() => setFullscreenExpEditor(true)}>
                   Add Experience
                 </Button>
               }
@@ -856,7 +938,6 @@ export default function AdminDashboardPage() {
                   className="flex items-center justify-between p-3.5 bg-[#141417] border border-white/[0.08] rounded-lg transition-colors hover:border-white/[0.12]"
                 >
                   <div className="flex items-center space-x-3 min-w-0">
-                    {/* Priority & Move Up/Down Controls */}
                     <div className="flex items-center space-x-1 pr-2 border-r border-white/[0.08]">
                       <Badge variant="brand" className="font-mono text-[9px]">
                         #{exp.order !== undefined ? exp.order : idx + 1}
@@ -939,7 +1020,7 @@ export default function AdminDashboardPage() {
               size="sm"
               onClick={() => {
                 cancelEditProject();
-                setProjDrawerOpen(true);
+                setFullscreenProjectEditor(true);
               }}
             >
               <Plus className="w-3.5 h-3.5" />
@@ -1020,18 +1101,18 @@ export default function AdminDashboardPage() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
               <h3 className="text-sm font-semibold text-zinc-100">Markdown Blogs</h3>
-              <p className="text-[11px] text-zinc-500">Publish and edit technical articles with live preview</p>
+              <p className="text-[11px] text-zinc-500">Publish and edit technical articles with live split preview</p>
             </div>
             <Button
               variant="primary"
               size="sm"
               onClick={() => {
                 cancelEditBlog();
-                setBlogDrawerOpen(true);
+                setFullscreenBlogEditor(true);
               }}
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Create Blog</span>
+              <span>Create Blog Workspace</span>
             </Button>
           </div>
 
@@ -1061,7 +1142,7 @@ export default function AdminDashboardPage() {
                     <TableCell className="font-mono text-rose-400">{b.likes || 0}</TableCell>
                     <TableCell className="text-right">
                       <div className="inline-flex space-x-1">
-                        <IconButton title="Edit Blog" onClick={() => startEditBlog(b)}>
+                        <IconButton title="Edit Blog Workspace" onClick={() => startEditBlog(b)}>
                           <Edit2 className="w-3.5 h-3.5" />
                         </IconButton>
                         <IconButton
@@ -1124,7 +1205,7 @@ export default function AdminDashboardPage() {
                       {c.name || "Anonymous Visitor"}
                     </TableCell>
                     <TableCell className="max-w-md text-zinc-300 truncate">
-                      "{c.message}"
+                      "{c.message || c.content}"
                     </TableCell>
                     <TableCell className="font-mono text-[11px] text-zinc-500">
                       {c.created_at ? new Date(c.created_at).toLocaleDateString() : "Recent"}
@@ -1153,275 +1234,234 @@ export default function AdminDashboardPage() {
         </Card>
       )}
 
-      {/* EXPERIENCE EDIT/CREATE DRAWER */}
-      <Drawer
-        isOpen={expDrawerOpen}
-        onClose={cancelEditExperience}
-        title={editingExpId ? "Edit Work Experience" : "New Work Experience"}
-        description="Configure role title, company details, logo, dates, and order priority"
-        footer={
-          <>
-            <Button variant="secondary" size="sm" onClick={cancelEditExperience}>
-              Cancel
-            </Button>
-            <Button variant="primary" size="sm" onClick={handleAddExperience}>
-              {editingExpId ? "Save Changes" : "Create Experience"}
-            </Button>
-          </>
-        }
-      >
-        <form onSubmit={handleAddExperience} className="space-y-4">
-          <Input
-            label="Job Title *"
-            required
-            placeholder="e.g. Full Stack Intern"
-            value={expTitle}
-            onChange={(e) => setExpTitle(e.target.value)}
-          />
-
-          <Input
-            label="Company Name *"
-            required
-            placeholder="e.g. Donald Hans"
-            value={expCompany}
-            onChange={(e) => setExpCompany(e.target.value)}
-          />
-
-          <div className="space-y-1.5">
-            <label className="block text-[11px] font-medium text-zinc-400">Company Logo URL / File</label>
-            <div className="flex gap-2.5 items-center">
-              <Input
-                placeholder="https://company.com/logo.png"
-                value={expLogoUrl}
-                onChange={(e) => setExpLogoUrl(e.target.value)}
-              />
-              <label className="inline-flex items-center px-3 py-2 bg-[#1A1A1E] border border-white/[0.08] rounded-lg text-xs font-medium text-zinc-300 hover:bg-[#222226] cursor-pointer flex-shrink-0">
-                <Upload className="w-3.5 h-3.5 mr-1.5" />
-                Upload
-                <input type="file" accept="image/*" onChange={handleLogoFileUpload} className="hidden" />
-              </label>
+      {/* FULLSCREEN SPLIT-SCREEN WORKSPACE - WORK EXPERIENCE */}
+      {fullscreenExpEditor && (
+        <div className="fixed inset-0 z-50 bg-[#0A0A0B] text-zinc-100 flex flex-col font-sans select-none animate-in fade-in duration-150">
+          <div className="flex justify-between items-center px-6 py-4 border-b border-white/[0.08] bg-[#111113]">
+            <div>
+              <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-red-500" />
+                <span>{editingExpId ? "Update Work Experience Workspace" : "New Work Experience Workspace"}</span>
+              </h2>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button variant="secondary" size="sm" onClick={cancelEditExperience}>
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Exit Workspace</span>
+              </Button>
+              <Button variant="primary" size="sm" onClick={handleAddExperience}>
+                {editingExpId ? "Save Changes" : "Publish Experience"}
+              </Button>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Start Period"
-              placeholder="e.g. Jun 2025"
-              value={expStartDate}
-              onChange={(e) => setExpStartDate(e.target.value)}
-            />
-            <Input
-              label="End Period"
-              disabled={expIsPresent}
-              placeholder={expIsPresent ? "Present" : "e.g. Sept 2025"}
-              value={expIsPresent ? "Present" : expEndDate}
-              onChange={(e) => setExpEndDate(e.target.value)}
-            />
-          </div>
+          <div className="flex-1 flex overflow-hidden select-text">
+            {/* Left Pane (Editor Form) */}
+            <div className="w-1/2 p-8 overflow-y-auto border-r border-white/[0.08] space-y-4">
+              <h3 className="text-xs font-semibold text-zinc-400 pb-2 border-b border-white/[0.08]">
+                Experience Record Parameters
+              </h3>
+              <Input
+                label="Job Title *"
+                required
+                placeholder="e.g. Full Stack Intern"
+                value={expTitle}
+                onChange={(e) => setExpTitle(e.target.value)}
+              />
+              <Input
+                label="Company Name *"
+                required
+                placeholder="e.g. Donald Hans, LA"
+                value={expCompany}
+                onChange={(e) => setExpCompany(e.target.value)}
+              />
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-medium text-zinc-400">Company Logo (Upload File or Enter URL)</label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="https://..."
+                    value={expLogoUrl}
+                    onChange={(e) => setExpLogoUrl(e.target.value)}
+                  />
+                  <label className="inline-flex items-center px-3 py-2 bg-[#1A1A1E] border border-white/[0.08] rounded-lg text-xs font-medium text-zinc-300 hover:bg-[#222226] cursor-pointer flex-shrink-0">
+                    <Upload className="w-3.5 h-3.5 mr-1.5" /> Upload
+                    <input type="file" accept="image/*" onChange={handleLogoFileUpload} className="hidden" />
+                  </label>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Start Period" placeholder="Jun 2025" value={expStartDate} onChange={(e) => setExpStartDate(e.target.value)} />
+                <Input label="End Period" disabled={expIsPresent} placeholder={expIsPresent ? "Present" : "Sept 2025"} value={expIsPresent ? "Present" : expEndDate} onChange={(e) => setExpEndDate(e.target.value)} />
+              </div>
+              <div className="flex items-center space-x-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="splitExpIsPresent"
+                  checked={expIsPresent}
+                  onChange={(e) => {
+                    setExpIsPresent(e.target.checked);
+                    if (e.target.checked) setExpEndDate("Present");
+                  }}
+                  className="w-4 h-4 rounded border-white/[0.08] bg-[#141417] text-red-600 focus:ring-red-500/40"
+                />
+                <label htmlFor="splitExpIsPresent" className="text-xs text-zinc-300 cursor-pointer">Currently working here / Present position</label>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Location" placeholder="Los Angeles, CA" value={expLocation} onChange={(e) => setExpLocation(e.target.value)} />
+                <Input label="Priority Order" type="number" min="1" value={expOrder} onChange={(e) => setExpOrder(e.target.value)} />
+              </div>
+              <Textarea label="Bullet Points (One per line)" rows={6} value={expDescription} onChange={(e) => setExpDescription(e.target.value)} />
+            </div>
 
-          <div className="flex items-center space-x-2 pt-1">
-            <input
-              type="checkbox"
-              id="presentCheck"
-              checked={expIsPresent}
-              onChange={(e) => {
-                setExpIsPresent(e.target.checked);
-                if (e.target.checked) setExpEndDate("Present");
-              }}
-              className="w-4 h-4 rounded border-white/[0.08] bg-[#141417] text-red-600 focus:ring-red-500/40"
-            />
-            <label htmlFor="presentCheck" className="text-xs text-zinc-300 cursor-pointer">
-              Currently working here / Present role
-            </label>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Location / Region"
-              placeholder="e.g. Los Angeles, CA"
-              value={expLocation}
-              onChange={(e) => setExpLocation(e.target.value)}
-            />
-            <Input
-              label="Priority Order (1 = Top)"
-              type="number"
-              min="1"
-              value={expOrder}
-              onChange={(e) => setExpOrder(e.target.value)}
-            />
-          </div>
-
-          <Textarea
-            label="Bullet Point Responsibilities (One per line)"
-            rows={5}
-            placeholder="Engineered high-fidelity chatbot MVP...\nOptimized runtime middleware..."
-            value={expDescription}
-            onChange={(e) => setExpDescription(e.target.value)}
-          />
-        </form>
-      </Drawer>
-
-      {/* PROJECT EDIT/CREATE DRAWER */}
-      <Drawer
-        isOpen={projDrawerOpen}
-        onClose={cancelEditProject}
-        title={editingProjectId ? "Edit Project" : "New Project"}
-        description="Configure GitHub repository, tech stack tags, and status"
-        footer={
-          <>
-            <Button variant="secondary" size="sm" onClick={cancelEditProject}>
-              Cancel
-            </Button>
-            <Button variant="primary" size="sm" onClick={handleAddProject}>
-              {editingProjectId ? "Save Changes" : "Publish Project"}
-            </Button>
-          </>
-        }
-      >
-        <form onSubmit={handleAddProject} className="space-y-4">
-          <Input
-            label="Project Title *"
-            required
-            placeholder="e.g. HireNova Job Scraper"
-            value={newProjTitle}
-            onChange={(e) => setNewProjTitle(e.target.value)}
-          />
-
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Tech Stack (Comma Separated) *"
-              required
-              placeholder="React, Python, Tailwind"
-              value={newProjTech}
-              onChange={(e) => setNewProjTech(e.target.value)}
-            />
-            <Select
-              label="Category"
-              value={newProjCat}
-              onChange={(e) => setNewProjCat(e.target.value)}
-              options={[
-                { label: "Web & Systems", value: "web" },
-                { label: "AI & NLP", value: "ai" },
-              ]}
-            />
-          </div>
-
-          <Input
-            label="GitHub Repository URL *"
-            type="url"
-            required
-            placeholder="https://github.com/..."
-            value={newProjGithub}
-            onChange={(e) => setNewProjGithub(e.target.value)}
-          />
-
-          <Input
-            label="Deployed Demo URL"
-            type="url"
-            placeholder="https://..."
-            value={newProjDeployed}
-            onChange={(e) => setNewProjDeployed(e.target.value)}
-          />
-
-          <Input
-            label="Thumbnail Image URL"
-            type="url"
-            placeholder="https://..."
-            value={newProjImageUrl}
-            onChange={(e) => setNewProjImageUrl(e.target.value)}
-          />
-
-          <div className="flex items-center space-x-2 pt-1">
-            <input
-              type="checkbox"
-              id="pinCheck"
-              checked={newProjPinned}
-              onChange={(e) => setNewProjPinned(e.target.checked)}
-              className="w-4 h-4 rounded border-white/[0.08] bg-[#141417] text-red-600 focus:ring-red-500/40"
-            />
-            <label htmlFor="pinCheck" className="text-xs text-zinc-300 cursor-pointer flex items-center gap-1.5">
-              <Pin className="w-3.5 h-3.5 text-amber-400 fill-current" /> Pin project to top of portfolio
-            </label>
-          </div>
-
-          <Textarea
-            label="Short Description"
-            rows={4}
-            placeholder="Automated job application browser extension powered by Playwright and AI..."
-            value={newProjDesc}
-            onChange={(e) => setNewProjDesc(e.target.value)}
-          />
-        </form>
-      </Drawer>
-
-      {/* BLOG EDIT/CREATE DRAWER */}
-      <Drawer
-        isOpen={blogDrawerOpen}
-        onClose={cancelEditBlog}
-        title={editingBlogId ? "Edit Markdown Blog" : "New Markdown Blog"}
-        description="Write and compile markdown articles with live split preview"
-        footer={
-          <>
-            <Button variant="secondary" size="sm" onClick={cancelEditBlog}>
-              Cancel
-            </Button>
-            <Button variant="primary" size="sm" onClick={handleAddBlog}>
-              {editingBlogId ? "Save Changes" : "Publish Article"}
-            </Button>
-          </>
-        }
-      >
-        <form onSubmit={handleAddBlog} className="space-y-4">
-          <Input
-            label="Article Title *"
-            required
-            placeholder="e.g. Building Scalable AI Search Engines"
-            value={newBlogTitle}
-            onChange={(e) => setNewBlogTitle(e.target.value)}
-          />
-
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Category Tag"
-              placeholder="e.g. AI & Search"
-              value={newBlogCat}
-              onChange={(e) => setNewBlogCat(e.target.value)}
-            />
-            <Input
-              label="Thumbnail Image URL"
-              type="url"
-              placeholder="https://..."
-              value={newBlogImage}
-              onChange={(e) => setNewBlogImage(e.target.value)}
-            />
-          </div>
-
-          <Input
-            label="Short Excerpt Summary"
-            placeholder="An in-depth exploration of vector databases..."
-            value={newBlogExcerpt}
-            onChange={(e) => setNewBlogExcerpt(e.target.value)}
-          />
-
-          <Textarea
-            label="Article Content (Markdown Supported) *"
-            required
-            rows={8}
-            placeholder="# Article Header\n\nWrite in Markdown format..."
-            value={newBlogContent}
-            onChange={(e) => setNewBlogContent(e.target.value)}
-          />
-
-          {debouncedBlogContent.trim() && (
-            <div className="space-y-1.5 pt-2 border-t border-white/[0.08]">
-              <label className="block text-[11px] font-medium text-zinc-400">Live Markdown Preview</label>
-              <div className="p-3 bg-[#141417] border border-white/[0.08] rounded-lg max-h-56 overflow-y-auto">
-                <CustomMarkdown content={debouncedBlogContent} />
+            {/* Right Pane (Live Dynamic Experience Card Mockup) */}
+            <div className="w-1/2 p-8 bg-[#0E0E10] overflow-y-auto flex flex-col justify-center items-center">
+              <div className="w-full max-w-md">
+                <p className="text-xs font-semibold text-zinc-400 mb-4 text-center">Portfolio Experience Live Card Mockup</p>
+                <div className="p-6 rounded-xl bg-[#141417] border border-white/[0.08] space-y-3 shadow-xl">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/[0.08] bg-white/[0.04] flex items-center justify-center flex-shrink-0">
+                      {expLogoUrl ? <img src={expLogoUrl} alt="Logo" className="w-full h-full object-cover" /> : <Briefcase className="w-4 h-4 text-red-400" />}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <h4 className="text-sm font-semibold text-zinc-100">{expTitle || "Full Stack Intern"}</h4>
+                        <Badge variant="neutral">{expStartDate ? (expIsPresent ? `${expStartDate} – Present` : expEndDate ? `${expStartDate} – ${expEndDate}` : expStartDate) : "Jun 2025 – Present"}</Badge>
+                      </div>
+                      <p className="text-xs text-red-400 font-medium mt-0.5">{expCompany || "Company Name"}</p>
+                      {expLocation && <p className="text-[10px] text-zinc-400 mt-0.5 font-mono">{expLocation}</p>}
+                    </div>
+                  </div>
+                  <div className="border-t border-white/[0.08] pt-3">
+                    <ul className="list-disc pl-4 text-xs text-zinc-400 space-y-1">
+                      {(expDescription ? expDescription.split("\n").filter(Boolean) : ["Architected structured microdata schematics...", "Engineered high-fidelity chatbot MVP..."]).map((b, idx) => (
+                        <li key={idx}>{b}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
               </div>
             </div>
-          )}
-        </form>
-      </Drawer>
+          </div>
+        </div>
+      )}
+
+      {/* FULLSCREEN SPLIT-SCREEN WORKSPACE - MANAGE PROJECTS */}
+      {fullscreenProjectEditor && (
+        <div className="fixed inset-0 z-50 bg-[#0A0A0B] text-zinc-100 flex flex-col font-sans select-none animate-in fade-in duration-150">
+          <div className="flex justify-between items-center px-6 py-4 border-b border-white/[0.08] bg-[#111113]">
+            <div>
+              <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+                <FolderKanban className="w-4 h-4 text-red-500" />
+                <span>{editingProjectId ? "Update Dynamic Project Workspace" : "New Dynamic Project Workspace"}</span>
+              </h2>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button variant="secondary" size="sm" onClick={cancelEditProject}>
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Exit Workspace</span>
+              </Button>
+              <Button variant="primary" size="sm" onClick={handleAddProject}>
+                {editingProjectId ? "Save Changes" : "Publish Project"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex-1 flex overflow-hidden select-text">
+            {/* Left Pane (Editor Form) */}
+            <div className="w-1/2 p-8 overflow-y-auto border-r border-white/[0.08] space-y-4">
+              <h3 className="text-xs font-semibold text-zinc-400 pb-2 border-b border-white/[0.08]">
+                Project Parameters Configuration
+              </h3>
+              <Input label="Project Title *" required placeholder="e.g. HireNova Job Scraper" value={newProjTitle} onChange={(e) => setNewProjTitle(e.target.value)} />
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Tech Stack *" required placeholder="React, Python, Tailwind" value={newProjTech} onChange={(e) => setNewProjTech(e.target.value)} />
+                <Select label="Category" value={newProjCat} onChange={(e) => setNewProjCat(e.target.value)} options={[{ label: "Web & Systems", value: "web" }, { label: "AI & NLP", value: "ai" }]} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="GitHub URL *" type="url" required placeholder="https://github.com/..." value={newProjGithub} onChange={(e) => setNewProjGithub(e.target.value)} />
+                <Input label="Deployed Demo URL" type="url" placeholder="https://..." value={newProjDeployed} onChange={(e) => setNewProjDeployed(e.target.value)} />
+              </div>
+              <Input label="Thumbnail Image URL" type="url" placeholder="https://..." value={newProjImageUrl} onChange={(e) => setNewProjImageUrl(e.target.value)} />
+              <div className="flex items-center space-x-2 pt-1">
+                <input type="checkbox" id="splitProjPinned" checked={newProjPinned} onChange={(e) => setNewProjPinned(e.target.checked)} className="w-4 h-4 rounded border-white/[0.08] bg-[#141417] text-red-600 focus:ring-red-500/40" />
+                <label htmlFor="splitProjPinned" className="text-xs text-zinc-300 cursor-pointer flex items-center gap-1"><Pin className="w-3.5 h-3.5 text-amber-400 fill-current" /> Pin project to top</label>
+              </div>
+              <Textarea label="Short Description" rows={5} value={newProjDesc} onChange={(e) => setNewProjDesc(e.target.value)} />
+            </div>
+
+            {/* Right Pane (Live Dynamic Project Card Mockup) */}
+            <div className="w-1/2 p-8 bg-[#0E0E10] overflow-y-auto flex flex-col justify-center items-center">
+              <div className="w-full max-w-md">
+                <p className="text-xs font-semibold text-zinc-400 mb-4 text-center">Portfolio Project Live Card Mockup</p>
+                <div className={`p-6 rounded-xl bg-[#141417] border space-y-3 shadow-xl ${newProjPinned ? "border-amber-500/40" : "border-white/[0.08]"}`}>
+                  <div className="flex justify-between items-start">
+                    <Badge variant="brand">{newProjCat || "web"}</Badge>
+                    {newProjPinned && <Badge variant="warning"><Pin className="w-2.5 h-2.5 mr-1 fill-current" /> Pinned</Badge>}
+                  </div>
+                  <h4 className="text-sm font-semibold text-zinc-100">{newProjTitle || "Project Title Mock"}</h4>
+                  <p className="text-xs text-zinc-400 leading-relaxed">{newProjDesc || "Short explainer description will compile dynamically in real-time as you type..."}</p>
+                  <div className="flex flex-wrap gap-1 pt-2">
+                    {(newProjTech ? newProjTech.split(",") : ["React", "Tailwind"]).map((t, idx) => (
+                      <span key={idx} className="text-[9px] bg-white/[0.06] text-zinc-400 px-1.5 py-0.5 rounded font-mono">{t.trim()}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FULLSCREEN SPLIT-SCREEN WORKSPACE - MARKDOWN BLOGS */}
+      {fullscreenBlogEditor && (
+        <div className="fixed inset-0 z-50 bg-[#0A0A0B] text-zinc-100 flex flex-col font-sans select-none animate-in fade-in duration-150">
+          <div className="flex justify-between items-center px-6 py-4 border-b border-white/[0.08] bg-[#111113]">
+            <div>
+              <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+                <BookHeart className="w-4 h-4 text-red-500" />
+                <span>{editingBlogId ? "Update Markdown Blog Workspace" : "New Markdown Blog Workspace"}</span>
+              </h2>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button variant="secondary" size="sm" onClick={cancelEditBlog}>
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Exit Workspace</span>
+              </Button>
+              <Button variant="primary" size="sm" onClick={handleAddBlog}>
+                {editingBlogId ? "Save Changes" : "Publish Article"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex-1 flex overflow-hidden select-text">
+            {/* Left Pane (Editor Form) */}
+            <div className="w-1/2 p-8 overflow-y-auto border-r border-white/[0.08] space-y-4">
+              <h3 className="text-xs font-semibold text-zinc-400 pb-2 border-b border-white/[0.08]">
+                Markdown Article Parameters
+              </h3>
+              <Input label="Article Title *" required placeholder="Building Scalable AI Search Engines" value={newBlogTitle} onChange={(e) => setNewBlogTitle(e.target.value)} />
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Category Tag" placeholder="AI & Search" value={newBlogCat} onChange={(e) => setNewBlogCat(e.target.value)} />
+                <Input label="Thumbnail Image URL" type="url" placeholder="https://..." value={newBlogImage} onChange={(e) => setNewBlogImage(e.target.value)} />
+              </div>
+              <Input label="Short Excerpt" placeholder="An in-depth exploration..." value={newBlogExcerpt} onChange={(e) => setNewBlogExcerpt(e.target.value)} />
+              <Textarea label="Article Body Content (Markdown Supported) *" required rows={10} placeholder="# Article Header\n\nWrite in Markdown format..." value={newBlogContent} onChange={(e) => setNewBlogContent(e.target.value)} />
+            </div>
+
+            {/* Right Pane (Live README Markdown Preview) */}
+            <div className="w-1/2 p-8 bg-[#0E0E10] overflow-y-auto flex flex-col justify-start">
+              <p className="text-xs font-semibold text-zinc-400 mb-4 text-center">Live README Markdown Preview</p>
+              <div className="p-6 rounded-xl bg-[#141417] border border-white/[0.08] min-h-[400px]">
+                {debouncedBlogContent.trim() ? (
+                  <CustomMarkdown content={debouncedBlogContent} />
+                ) : (
+                  <p className="text-zinc-500 italic text-center py-24 text-xs">No markdown written yet. Enter text in the left pane to compile.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* DELETE CONFIRMATION DIALOG */}
       <Dialog
@@ -1462,7 +1502,7 @@ export default function AdminDashboardPage() {
           key={toast.key}
           message={toast.message}
           type={toast.type}
-          isDark={true}
+          isDark={isDark}
           onClose={() => setToast({ message: "", type: "success", key: 0 })}
         />
       )}
