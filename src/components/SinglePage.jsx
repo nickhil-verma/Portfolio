@@ -495,6 +495,17 @@ export default function Portfolio() {
   const sortExperiencesLatestFirst = (expList) => {
     if (!Array.isArray(expList)) return [];
     return [...expList].sort((a, b) => {
+      const orderA = typeof a.order === "number" ? a.order : (a.order ? parseInt(a.order, 10) : null);
+      const orderB = typeof b.order === "number" ? b.order : (b.order ? parseInt(b.order, 10) : null);
+
+      if (orderA !== null && orderB !== null && !isNaN(orderA) && !isNaN(orderB)) {
+        if (orderA !== orderB) return orderA - orderB;
+      } else if (orderA !== null && !isNaN(orderA)) {
+        return -1;
+      } else if (orderB !== null && !isNaN(orderB)) {
+        return 1;
+      }
+
       const aIsPresent = Boolean(a.isPresent || (a.endDate && a.endDate.toString().toLowerCase().includes("present")));
       const bIsPresent = Boolean(b.isPresent || (b.endDate && b.endDate.toString().toLowerCase().includes("present")));
 
@@ -1361,7 +1372,7 @@ export default function Portfolio() {
                 {/* Vertical Timeline line (Mobile) - Centered at 13px */}
                 <div className={`absolute left-[13px] top-2 bottom-2 w-0.5 ${isDark ? "bg-zinc-800" : "bg-zinc-200"}`} />
 
-                {experiences.map((exp, index) => {
+                {combinedExperiences.map((exp, index) => {
                   const isExpanded = expandedExperience === index;
                   return (
                     <div
