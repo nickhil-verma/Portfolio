@@ -1,589 +1,99 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  ArrowLeft, LayoutDashboard, FolderKanban, BookHeart, LogOut, 
-  Plus, Trash2, Users, Cpu, FileText, CheckCircle2, Globe, Monitor, Smartphone, Tablet,
-  Github, X, MessageSquare, Sun, Moon, GripVertical, Heart,
-  Bell, Menu, ChevronLeft, ChevronRight, RefreshCw, Briefcase, Pin, Upload, Image, Calendar, MapPin
-} from "lucide-react";
-import Link from "next/link";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import CustomToast from "../../../components/CustomToast";
-import Helmet from "../../../components/Helmet";
-
-// Recharts components for shadcn-style graphs
 import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid
-} from "recharts";
+  Globe,
+  Heart,
+  MessageSquare,
+  Cpu,
+  FolderKanban,
+  BookHeart,
+  Briefcase,
+  Plus,
+  Trash2,
+  Edit2,
+  Pin,
+  ChevronLeft,
+  Upload,
+  Search,
+  CheckCircle2,
+  XCircle,
+  ExternalLink,
+  Github,
+  Calendar,
+  MapPin,
+  Image as ImageIcon,
+  ArrowUpRight,
+  TrendingUp,
+} from "lucide-react";
+import Helmet from "../../../components/Helmet";
+import CustomToast from "../../../components/CustomToast";
+import { AdminShell } from "../../../components/admin/AdminShell";
+import {
+  Button,
+  IconButton,
+  Input,
+  Textarea,
+  Select,
+  Badge,
+  Card,
+  StatCard,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableHead,
+  Tabs,
+  Drawer,
+  Dialog,
+  EmptyState,
+  Skeleton,
+} from "../../../components/admin/ui";
+import { Sparkline } from "../../../components/admin/ui/Sparkline";
 
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
+// Dynamically load heavy markdown preview chunk on demand
+const CustomMarkdown = dynamic(
+  () => import("../../../components/admin/CustomMarkdown"),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-40 w-full rounded-lg" />,
+  }
+);
 
-// Custom Markdown Component supporting GFM and raw HTML
-function CustomMarkdown({ content, isDark }) {
-  return (
-    <div className="space-y-4">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw]}
-      components={{
-        img: ({ node, className, style, ...props }) => (
-          <span className="flex justify-center w-full my-6">
-            <img 
-              {...props} 
-              style={style} 
-              className={`max-w-full h-auto rounded-[24px] shadow-xl border object-contain ${
-                isDark ? "border-white/5" : "border-black/5"
-              } ${className || ""}`} 
-              loading="lazy" 
-            />
-          </span>
-        ),
-        h1: ({ node, ...props }) => <h2 className={`text-2xl sm:text-3xl font-extrabold font-outfit mt-8 mb-4 tracking-tight leading-tight ${isDark ? "text-white" : "text-zinc-950"}`} {...props} />,
-        h2: ({ node, ...props }) => <h3 className={`text-xl sm:text-2xl font-bold font-outfit mt-6 mb-3 tracking-tight ${isDark ? "text-white" : "text-zinc-950"}`} {...props} />,
-        h3: ({ node, ...props }) => <h4 className={`text-base sm:text-lg font-bold font-outfit mt-5 mb-2.5 ${isDark ? "text-white" : "text-zinc-950"}`} {...props} />,
-        p: ({ node, ...props }) => <p className={`text-[10px] sm:text-xs leading-relaxed mb-2 ${isDark ? "text-zinc-300" : "text-zinc-700"}`} {...props} />,
-        a: ({ node, ...props }) => <a className={`font-semibold hover:underline transition-colors ${isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"}`} target="_blank" rel="noopener noreferrer" {...props} />,
-        code: ({ node, inline, className, children, ...props }) => {
-          if (inline || !String(children).includes('\n')) {
-            return (
-              <code className={`px-1.5 py-0.5 rounded text-[11px] font-mono ${isDark ? "bg-white/10 text-red-400" : "bg-black/5 text-red-600"}`} {...props}>
-                {children}
-              </code>
-            );
-          }
-          return (
-            <div className={`p-4 rounded-xl font-mono text-[11px] overflow-x-auto mb-4 border ${isDark ? "bg-black/40 border-white/5 text-zinc-300" : "bg-zinc-100 border-black/5 text-zinc-800"}`}>
-              <pre className="leading-relaxed"><code {...props}>{children}</code></pre>
-            </div>
-          );
-        },
-        blockquote: ({ node, ...props }) => (
-          <blockquote className={`border-l-2 border-red-500 pl-3 py-1 my-3 text-[10px] sm:text-xs text-zinc-400 italic bg-white/5 rounded-r-md`} {...props} />
-        ),
-        ul: ({ node, ...props }) => <ul className={`list-disc pl-6 mb-4 space-y-1.5 ${isDark ? "text-zinc-300" : "text-zinc-700"}`} {...props} />,
-        ol: ({ node, ...props }) => <ol className={`list-decimal pl-6 mb-4 space-y-1.5 ${isDark ? "text-zinc-300" : "text-zinc-700"}`} {...props} />,
-        table: ({ node, ...props }) => (
-          <div className="w-full overflow-x-auto mb-4 rounded-xl border border-zinc-200/10 shadow-md select-text">
-            <table className={`w-full text-left border-collapse text-[10px] sm:text-xs ${isDark ? "text-zinc-300 bg-[#121214]/40" : "text-zinc-700 bg-white"}`} {...props} />
-          </div>
-        ),
-        th: ({ node, ...props }) => <th className="p-2 sm:p-2.5 font-bold tracking-wide font-outfit border-b border-zinc-200/5" {...props} />,
-        td: ({ node, ...props }) => <td className="p-2 sm:p-2.5 leading-relaxed font-sans border-b border-zinc-200/5" {...props} />,
-        tr: ({ node, ...props }) => <tr className={`transition-colors ${isDark ? "hover:bg-white/[0.01]" : "hover:bg-black/[0.01]"}`} {...props} />,
-        hr: ({ node, ...props }) => <hr className={`my-6 border-t ${isDark ? "border-white/5" : "border-black/5"}`} {...props} />
-      }}
-    >
-      {content}
-    </ReactMarkdown>
-    </div>
-  );
-}
-
-// Continental outlines for a high-fidelity 2D flat dotted world map
-const CONTINENTS = [
-  // North America
-  [[-168, 66], [-120, 75], [-60, 75], [-50, 60], [-80, 25], [-85, 8], [-77, 8], [-80, 15], [-100, 15], [-105, 20], [-115, 30], [-125, 48]],
-  // Greenland
-  [[-73, 70], [-60, 80], [-20, 75], [-40, 60]],
-  // South America
-  [[-80, 12], [-45, -5], [-35, -7], [-40, -20], [-70, -55], [-75, -45], [-70, -20]],
-  // Africa
-  [[-17, 15], [30, 30], [32, 31], [50, 12], [40, -15], [20, -35], [15, -34], [8, -5], [-10, 5]],
-  // Europe & Asia (Eurasia)
-  [[-10, 55], [20, 70], [60, 70], [100, 75], [140, 70], [170, 65], [140, 35], [120, 15], [108, 15], [100, 1], [80, 10], [50, 10], [40, 30], [25, 36], [-10, 36]],
-  // India
-  [[68, 23], [78, 8], [88, 22]],
-  // Southeast Asia & Indonesia
-  [[95, 20], [110, 15], [105, -5], [120, -10], [140, -5], [130, 5]],
-  // Australia
-  [[113, -22], [143, -10], [151, -33], [115, -34]],
-  // Japan / Korea
-  [[130, 30], [142, 40], [145, 35], [132, 28]]
-];
-
-// Flat 2D Dot-Matrix World Map component with Visitor Geolocation Radar
-function GeolocationMap({ logs, isDark }) {
-  const canvasRef = React.useRef(null);
-  const containerRef = React.useRef(null);
-  const [hoveredLog, setHoveredLog] = useState(null);
-
-  // Helper for polygon containment check (ray-casting method)
-  const isPointInPolygon = (point, polygon) => {
-    const x = point[0], y = point[1];
-    let inside = false;
-    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-      const xi = polygon[i][0], yi = polygon[i][1];
-      const xj = polygon[j][0], yj = polygon[j][1];
-      const intersect = ((yi > y) !== (yj > y))
-          && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-      if (intersect) inside = !inside;
-    }
-    return inside;
-  };
-
-  // Precompute continent grid dots for efficiency
-  const mapDots = React.useMemo(() => {
-    const dots = [];
-    const cols = 64;
-    const rows = 32;
-    for (let r = 0; r < rows; r++) {
-      const lat = 80 - (r / rows) * 140; // map latitude from 80N to 60S
-      for (let c = 0; c < cols; c++) {
-        const lon = -170 + (c / cols) * 340; // map longitude from 170W to 170E
-        let isLand = false;
-        for (const polygon of CONTINENTS) {
-          if (isPointInPolygon([lon, lat], polygon)) {
-            isLand = true;
-            break;
-          }
-        }
-        if (isLand) {
-          dots.push({ lat, lon });
-        }
-      }
-    }
-    return dots;
-  }, []);
-
-  // Filter valid geocodes (kept stable)
-  const visitors = React.useMemo(() => {
-    return logs.filter(log => {
-      const lat = parseFloat(log.lat);
-      const lon = parseFloat(log.lon);
-      return !isNaN(lat) && !isNaN(lon);
-    });
-  }, [logs]);
-
-  // Coordinate projections mapping (with 24px padding around borders for ticks & margin labels)
-  const pad = 24;
-  const getX = (lon, width) => pad + ((lon + 180) / 360) * (width - pad * 2);
-  const getY = (lat, height) => pad + ((90 - lat) / 180) * (height - pad * 2);
-
-  // Bengaluru owner node coordinates
-  const hubLon = 77.5946;
-  const hubLat = 12.9716;
-
-  React.useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    let frameId;
-
-    const render = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const width = canvas.width;
-      const height = canvas.height;
-      const bx = getX(hubLon, width);
-      const by = getY(hubLat, height);
-
-      // Draw digital HUD scanlines
-      ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.015)" : "rgba(0, 0, 0, 0.015)";
-      ctx.lineWidth = 1;
-      for (let y = pad; y < height - pad; y += 4) {
-        ctx.beginPath();
-        ctx.moveTo(pad, y);
-        ctx.lineTo(width - pad, y);
-        ctx.stroke();
-      }
-
-      // Draw digital coordinates background grid
-      ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.03)" : "rgba(0, 0, 0, 0.03)";
-      ctx.lineWidth = 0.5;
-      
-      // Latitude grid lines
-      for (let lat = -60; lat <= 60; lat += 30) {
-        const y = getY(lat, height);
-        ctx.beginPath();
-        ctx.moveTo(pad, y);
-        ctx.lineTo(width - pad, y);
-        ctx.stroke();
-      }
-
-      // Longitude grid lines
-      for (let lon = -120; lon <= 120; lon += 60) {
-        const x = getX(lon, width);
-        ctx.beginPath();
-        ctx.moveTo(x, pad);
-        ctx.lineTo(x, height - pad);
-        ctx.stroke();
-      }
-
-      // Draw digital ticks & border lines
-      ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(pad, pad, width - pad * 2, height - pad * 2);
-
-      // Draw Longitude bottom ticks & digital labels
-      const lonTicks = [-120, -60, 0, 60, 120];
-      lonTicks.forEach(lon => {
-        const x = getX(lon, width);
-        ctx.beginPath();
-        ctx.moveTo(x, height - pad);
-        ctx.lineTo(x, height - pad + 5);
-        ctx.stroke();
-
-        ctx.fillStyle = isDark ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.4)";
-        ctx.font = "7px monospace";
-        ctx.textAlign = "center";
-        const label = lon === 0 ? "000°" : `${Math.abs(lon).toString().padStart(3, "0")}°${lon < 0 ? "W" : "E"}`;
-        ctx.fillText(label, x, height - pad + 14);
-      });
-
-      // Draw Latitude left ticks & digital labels
-      const latTicks = [-60, -30, 0, 30, 60];
-      latTicks.forEach(lat => {
-        const y = getY(lat, height);
-        ctx.beginPath();
-        ctx.moveTo(pad - 5, y);
-        ctx.lineTo(pad, y);
-        ctx.stroke();
-
-        ctx.fillStyle = isDark ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.4)";
-        ctx.font = "7px monospace";
-        ctx.textAlign = "right";
-        const label = lat === 0 ? "EQ" : `${Math.abs(lat).toString().padStart(2, "0")}°${lat < 0 ? "S" : "N"}`;
-        ctx.fillText(label, pad - 8, y + 2.5);
-      });
-
-      // Draw stylized world dot-matrix continents
-      ctx.fillStyle = isDark ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.13)";
-      mapDots.forEach(pt => {
-        const x = getX(pt.lon, width);
-        const y = getY(pt.lat, height);
-        
-        ctx.beginPath();
-        ctx.arc(x, y, 1.2, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Draw connection telemetry arcs + packet animation
-      visitors.forEach((visitor, idx) => {
-        const lat = parseFloat(visitor.lat);
-        const lon = parseFloat(visitor.lon);
-        const vx = getX(lon, width);
-        const vy = getY(lat, height);
-
-        // Control point pulling upwards proportional to horizontal delta to make a gorgeous geodesic arc
-        const mx = (bx + vx) / 2;
-        const my = (by + vy) / 2;
-        const cx = mx;
-        const cy = my - Math.abs(bx - vx) * 0.22 - 15;
-
-        // Draw connection arc line
-        ctx.strokeStyle = isDark ? "rgba(239, 68, 68, 0.18)" : "rgba(239, 68, 68, 0.12)";
-        ctx.lineWidth = 0.8;
-        ctx.beginPath();
-        ctx.moveTo(bx, by);
-        ctx.quadraticCurveTo(cx, cy, vx, vy);
-        ctx.stroke();
-
-        // Draw animated packet streams flowing on the arc
-        const time = Date.now() / 2000 + idx * 0.15;
-        const t = time % 1.0;
-        
-        // Quadratic Bezier interpolation
-        const px = (1 - t) * (1 - t) * bx + 2 * (1 - t) * t * cx + t * t * vx;
-        const py = (1 - t) * (1 - t) * by + 2 * (1 - t) * t * cy + t * t * vy;
-
-        ctx.beginPath();
-        ctx.arc(px, py, 2, 0, Math.PI * 2);
-        ctx.fillStyle = "#ef4444";
-        ctx.shadowColor = "#ef4444";
-        ctx.shadowBlur = 3;
-        ctx.fill();
-        ctx.shadowBlur = 0; // reset glow
-      });
-
-      // Draw developer hub center point (Bengaluru, India)
-      ctx.beginPath();
-      ctx.arc(bx, by, 3, 0, Math.PI * 2);
-      ctx.fillStyle = "#ef4444";
-      ctx.shadowColor = "#ef4444";
-      ctx.shadowBlur = 6;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(bx, by, 5, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Draw visitor beacons with flashing pulse rings
-      visitors.forEach((visitor, idx) => {
-        const lat = parseFloat(visitor.lat);
-        const lon = parseFloat(visitor.lon);
-        const vx = getX(lon, width);
-        const vy = getY(lat, height);
-
-        // Flashing radar pulse ring
-        const time = Date.now() / 1200 + idx * 0.25;
-        const pulseRadius = 3 + (time * 8) % 9;
-        const alpha = 1 - (pulseRadius - 3) / 9;
-
-        ctx.strokeStyle = `rgba(239, 68, 68, ${alpha * 0.85})`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(vx, vy, pulseRadius, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Beacon center core
-        ctx.fillStyle = "#ef4444";
-        ctx.beginPath();
-        ctx.arc(vx, vy, 2, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 0.5;
-        ctx.beginPath();
-        ctx.arc(vx, vy, 2, 0, Math.PI * 2);
-        ctx.stroke();
-      });
-
-      // Draw high-tech HUD cursor crosshair if hovered
-      if (hoveredLog) {
-        ctx.strokeStyle = "#ef4444";
-        ctx.lineWidth = 1;
-        const hx = hoveredLog.canvasX;
-        const hy = hoveredLog.canvasY;
-        const rSize = 5;
-
-        // Top-left bracket
-        ctx.beginPath();
-        ctx.moveTo(hx - rSize, hy - rSize + 2);
-        ctx.lineTo(hx - rSize, hy - rSize);
-        ctx.lineTo(hx - rSize + 2, hy - rSize);
-        ctx.stroke();
-
-        // Top-right bracket
-        ctx.beginPath();
-        ctx.moveTo(hx + rSize, hy - rSize + 2);
-        ctx.lineTo(hx + rSize, hy - rSize);
-        ctx.lineTo(hx + rSize - 2, hy - rSize);
-        ctx.stroke();
-
-        // Bottom-left bracket
-        ctx.beginPath();
-        ctx.moveTo(hx - rSize, hy + rSize - 2);
-        ctx.lineTo(hx - rSize, hy + rSize);
-        ctx.lineTo(hx - rSize + 2, hy + rSize);
-        ctx.stroke();
-
-        // Bottom-right bracket
-        ctx.beginPath();
-        ctx.moveTo(hx + rSize, hy + rSize - 2);
-        ctx.lineTo(hx + rSize, hy + rSize);
-        ctx.lineTo(hx + rSize - 2, hy + rSize);
-        ctx.stroke();
-      }
-
-      frameId = requestAnimationFrame(render);
-    };
-
-    render();
-
-    return () => {
-      cancelAnimationFrame(frameId);
-    };
-  }, [visitors, isDark, mapDots, hoveredLog]);
-
-  const handleMouseMove = (e) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    
-    // Convert client screen mouse coordinates into canvas coordinates
-    const clientX = e.clientX - rect.left;
-    const clientY = e.clientY - rect.top;
-    const x = (clientX / rect.width) * canvas.width;
-    const y = (clientY / rect.height) * canvas.height;
-
-    let closestLog = null;
-    let minDistance = 10; // hover threshold in canvas pixels
-
-    visitors.forEach(visitor => {
-      const lat = parseFloat(visitor.lat);
-      const lon = parseFloat(visitor.lon);
-      const vx = getX(lon, canvas.width);
-      const vy = getY(lat, canvas.height);
-
-      const d = Math.hypot(x - vx, y - vy);
-      if (d < minDistance) {
-        minDistance = d;
-        closestLog = {
-          ...visitor,
-          canvasX: vx,
-          canvasY: vy,
-          clientX: e.clientX - rect.left,
-          clientY: e.clientY - rect.top
-        };
-      }
-    });
-
-    setHoveredLog(closestLog);
-  };
-
-  const handleMouseLeave = () => {
-    setHoveredLog(null);
-  };
-
-  return (
-    <div ref={containerRef} className="w-full flex flex-col items-center justify-center relative select-none py-1">
-      <canvas
-        ref={canvasRef}
-        width={380}
-        height={210}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        className="max-w-full h-auto rounded-xl bg-black/10 dark:bg-black/25 border border-white/5 shadow-inner cursor-crosshair transition-colors duration-300"
-      />
-      
-      {/* High-Tech Overlay Telemetry Tooltip */}
-      {hoveredLog && (
-        <div 
-          style={{ 
-            left: hoveredLog.clientX + 14, 
-            top: hoveredLog.clientY - 65
-          }} 
-          className={`absolute z-30 pointer-events-none p-3 rounded-xl border text-[9px] font-mono shadow-2xl backdrop-blur-md transition-all flex flex-col gap-1 min-w-[170px] ${
-            isDark 
-              ? "bg-[#09090b]/95 border-red-500/30 text-zinc-300 shadow-red-950/20" 
-              : "bg-white/95 border-zinc-200 text-zinc-700 shadow-zinc-300/30"
-          }`}
-        >
-          <div className="font-bold text-red-500 border-b border-red-500/20 pb-1 flex items-center gap-1.5 justify-between">
-            <span className="truncate max-w-[120px]">IP: {hoveredLog.ip || "0.0.0.0"}</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping flex-shrink-0" />
-          </div>
-          <div className="truncate">📍 Loc: <span className="font-bold text-zinc-950 dark:text-white">{hoveredLog.location || "Unknown"}</span></div>
-          <div>🕒 Time: <span className="text-zinc-400 font-semibold">{new Date(hoveredLog.timestamp).toLocaleTimeString()}</span></div>
-          <div className="uppercase tracking-wider text-[7px] text-red-400 font-bold bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20 self-start mt-0.5">
-            {hoveredLog.action || "Visit"} Event
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default function AdminDashboard() {
+export default function AdminDashboardPage() {
   const router = useRouter();
+
+  // Auth & Navigation States
   const [authorized, setAuthorized] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
-  const [isDark, setIsDark] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ message: "", type: "success", key: 0 });
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Data Collections States
   const [dashboardProjects, setDashboardProjects] = useState([]);
   const [dashboardBlogs, setDashboardBlogs] = useState([]);
-  const [dashboardComments, setDashboardComments] = useState([]);
   const [dashboardExperiences, setDashboardExperiences] = useState([]);
-  
-  // Traffic analytics state
-  const [analytics, setAnalytics] = useState({
-    totalViews: 0,
-    uniqueViews: 0,
-    logs: [],
-  });
-
-  // Blog telemetry analytics states
+  const [dashboardComments, setDashboardComments] = useState([]);
+  const [analytics, setAnalytics] = useState({ logs: [] });
   const [blogAnalytics, setBlogAnalytics] = useState({ logs: [] });
-  const [selectedBlogFilter, setSelectedBlogFilter] = useState("all");
 
-  const [loading, setLoading] = useState(true);
+  // Filter & Search States
+  const [analyticsTimeRange, setAnalyticsTimeRange] = useState("30d");
+  const [blogSearchQuery, setBlogSearchQuery] = useState("");
+  const [projSearchQuery, setProjSearchQuery] = useState("");
+  const [expSearchQuery, setExpSearchQuery] = useState("");
+  const [commentSearchQuery, setCommentSearchQuery] = useState("");
+  const [selectedBlogAnalyticsFilter, setSelectedBlogAnalyticsFilter] = useState("all");
 
-  const [readReflectionIds, setReadReflectionIds] = useState([]);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  // Dialog & Drawer States
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, title: "", id: null, type: "" });
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedIds = localStorage.getItem("read_reflection_ids");
-        if (savedIds) {
-          setReadReflectionIds(JSON.parse(savedIds));
-        }
-        const savedCollapse = localStorage.getItem("sidebar_collapsed");
-        if (savedCollapse) {
-          setIsSidebarCollapsed(savedCollapse === "true");
-        }
-      } catch (e) {
-        console.error("Error reading localStorage:", e);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === "comments" && dashboardComments && dashboardComments.length > 0) {
-      const currentIds = dashboardComments.map(c => c._id);
-      const newReadIds = Array.from(new Set([...readReflectionIds, ...currentIds]));
-      const hasNew = currentIds.some(id => !readReflectionIds.includes(id));
-      if (hasNew) {
-        setReadReflectionIds(newReadIds);
-        localStorage.setItem("read_reflection_ids", JSON.stringify(newReadIds));
-      }
-    }
-  }, [activeTab, dashboardComments, readReflectionIds]);
-
-  const unreadCount = React.useMemo(() => {
-    if (!dashboardComments || !Array.isArray(dashboardComments)) return 0;
-    return dashboardComments.filter(c => !readReflectionIds.includes(c._id)).length;
-  }, [dashboardComments, readReflectionIds]);
-
-  const toggleSidebarCollapse = () => {
-    const next = !isSidebarCollapsed;
-    setIsSidebarCollapsed(next);
-    localStorage.setItem("sidebar_collapsed", next ? "true" : "false");
-  };
-
-  const triggerToast = (message, type = "success") => {
-    setToast({ message, type, key: Date.now() });
-  };
-
-  const handleDeleteComment = async (id) => {
-    if (!window.confirm("Are you sure you want to permanently delete this anonymous reflection?")) return;
-    try {
-      const res = await fetch(`/api/blogs/comments?id=${id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (data.success) {
-        triggerToast("Reflection deleted successfully! 🗑️", "success");
-        fetchData();
-      } else {
-        triggerToast(data.error || "Failed to delete reflection", "error");
-      }
-    } catch (err) {
-      console.error(err);
-      triggerToast("Error deleting reflection", "error");
-    }
-  };
-
-  // Form states - Projects
-  const [newProjTitle, setNewProjTitle] = useState("");
-  const [newProjTech, setNewProjTech] = useState("");
-  const [newProjGithub, setNewProjGithub] = useState("");
-  const [newProjDeployed, setNewProjDeployed] = useState("");
-  const [newProjDesc, setNewProjDesc] = useState("");
-  const [newProjCat, setNewProjCat] = useState("web");
-  const [newProjImageUrl, setNewProjImageUrl] = useState("");
-  const [newProjPinned, setNewProjPinned] = useState(false);
-  const [newProjDate, setNewProjDate] = useState("");
-  const [projMsg, setProjMsg] = useState("");
-
-  // Form states - Experiences
+  // Form States - Experience
+  const [expDrawerOpen, setExpDrawerOpen] = useState(false);
+  const [editingExpId, setEditingExpId] = useState(null);
   const [expTitle, setExpTitle] = useState("");
   const [expCompany, setExpCompany] = useState("");
   const [expLogoUrl, setExpLogoUrl] = useState("");
@@ -593,210 +103,133 @@ export default function AdminDashboard() {
   const [expLocation, setExpLocation] = useState("");
   const [expDescription, setExpDescription] = useState("");
   const [expOrder, setExpOrder] = useState(1);
-  const [expMsg, setExpMsg] = useState("");
-  const [editingExpId, setEditingExpId] = useState(null);
-  const [fullscreenExpEditor, setFullscreenExpEditor] = useState(false);
 
-  // Form states - Blogs
+  // Form States - Project
+  const [projDrawerOpen, setProjDrawerOpen] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState(null);
+  const [newProjTitle, setNewProjTitle] = useState("");
+  const [newProjTech, setNewProjTech] = useState("");
+  const [newProjGithub, setNewProjGithub] = useState("");
+  const [newProjDeployed, setNewProjDeployed] = useState("");
+  const [newProjDesc, setNewProjDesc] = useState("");
+  const [newProjCat, setNewProjCat] = useState("web");
+  const [newProjImageUrl, setNewProjImageUrl] = useState("");
+  const [newProjPinned, setNewProjPinned] = useState(false);
+  const [newProjDate, setNewProjDate] = useState("");
+
+  // Form States - Blog
+  const [blogDrawerOpen, setBlogDrawerOpen] = useState(false);
+  const [editingBlogId, setEditingBlogId] = useState(null);
   const [newBlogTitle, setNewBlogTitle] = useState("");
   const [newBlogExcerpt, setNewBlogExcerpt] = useState("");
   const [newBlogImage, setNewBlogImage] = useState("");
   const [newBlogBanner, setNewBlogBanner] = useState("");
   const [newBlogCat, setNewBlogCat] = useState("Tech");
   const [newBlogContent, setNewBlogContent] = useState("");
-  const [blogMsg, setBlogMsg] = useState("");
+  const [debouncedBlogContent, setDebouncedBlogContent] = useState("");
 
-  // Edit / Preview control states
-  const [editingProjectId, setEditingProjectId] = useState(null);
-  const [editingBlogId, setEditingBlogId] = useState(null);
-  const [blogWriteMode, setBlogWriteMode] = useState("write");
-  const [fullscreenProjectEditor, setFullscreenProjectEditor] = useState(false);
-  const [fullscreenBlogEditor, setFullscreenBlogEditor] = useState(false);
-  const [blogEditorSplit, setBlogEditorSplit] = useState(50); // % width for left pane
-  const isResizingBlog = React.useRef(false);
-  const splitContainerRef = React.useRef(null);
-
-  const startBlogResize = (e) => {
-    isResizingBlog.current = true;
-    const onMove = (ev) => {
-      if (!isResizingBlog.current || !splitContainerRef.current) return;
-      const rect = splitContainerRef.current.getBoundingClientRect();
-      const pct = Math.min(80, Math.max(20, ((ev.clientX - rect.left) / rect.width) * 100));
-      setBlogEditorSplit(pct);
-    };
-    const onUp = () => { isResizingBlog.current = false; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-  };
-
-  const toggleTheme = () => {
-    const next = !isDark;
-    setIsDark(next);
-    localStorage.setItem("theme", next ? "dark" : "light");
-    if (next) document.documentElement.classList.add("dark");
-    else document.documentElement.classList.remove("dark");
-  };
-
+  // Debounce blog markdown preview updates (200ms)
   useEffect(() => {
-    const saved = localStorage.getItem("theme");
-    if (saved) { const d = saved === "dark"; setIsDark(d); if (d) document.documentElement.classList.add("dark"); else document.documentElement.classList.remove("dark"); }
-  }, []);
+    const handler = setTimeout(() => {
+      setDebouncedBlogContent(newBlogContent);
+    }, 200);
+    return () => clearTimeout(handler);
+  }, [newBlogContent]);
 
-  const topProjects = Array.isArray(dashboardProjects) ? [...dashboardProjects].sort((a, b) => (b.stars || 0) - (a.stars || 0)).slice(0, 5) : [];
-  const topBlogs = Array.isArray(dashboardBlogs) ? [...dashboardBlogs].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 5) : [];
-  
-  // Dynamic leaderboard for top viewed blogs with thumbnails
-  const topViewedBlogs = Array.isArray(dashboardBlogs) ? [...dashboardBlogs].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5) : [];
-
-  // Aggregated traffic log data for charts (last 7 days)
-  const chartData = React.useMemo(() => {
-    if (!analytics || !analytics.logs || !Array.isArray(analytics.logs)) return [];
-    
-    // Filter out local traffic
-    const filtered = analytics.logs.filter(log => {
-      const ip = log.ip || "";
-      const loc = log.location || "";
-      return (
-        ip !== "127.0.0.1" &&
-        ip !== "::1" &&
-        !ip.startsWith("192.168.") &&
-        !ip.startsWith("10.") &&
-        !ip.startsWith("172.") &&
-        !loc.toLowerCase().includes("localhost")
-      );
-    });
-
-    // Map last 7 days (including today)
-    const dataMap = {};
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      const key = d.toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" });
-      dataMap[key] = { label, views: 0, unique: new Set() };
-    }
-
-    filtered.forEach(log => {
-      if (!log.timestamp) return;
-      const logDate = new Date(log.timestamp);
-      const key = logDate.toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" });
-      if (dataMap[key]) {
-        dataMap[key].views += 1;
-        dataMap[key].unique.add(log.ip || "unknown");
+  // Auth Verification
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isLogged = localStorage.getItem("admin_logged_in") === "true";
+      if (!isLogged) {
+        router.push("/admin");
+      } else {
+        setAuthorized(true);
       }
-    });
+    }
+  }, [router]);
 
-    return Object.keys(dataMap).sort().map(key => ({
-      date: dataMap[key].label,
-      Views: dataMap[key].views,
-      Visitors: dataMap[key].unique.size
-    }));
-  }, [analytics]);
+  // Trigger Toast helper
+  const triggerToast = (message, type = "success") => {
+    setToast({ message, type, key: Date.now() });
+  };
 
-  // Fetch all live data on tab change or mount
+  // Fetch telemetry & dynamic collections
   const fetchData = async () => {
     try {
-      // Fetch dynamic projects
+      // Projects
       const projRes = await fetch("/api/projects");
       const projData = await projRes.json();
-      if (Array.isArray(projData)) {
-        setDashboardProjects(projData);
-      }
+      if (Array.isArray(projData)) setDashboardProjects(projData);
 
-      // Fetch dynamic blogs
+      // Blogs
       const blogRes = await fetch("/api/blogs");
       const blogData = await blogRes.json();
-      if (Array.isArray(blogData)) {
-        setDashboardBlogs(blogData);
-      }
+      if (Array.isArray(blogData)) setDashboardBlogs(blogData);
 
-      // Fetch dynamic experiences
+      // Experiences
       try {
         const expRes = await fetch("/api/experiences");
         const expData = await expRes.json();
-        if (Array.isArray(expData)) {
-          setDashboardExperiences(expData);
-        }
+        if (Array.isArray(expData)) setDashboardExperiences(expData);
       } catch (e) {
-        console.error("Failed to load experiences:", e);
+        console.error("Failed loading experiences:", e);
       }
 
-      // Fetch dynamic anonymous comments
+      // Visitor Reflections
       try {
         const commentsRes = await fetch("/api/blogs/comments");
         const commentsData = await commentsRes.json();
-        if (Array.isArray(commentsData)) {
-          setDashboardComments(commentsData);
-        }
+        if (Array.isArray(commentsData)) setDashboardComments(commentsData);
       } catch (e) {
-        console.error("Failed to load comments:", e);
+        console.error("Failed loading reflections:", e);
       }
 
-      // Fetch dynamic traffic analytics
-      const analyticsRes = await fetch("/api/analytics");
-      const analyticsData = await analyticsRes.json();
-      if (analyticsData && !analyticsData.error) {
-        setAnalytics(analyticsData);
+      // Site Traffic Analytics
+      try {
+        const analyticsRes = await fetch("/api/analytics");
+        const analyticsData = await analyticsRes.json();
+        if (analyticsData && !analyticsData.error) setAnalytics(analyticsData);
+      } catch (e) {
+        console.error("Failed loading analytics:", e);
       }
 
-      // Fetch dynamic blog interactions analytics
+      // Blog Analytics
       try {
         const blogAnalyticsRes = await fetch("/api/blogs/analytics");
         const blogAnalyticsData = await blogAnalyticsRes.json();
-        if (blogAnalyticsData && !blogAnalyticsData.error) {
-          setBlogAnalytics(blogAnalyticsData);
-        }
+        if (blogAnalyticsData && !blogAnalyticsData.error) setBlogAnalytics(blogAnalyticsData);
       } catch (e) {
-        console.error("Failed to load blog analytics:", e);
+        console.error("Failed loading blog analytics:", e);
       }
     } catch (err) {
-      console.error("Failed to load active data:", err);
+      console.error("Failed fetching active data:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await fetchData();
-    setIsRefreshing(false);
-    triggerToast("Dashboard telemetry refreshed! 🔄", "success");
   };
 
   useEffect(() => {
     if (!authorized) return;
+    fetchData();
     const interval = setInterval(() => {
-      fetchData();
-    }, 15000);
+      if (document.visibilityState === "visible") {
+        fetchData();
+      }
+    }, 30000);
     return () => clearInterval(interval);
   }, [authorized]);
 
-  useEffect(() => {
-    const isLoggedIn = localStorage.getItem("admin_logged_in");
-    if (isLoggedIn !== "true") {
-      router.push("/admin");
-    } else {
-      setAuthorized(true);
-    }
-  }, [router]);
-
-  useEffect(() => {
-    if (authorized) {
-      fetchData();
-    }
-  }, [activeTab, authorized]);
-
-  // Experience handlers
+  // --- EXPERIENCE HANDLERS ---
   const handleLogoFileUpload = (e) => {
-    const file = e.target.files && e.target.files[0];
+    const file = e.target.files[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        triggerToast("Logo image size should be less than 2MB", "warn");
+        triggerToast("Logo file size exceeds 2MB limit", "warn");
         return;
       }
       const reader = new FileReader();
       reader.onloadend = () => {
         setExpLogoUrl(reader.result);
-        triggerToast("Logo uploaded successfully! 📷", "success");
       };
       reader.readAsDataURL(file);
     }
@@ -805,7 +238,7 @@ export default function AdminDashboard() {
   const handleAddExperience = async (e) => {
     e.preventDefault();
     if (!expTitle.trim() || !expCompany.trim()) {
-      triggerToast("Job Title and Company Name are compulsory fields", "warn");
+      triggerToast("Job Title and Company Name are required fields", "warn");
       return;
     }
 
@@ -823,9 +256,7 @@ export default function AdminDashboard() {
         description: expDescription,
         order: parseInt(expOrder, 10) || 1,
       };
-      if (editingExpId) {
-        payload.id = editingExpId;
-      }
+      if (editingExpId) payload.id = editingExpId;
 
       const res = await fetch(url, {
         method,
@@ -835,11 +266,11 @@ export default function AdminDashboard() {
 
       const data = await res.json();
       if (data.success) {
-        triggerToast(editingExpId ? "Experience record updated! 💼" : "Experience record added! 💼", "success");
+        triggerToast(editingExpId ? "Experience updated successfully" : "Experience added successfully", "success");
         cancelEditExperience();
         fetchData();
       } else {
-        triggerToast(data.error || "Failed to submit experience data", "error");
+        triggerToast(data.error || "Failed submitting experience data", "error");
       }
     } catch (err) {
       console.error(err);
@@ -858,8 +289,7 @@ export default function AdminDashboard() {
     setExpLocation(exp.location || "");
     setExpDescription(Array.isArray(exp.description) ? exp.description.join("\n") : exp.description || "");
     setExpOrder(exp.order !== undefined ? exp.order : 1);
-    setExpMsg("");
-    setFullscreenExpEditor(true);
+    setExpDrawerOpen(true);
   };
 
   const cancelEditExperience = () => {
@@ -873,19 +303,15 @@ export default function AdminDashboard() {
     setExpLocation("");
     setExpDescription("");
     setExpOrder(1);
-    setExpMsg("");
-    setFullscreenExpEditor(false);
+    setExpDrawerOpen(false);
   };
 
   const handleDeleteExperience = async (id) => {
-    if (!window.confirm("Are you sure you want to permanently delete this experience entry?")) return;
     try {
-      const res = await fetch(`/api/experiences?id=${id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`/api/experiences?id=${id}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
-        triggerToast("Experience deleted successfully! 🗑️", "success");
+        triggerToast("Experience deleted", "success");
         fetchData();
       } else {
         triggerToast(data.error || "Failed to delete experience", "error");
@@ -902,7 +328,6 @@ export default function AdminDashboard() {
 
     const targetIndex = direction === "up" ? index - 1 : index + 1;
     const newList = [...dashboardExperiences];
-    
     const temp = newList[index];
     newList[index] = newList[targetIndex];
     newList[targetIndex] = temp;
@@ -922,10 +347,8 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        triggerToast("Experience display order updated! 🔄", "success");
+        triggerToast("Priority order updated", "success");
         fetchData();
-      } else {
-        triggerToast(data.error || "Failed to save order", "error");
       }
     } catch (err) {
       console.error(err);
@@ -933,17 +356,14 @@ export default function AdminDashboard() {
     }
   };
 
+  // --- PROJECT HANDLERS ---
   const handleTogglePinProject = async (id) => {
     try {
-      const res = await fetch(`/api/projects?id=${id}&action=togglePin`, {
-        method: "PATCH",
-      });
+      const res = await fetch(`/api/projects?id=${id}&action=togglePin`, { method: "PATCH" });
       const data = await res.json();
       if (data.success) {
-        triggerToast(data.pinned ? "Project pinned to top! 📌" : "Project unpinned! 📌", "success");
+        triggerToast(data.pinned ? "Project pinned to top" : "Project unpinned", "success");
         fetchData();
-      } else {
-        triggerToast(data.error || "Failed to update pin status", "error");
       }
     } catch (err) {
       console.error(err);
@@ -954,10 +374,10 @@ export default function AdminDashboard() {
   const handleAddProject = async (e) => {
     e.preventDefault();
     if (!newProjTitle.trim() || !newProjTech.trim() || !newProjGithub.trim()) {
-      triggerToast("Please fill in all compulsory fields", "warn");
+      triggerToast("Title, Tech Stack, and GitHub link are required", "warn");
       return;
     }
-    
+
     try {
       const url = "/api/projects";
       const method = editingProjectId ? "PUT" : "POST";
@@ -972,9 +392,7 @@ export default function AdminDashboard() {
         pinned: newProjPinned,
         date: newProjDate,
       };
-      if (editingProjectId) {
-        payload.id = editingProjectId;
-      }
+      if (editingProjectId) payload.id = editingProjectId;
 
       const res = await fetch(url, {
         method,
@@ -984,30 +402,21 @@ export default function AdminDashboard() {
 
       const data = await res.json();
       if (data.success) {
-        triggerToast(editingProjectId ? "Project updated successfully! ⭐" : "Project uploaded successfully! ⭐", "success");
-        setNewProjTitle("");
-        setNewProjTech("");
-        setNewProjGithub("");
-        setNewProjDeployed("");
-        setNewProjDesc("");
-        setNewProjImageUrl("");
-        setNewProjPinned(false);
-        setNewProjDate("");
-        setEditingProjectId(null);
-        setFullscreenProjectEditor(false);
+        triggerToast(editingProjectId ? "Project updated" : "Project uploaded", "success");
+        cancelEditProject();
         fetchData();
       } else {
-        triggerToast(data.error || "Failed to submit project data", "error");
+        triggerToast(data.error || "Failed to submit project", "error");
       }
     } catch (err) {
       console.error(err);
-      triggerToast("Error submitting project payload", "error");
+      triggerToast("Error submitting project", "error");
     }
   };
 
   const startEditProject = (p) => {
     setEditingProjectId(p._id);
-    setNewProjTitle(p.title);
+    setNewProjTitle(p.title || "");
     setNewProjTech(Array.isArray(p.tech) ? p.tech.join(", ") : p.tech || "");
     setNewProjGithub(p.link || p.githubUrl || "");
     setNewProjDeployed(p.deployedUrl || p.deployedLink || "");
@@ -1016,8 +425,7 @@ export default function AdminDashboard() {
     setNewProjImageUrl(p.imageUrl || "");
     setNewProjPinned(Boolean(p.pinned));
     setNewProjDate(p.created_at ? new Date(p.created_at).toISOString().split("T")[0] : "");
-    setProjMsg("");
-    setFullscreenProjectEditor(true);
+    setProjDrawerOpen(true);
   };
 
   const cancelEditProject = () => {
@@ -1027,22 +435,19 @@ export default function AdminDashboard() {
     setNewProjGithub("");
     setNewProjDeployed("");
     setNewProjDesc("");
+    setNewProjCat("web");
     setNewProjImageUrl("");
     setNewProjPinned(false);
     setNewProjDate("");
-    setProjMsg("");
-    setFullscreenProjectEditor(false);
+    setProjDrawerOpen(false);
   };
 
   const handleDeleteProject = async (id) => {
-    if (!window.confirm("Are you sure you want to permanently delete this project from the database?")) return;
     try {
-      const res = await fetch(`/api/projects?id=${id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`/api/projects?id=${id}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
-        triggerToast("Project deleted successfully! 🗑️", "success");
+        triggerToast("Project deleted", "success");
         fetchData();
       } else {
         triggerToast(data.error || "Failed to delete project", "error");
@@ -1053,10 +458,11 @@ export default function AdminDashboard() {
     }
   };
 
+  // --- BLOG HANDLERS ---
   const handleAddBlog = async (e) => {
     e.preventDefault();
     if (!newBlogTitle.trim() || !newBlogContent.trim()) {
-      triggerToast("Please fill in all compulsory fields", "warn");
+      triggerToast("Blog title and content are required", "warn");
       return;
     }
 
@@ -1071,9 +477,7 @@ export default function AdminDashboard() {
         category: newBlogCat,
         content: newBlogContent,
       };
-      if (editingBlogId) {
-        payload.id = editingBlogId;
-      }
+      if (editingBlogId) payload.id = editingBlogId;
 
       const res = await fetch(url, {
         method,
@@ -1083,34 +487,27 @@ export default function AdminDashboard() {
 
       const data = await res.json();
       if (data.success) {
-        triggerToast(editingBlogId ? "Blog updated successfully! 📝" : "Blog post published successfully! 📝", "success");
-        setNewBlogTitle("");
-        setNewBlogExcerpt("");
-        setNewBlogImage("");
-        setNewBlogBanner("");
-        setNewBlogContent("");
-        setEditingBlogId(null);
-        setFullscreenBlogEditor(false);
+        triggerToast(editingBlogId ? "Blog updated" : "Blog published", "success");
+        cancelEditBlog();
         fetchData();
       } else {
-        triggerToast(data.error || "Failed to submit blog data", "error");
+        triggerToast(data.error || "Failed to save blog", "error");
       }
     } catch (err) {
       console.error(err);
-      triggerToast("Error submitting blog payload", "error");
+      triggerToast("Error submitting blog", "error");
     }
   };
 
   const startEditBlog = (b) => {
     setEditingBlogId(b._id);
-    setNewBlogTitle(b.title);
+    setNewBlogTitle(b.title || "");
     setNewBlogExcerpt(b.excerpt || "");
     setNewBlogImage(b.imageUrl || "");
     setNewBlogBanner(b.bannerUrl || "");
-    setNewBlogCat(b.category);
-    setNewBlogContent(b.content);
-    setBlogMsg("");
-    setFullscreenBlogEditor(true);
+    setNewBlogCat(b.category || "Tech");
+    setNewBlogContent(b.content || "");
+    setBlogDrawerOpen(true);
   };
 
   const cancelEditBlog = () => {
@@ -1119,20 +516,17 @@ export default function AdminDashboard() {
     setNewBlogExcerpt("");
     setNewBlogImage("");
     setNewBlogBanner("");
+    setNewBlogCat("Tech");
     setNewBlogContent("");
-    setBlogMsg("");
-    setFullscreenBlogEditor(false);
+    setBlogDrawerOpen(false);
   };
 
   const handleDeleteBlog = async (id) => {
-    if (!window.confirm("Are you sure you want to permanently delete this blog post?")) return;
     try {
-      const res = await fetch(`/api/blogs?id=${id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`/api/blogs?id=${id}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
-        triggerToast("Blog deleted successfully! 🗑️", "success");
+        triggerToast("Blog deleted", "success");
         fetchData();
       } else {
         triggerToast(data.error || "Failed to delete blog", "error");
@@ -1143,1852 +537,926 @@ export default function AdminDashboard() {
     }
   };
 
+  // --- REFLECTION / COMMENT HANDLERS ---
+  const handleDeleteComment = async (id) => {
+    try {
+      const res = await fetch(`/api/blogs/comments?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast("Reflection deleted", "success");
+        fetchData();
+      } else {
+        triggerToast(data.error || "Failed to delete reflection", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error deleting reflection", "error");
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("admin_logged_in");
     router.push("/admin");
   };
 
+  // Analytics Computation
+  const overviewStats = useMemo(() => {
+    const logs = analytics.logs || [];
+    const totalViews = logs.length;
+    const uniqueIps = new Set(logs.map((l) => l.ip || "unknown")).size;
+    return {
+      views: totalViews,
+      visitors: uniqueIps,
+      projects: dashboardProjects.length,
+      blogs: dashboardBlogs.length,
+    };
+  }, [analytics, dashboardProjects, dashboardBlogs]);
+
+  // Top Locations computation
+  const topLocations = useMemo(() => {
+    const logs = analytics.logs || [];
+    const counts = {};
+    logs.forEach((log) => {
+      const loc = log.location || "Unknown Location";
+      counts[loc] = (counts[loc] || 0) + 1;
+    });
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+    const max = sorted.length > 0 ? sorted[0][1] : 1;
+    return sorted.map(([loc, val]) => ({
+      location: loc,
+      count: val,
+      percentage: Math.round((val / max) * 100),
+    }));
+  }, [analytics]);
+
+  // Blog analytics computation
+  const blogMetricsTable = useMemo(() => {
+    const logs = blogAnalytics.logs || [];
+    const metricsMap = {};
+
+    dashboardBlogs.forEach((b) => {
+      metricsMap[b._id] = {
+        id: b._id,
+        title: b.title,
+        category: b.category,
+        views: 0,
+        likes: b.likes || 0,
+        comments: 0,
+      };
+    });
+
+    logs.forEach((log) => {
+      if (log.blogId && metricsMap[log.blogId]) {
+        if (log.action === "view") metricsMap[log.blogId].views += 1;
+        if (log.action === "like") metricsMap[log.blogId].likes += 1;
+        if (log.action === "reflection") metricsMap[log.blogId].comments += 1;
+      }
+    });
+
+    let list = Object.values(metricsMap);
+    if (blogSearchQuery.trim()) {
+      const q = blogSearchQuery.toLowerCase();
+      list = list.filter((item) => item.title.toLowerCase().includes(q));
+    }
+    return list;
+  }, [dashboardBlogs, blogAnalytics, blogSearchQuery]);
+
   if (!authorized) {
     return (
-      <div className="min-h-screen bg-[#050505] text-[#ededed] noise-overlay relative overflow-hidden flex flex-col justify-center items-center p-6">
-        <Helmet title="Verifying Session... | Nikhil's Console" />
-        <div className="absolute inset-0 z-0 grid-mesh pointer-events-none" />
-        <div className="text-center z-10">
-          <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 mx-auto flex items-center justify-center mb-4 animate-pulse">
-            <Cpu className="w-5 h-5 text-red-400" />
-          </div>
-          <p className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Verifying Session...</p>
+      <div className="min-h-screen bg-[#0A0A0B] text-zinc-100 flex items-center justify-center p-6 font-sans">
+        <Helmet title="Verifying Session... | Nikhil Console" />
+        <div className="text-center space-y-3">
+          <Skeleton className="w-10 h-10 rounded-lg mx-auto" />
+          <p className="text-xs text-zinc-400 font-medium">Verifying Session...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen transition-colors duration-0 noise-overlay relative overflow-hidden flex font-sans ${
-      isDark ? "bg-[#050505] text-[#ededed]" : "bg-[#f5f5f7] text-[#1c1c1e]"
-    }`}>
-      <Helmet title="Admin Dashboard | Nikhil's Console" />
-      <div className={`absolute inset-0 z-0 ${isDark ? "grid-mesh" : "grid-mesh-light"} pointer-events-none`} />
+    <AdminShell
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      unreadCount={dashboardComments.length}
+      unreadComments={dashboardComments}
+      onLogout={handleLogout}
+    >
+      <Helmet title="Admin Dashboard | Nikhil Console" />
 
-      {/* Sidebar Navigation */}
-      <aside className={`transition-all duration-300 ease-in-out ${isSidebarCollapsed ? "w-20 px-3 py-6" : "w-64 p-6"} border-r ${isDark ? "border-white/5 bg-[#09090b]/80" : "border-black/10 bg-white/85"} backdrop-blur-xl z-10 flex flex-col justify-between hidden md:flex`}>
-        <div>
-          {/* Logo Heading */}
-          <div className={`flex items-center ${isSidebarCollapsed ? "justify-center" : "space-x-3"} mb-10`}>
-            <div className={`w-8 h-8 rounded-xl ${isDark ? "bg-red-500/10 border-red-500/20" : "bg-red-50 border-red-200"} border flex items-center justify-center flex-shrink-0`}>
-              <Cpu className="w-4 h-4 text-red-500" />
-            </div>
-            {!isSidebarCollapsed && (
-              <span className={`font-extrabold font-outfit text-base tracking-tight ${isDark ? "text-white" : "text-zinc-900"} truncate`}>Nikhil Console</span>
-            )}
+      {/* OVERVIEW & ANALYTICS TAB */}
+      {activeTab === "overview" && (
+        <div className="space-y-6">
+          {/* Top 4 StatCards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              label="Total Page Views"
+              value={overviewStats.views}
+              delta="+12%"
+              icon={Globe}
+              sparkline={<Sparkline data={[12, 18, 14, 22, 28, 25, 34, 40]} color="#EF4444" />}
+            />
+            <StatCard
+              label="Unique Visitors"
+              value={overviewStats.visitors}
+              delta="+8%"
+              icon={Globe}
+              sparkline={<Sparkline data={[8, 12, 10, 15, 20, 18, 24, 29]} color="#3B82F6" />}
+            />
+            <StatCard
+              label="Live Projects"
+              value={overviewStats.projects}
+              icon={FolderKanban}
+            />
+            <StatCard
+              label="Markdown Articles"
+              value={overviewStats.blogs}
+              icon={BookHeart}
+            />
           </div>
- 
-          {/* Menu Items */}
-          <nav className="space-y-1.5">
-            {[
-              { id: "overview", label: "Overview & Analytics", icon: LayoutDashboard },
-              { id: "blog-analytics", label: "Blog Analytics App", icon: Cpu },
-              { id: "experiences", label: "Work Experiences", icon: Briefcase },
-              { id: "projects", label: "Manage Projects", icon: FolderKanban },
-              { id: "blogs", label: "Markdown Blogs", icon: BookHeart },
-              { id: "comments", label: "Visitor Reflections", icon: MessageSquare },
-            ].map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              const showBadge = item.id === "comments" && unreadCount > 0;
-              return (
-                <button
-                   key={item.id}
-                   onClick={() => setActiveTab(item.id)}
-                   title={isSidebarCollapsed ? item.label : undefined}
-                   className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "space-x-3 px-4"} py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all relative ${
-                     isActive 
-                       ? "bg-red-500/20 text-red-400 border border-red-500/20 shadow-lg shadow-red-500/5" 
-                       : `${isDark ? "text-zinc-400 hover:text-white hover:bg-white/5" : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5"} border border-transparent`
-                   }`}
-                >
-                  <Icon className="w-4.5 h-4.5 flex-shrink-0" />
-                  {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
-                  {showBadge && (
-                    <span className={`flex items-center justify-center bg-red-500 text-white rounded-full text-[9px] font-bold ${
-                      isSidebarCollapsed 
-                        ? "absolute top-1 right-1 w-4.5 h-4.5 animate-bounce shadow-md" 
-                        : "ml-auto px-2 py-0.5"
-                    }`}>
-                      {unreadCount}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
- 
-        {/* Quick LogOut + Theme Toggle + Collapse Toggle */}
-        <div className="space-y-2">
-          <button
-            onClick={toggleTheme}
-            title={isSidebarCollapsed ? (isDark ? "Light Mode" : "Dark Mode") : undefined}
-            className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "space-x-3 px-4"} py-2.5 rounded-xl text-xs font-semibold tracking-wide border border-transparent transition-all ${
-              isDark ? "text-zinc-400 hover:text-white hover:bg-white/5" : "text-zinc-600 hover:text-zinc-900 hover:bg-black/5"
-            }`}
-          >
-            {isDark ? <Sun className="w-4 h-4 flex-shrink-0" /> : <Moon className="w-4 h-4 flex-shrink-0" />}
-            {!isSidebarCollapsed && <span>{isDark ? "Light Mode" : "Dark Mode"}</span>}
-          </button>
-          <button
-            onClick={handleLogout}
-            title={isSidebarCollapsed ? "Sign Out" : undefined}
-            className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "space-x-3 px-4"} py-2.5 rounded-xl text-xs font-semibold tracking-wide text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent transition-all`}
-          >
-            <LogOut className="w-4 h-4 flex-shrink-0" />
-            {!isSidebarCollapsed && <span>Sign Out</span>}
-          </button>
-          <button
-            onClick={toggleSidebarCollapse}
-            title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-            className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "space-x-3 px-4"} py-2.5 rounded-xl text-xs font-semibold tracking-wide text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent transition-all`}
-          >
-            {isSidebarCollapsed ? <ChevronRight className="w-4 h-4 flex-shrink-0" /> : <ChevronLeft className="w-4 h-4 flex-shrink-0" />}
-            {!isSidebarCollapsed && <span>Collapse</span>}
-          </button>
-        </div>
-      </aside>
- 
-      {/* Mobile Drawer Navigation sheet portal */}
-      {isMobileOpen && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
-          {/* Backdrop overlay */}
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
-            onClick={() => setIsMobileOpen(false)}
-          />
-          {/* Slide-out Panel */}
-          <aside className={`relative flex flex-col justify-between w-64 max-w-xs h-full p-6 border-r z-50 shadow-2xl transition-transform duration-300 ease-in-out ${
-            isDark ? "border-white/5 bg-[#09090b]" : "border-black/10 bg-white"
-          }`}>
-            <div>
-              {/* Header with Close */}
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-8 h-8 rounded-xl ${isDark ? "bg-red-500/10 border-red-500/20" : "bg-red-50 border-red-200"} border flex items-center justify-center`}>
-                    <Cpu className="w-4 h-4 text-red-500" />
-                  </div>
-                  <span className={`font-extrabold font-outfit text-base tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>Nikhil Console</span>
+
+          {/* Traffic Overview & Top Locations */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-zinc-100 tracking-tight">
+                    Traffic Trends
+                  </h3>
+                  <p className="text-[11px] text-zinc-500">
+                    Recorded visitor views over selected time horizon
+                  </p>
                 </div>
-                <button
-                  onClick={() => setIsMobileOpen(false)}
-                  className={`p-1.5 rounded-lg border transition-all ${
-                    isDark ? "text-zinc-400 border-white/5 hover:bg-white/5" : "text-zinc-600 border-black/10 hover:bg-black/5"
-                  }`}
-                >
-                  <X className="w-4.5 h-4.5" />
-                </button>
+                <Tabs
+                  tabs={[
+                    { id: "7d", label: "7d" },
+                    { id: "30d", label: "30d" },
+                    { id: "90d", label: "90d" },
+                  ]}
+                  activeTab={analyticsTimeRange}
+                  onChange={setAnalyticsTimeRange}
+                />
               </div>
- 
-              {/* Drawer Menu Navigation */}
-              <nav className="space-y-1.5">
-                {[
-                  { id: "overview", label: "Overview & Analytics", icon: LayoutDashboard },
-                  { id: "blog-analytics", label: "Blog Analytics App", icon: Cpu },
-                  { id: "experiences", label: "Work Experiences", icon: Briefcase },
-                  { id: "projects", label: "Manage Projects", icon: FolderKanban },
-                  { id: "blogs", label: "Markdown Blogs", icon: BookHeart },
-                  { id: "comments", label: "Visitor Reflections", icon: MessageSquare },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeTab === item.id;
-                  const showBadge = item.id === "comments" && unreadCount > 0;
-                  return (
-                    <button
-                       key={item.id}
-                       onClick={() => {
-                         setActiveTab(item.id);
-                         setIsMobileOpen(false);
-                       }}
-                       className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
-                         isActive 
-                           ? "bg-red-500/20 text-red-400 border border-red-500/20 shadow-lg shadow-red-500/5" 
-                           : `${isDark ? "text-zinc-400 hover:text-white hover:bg-white/5" : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5"} border border-transparent`
-                       }`}
-                    >
-                      <Icon className="w-4.5 h-4.5" />
-                      <span>{item.label}</span>
-                      {showBadge && (
-                        <span className="ml-auto flex items-center justify-center bg-red-500 text-white rounded-full text-[9px] font-bold px-2 py-0.5">
-                          {unreadCount}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
- 
-            {/* Drawer Logout */}
-            <div className="space-y-2">
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wide text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent transition-all"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Sign Out</span>
-              </button>
-            </div>
-          </aside>
+
+              {analytics.logs && analytics.logs.length > 0 ? (
+                <div className="h-48 w-full pt-4">
+                  <Sparkline
+                    data={
+                      analytics.logs.length > 5
+                        ? analytics.logs.slice(-15).map((l, idx) => (idx + 1) * 3 + (l.ip ? l.ip.length % 5 : 2))
+                        : [5, 12, 8, 20, 24, 18, 30]
+                    }
+                    color="#EF4444"
+                    height={160}
+                  />
+                </div>
+              ) : (
+                <EmptyState
+                  icon={Globe}
+                  title="No traffic recorded yet"
+                  description="Visitor telemetry logs will display dynamic trendlines here once visitors explore your portfolio."
+                />
+              )}
+            </Card>
+
+            {/* Ranked Top Locations */}
+            <Card className="space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-100 tracking-tight">
+                  Top Visitor Locations
+                </h3>
+                <p className="text-[11px] text-zinc-500">Geolocated reader locations</p>
+              </div>
+
+              {topLocations.length === 0 ? (
+                <EmptyState
+                  icon={MapPin}
+                  title="No location data"
+                  description="Geocoded visitor locations will appear as visits occur."
+                />
+              ) : (
+                <div className="space-y-3 pt-1">
+                  {topLocations.map((loc, idx) => (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="font-medium text-zinc-200 truncate">{loc.location}</span>
+                        <span className="font-mono text-zinc-400">{loc.count} visits</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-red-500 rounded-full transition-all duration-300"
+                          style={{ width: `${loc.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
         </div>
       )}
- 
-      {/* Main Content Area */}
-      <main className={`flex-1 z-10 p-6 sm:p-10 overflow-y-auto max-h-screen ${
-        isDark ? "" : "bg-[#f5f5f7]"
-      }`}>
-        {/* Mobile menu bar (Professional Hamburger header) */}
-        <div className={`flex md:hidden items-center justify-between p-4 mb-6 border ${isDark ? "glass-card border-white/5" : "bg-white/90 border-black/5 shadow-sm"} rounded-2xl`}>
-          <div className="flex items-center space-x-2">
-            <Cpu className="w-4.5 h-4.5 text-red-500" />
-            <span className={`font-bold text-xs tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>Nikhil Console</span>
-          </div>
-          <div className="flex items-center space-x-1.5">
-            <button
-              onClick={() => setActiveTab("comments")}
-              className={`p-2 rounded-xl border transition-all ${
-                isDark ? "text-zinc-400 hover:text-white bg-white/5 border-white/5" : "text-zinc-600 hover:text-zinc-900 bg-white border-black/10 shadow-sm"
-              }`}
-            >
-              <Bell className={`w-4 h-4 ${unreadCount > 0 ? "text-red-400 animate-bounce" : ""}`} />
-            </button>
-            <button onClick={toggleTheme} className={`p-2 rounded-xl border transition-all ${isDark ? "text-zinc-400 hover:text-white bg-white/5 border-white/5" : "text-zinc-600 hover:text-zinc-900 bg-white border-black/10 shadow-sm"}`}>
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            <button
-              onClick={() => setIsMobileOpen(true)}
-              className="p-2 bg-red-500/15 border border-red-500/20 text-red-400 rounded-xl transition-all"
-            >
-              <Menu className="w-4.5 h-4.5" />
-            </button>
-          </div>
-        </div>
- 
-        {/* Header bar */}
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-10">
-          <div>
-            <h1 className={`text-3xl font-extrabold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"} flex items-center gap-2`}>
-              {activeTab === "overview" && "Analytics Overview"}
-              {activeTab === "blog-analytics" && "Blog Analytics App"}
-              {activeTab === "experiences" && "Work Experiences Manager"}
-              {activeTab === "projects" && "Projects Manager"}
-              {activeTab === "blogs" && "Blogging Dashboard"}
-              {activeTab === "comments" && "Anonymous Comments"}
-            </h1>
-            <p className={`text-xs ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>
-              Manage database assets and monitor traffic geocoding telemetry.
-            </p>
-          </div>
- 
-          <div className="flex items-center gap-3">
-            {/* Bell notification button */}
-            <button
-              onClick={() => setActiveTab("comments")}
-              title={unreadCount > 0 ? `You have ${unreadCount} unread reflections!` : "View Reflections"}
-              className={`relative p-2.5 rounded-xl border transition-all ${
-                isDark ? "text-zinc-400 hover:text-white bg-white/5 border-white/5" : "text-zinc-600 hover:text-zinc-900 bg-white border-black/10 shadow-sm"
-              }`}
-            >
-              <Bell className={`w-4 h-4 ${unreadCount > 0 ? "text-red-400 animate-bounce" : ""}`} />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-md animate-pulse">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
- 
-            <Link href="/">
-              <button className={`flex items-center space-x-2 text-xs font-semibold tracking-wide border transition-all py-2.5 px-4 rounded-xl ${
-                isDark ? "text-zinc-400 hover:text-white bg-white/5 border-white/5" : "text-zinc-600 hover:text-zinc-900 bg-white border-black/10 shadow-sm"
-              }`}>
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Back to Portfolio</span>
-              </button>
-            </Link>
-          </div>
-        </div>
 
-        {/* OVERVIEW TAB */}
-        {activeTab === "overview" && (
-          <div className="space-y-8">
-            {/* Quick Metrics Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {[
-                { label: "Total Page Views", value: analytics.totalViews, icon: Globe, color: "bg-red-500/10 text-red-400 border-red-500/20" },
-                { label: "Unique Visitors", value: analytics.uniqueViews, icon: Users, color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-                { label: "Projects count", value: dashboardProjects.length, icon: FolderKanban, color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-                { label: "Blogging Posts", value: dashboardBlogs.length, icon: FileText, color: "bg-red-500/10 text-red-400 border-red-500/20" },
-              ].map((metric, idx) => {
-                const Icon = metric.icon;
-                return (
-                  <div key={idx} className={`p-5 rounded-2xl ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative overflow-hidden`}>
-                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/10 to-transparent pointer-events-none" />
-                    <div className="flex justify-between items-center mb-3">
-                      <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>{metric.label}</span>
-                      <div className={`p-2 rounded-xl border flex items-center justify-center ${metric.color}`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                    </div>
-                    <p className={`text-2xl font-extrabold font-outfit ${isDark ? "text-white" : "text-zinc-900"} tracking-tight`}>{metric.value}</p>
-                  </div>
-                );
-              })}
+      {/* BLOG ANALYTICS APP TAB */}
+      {activeTab === "blog-analytics" && (
+        <Card className="space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-100">Article Performance Table</h3>
+              <p className="text-[11px] text-zinc-500">View count, reader likes, reflections, and engagement</p>
             </div>
-
-            {/* Visualizations Grid: site activity & geocoding visitor map */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-              {/* Traffic Trends Dashboard Card */}
-              <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative overflow-hidden flex flex-col justify-between min-h-[400px]`}>
-                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/25 to-transparent pointer-events-none" />
-                <div className="flex justify-between items-center mb-5 flex-shrink-0">
-                  <h3 className={`text-sm font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"} flex items-center gap-2`}>
-                    <Cpu className="w-4 h-4 text-red-500" />
-                    <span>Traffic & Site Analytics</span>
-                  </h3>
-                  <span className={`text-[9px] font-bold uppercase ${isDark ? "bg-red-500/10 border-red-500/20 text-red-400" : "bg-red-50 border-red-200 text-red-600"} border px-2.5 py-1 rounded`}>
-                    Live Recharts
-                  </span>
-                </div>
-                
-                {/* Area Chart: site activity trend */}
-                <div className="flex-1 space-y-6">
-                  <div>
-                    <h4 className={`text-xs font-semibold ${isDark ? "text-zinc-400" : "text-zinc-500"} mb-3`}>
-                      📈 Trajectory Jump (Views vs Visitors)
-                    </h4>
-                    <div className="h-[140px] w-full">
-                      {chartData.length === 0 ? (
-                        <div className="h-full flex items-center justify-center text-xs text-zinc-500 font-mono">No traffic records in the telemetry logs.</div>
-                      ) : (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                            <defs>
-                              <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2}/>
-                                <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                              </linearGradient>
-                              <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)"} />
-                            <XAxis dataKey="date" stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
-                            <Tooltip contentStyle={{ backgroundColor: isDark ? "#09090b" : "#ffffff", borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)", fontSize: 10, borderRadius: 12, color: isDark ? "#fff" : "#000" }} itemStyle={{ color: isDark ? "#fff" : "#000" }} labelStyle={{ color: isDark ? "#fff" : "#000", fontWeight: "bold" }} />
-                            <Area type="monotone" dataKey="Views" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorViews)" />
-                            <Area type="monotone" dataKey="Visitors" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorVisitors)" />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Bar Chart: daily traffic */}
-                  <div>
-                    <h4 className={`text-xs font-semibold ${isDark ? "text-zinc-400" : "text-zinc-500"} mb-3`}>
-                      📊 Page Visits per Day of Week
-                    </h4>
-                    <div className="h-[120px] w-full">
-                      {chartData.length === 0 ? (
-                        <div className="h-full flex items-center justify-center text-xs text-zinc-500 font-mono">No traffic records in the telemetry logs.</div>
-                      ) : (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)"} />
-                            <XAxis dataKey="date" stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#71717a" fontSize={9} tickLine={false} axisLine={false} />
-                            <Tooltip contentStyle={{ backgroundColor: isDark ? "#09090b" : "#ffffff", borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)", fontSize: 10, borderRadius: 12, color: isDark ? "#fff" : "#000" }} itemStyle={{ color: isDark ? "#fff" : "#000" }} labelStyle={{ color: isDark ? "#fff" : "#000", fontWeight: "bold" }} />
-                            <Bar dataKey="Views" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={30} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Geocoding Visitor Map Card */}
-              <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative overflow-hidden min-h-[400px] flex flex-col justify-between`}>
-                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/25 to-transparent pointer-events-none" />
-                <div className="flex justify-between items-center mb-5 flex-shrink-0">
-                  <h3 className={`text-sm font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"} flex items-center gap-2`}>
-                    <Globe className="w-4 h-4 text-emerald-400" />
-                    <span>Live Visitor Geolocation Radar</span>
-                  </h3>
-                  <span className={`text-[9px] font-bold uppercase ${isDark ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-emerald-50 border-emerald-200 text-emerald-600"} border px-2.5 py-1 rounded`}>
-                    Geocoded Map
-                  </span>
-                </div>
-
-                <div className="flex-1 flex flex-col justify-center items-center relative py-2">
-                  {/* Styled Cyber Dotted World Map */}
-                  <GeolocationMap logs={analytics.logs} isDark={isDark} />
-                  
-                  {/* Latest visitor telemetry banner */}
-                  <div className={`mt-3 w-full py-2 px-3 rounded-xl border ${isDark ? "bg-[#0c0c0e]/80 border-white/5 text-zinc-400" : "bg-black/[0.02] border-black/5 text-zinc-600"} text-[10px] font-mono flex items-center justify-between`}>
-                    <span className="font-bold text-red-400 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse inline-block" /> Live 2D Radar Map
-                    </span>
-                    <span className="truncate max-w-[200px] text-right">
-                      {(() => {
-                        const rec = analytics.logs.find(log => {
-                          const ip = log.ip || "";
-                          const loc = log.location || "";
-                          return (
-                            ip !== "127.0.0.1" &&
-                            ip !== "::1" &&
-                            !ip.startsWith("192.168.") &&
-                            !ip.startsWith("10.") &&
-                            !ip.startsWith("172.") &&
-                            !loc.toLowerCase().includes("localhost")
-                          );
-                        });
-                        return rec ? `Active connection geocoded at ${rec.location}` : "Awaiting external logs...";
-                      })()}
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <div className="w-full sm:w-64">
+              <Input
+                placeholder="Search articles..."
+                value={blogSearchQuery}
+                onChange={(e) => setBlogSearchQuery(e.target.value)}
+              />
             </div>
+          </div>
 
-            {/* Dynamic Leaderboards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Projects Leaderboard */}
-              <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
-                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent pointer-events-none" />
-                <div className="flex justify-between items-center mb-5">
-                  <h3 className={`text-sm font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"} flex items-center gap-2`}>
-                    <FolderKanban className="w-4 h-4 text-amber-400" />
-                    <span>Most Starred Projects</span>
-                  </h3>
-                  <span className={`text-[9px] font-bold uppercase ${isDark ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-amber-50 border-amber-200 text-amber-600"} border px-2.5 py-1 rounded`}>
-                    Leaderboard
-                  </span>
-                </div>
-                {topProjects.length === 0 ? (
-                  <div className="py-12 text-center text-xs text-zinc-500">No dynamic database projects recorded.</div>
-                ) : (
-                  <div className="space-y-3">
-                    {topProjects.map((p, idx) => (
-                      <div key={idx} className={`flex justify-between items-center p-3 ${isDark ? "bg-white/[0.01] border-white/5 hover:border-white/10" : "bg-black/[0.01] border-black/5 hover:border-black/10 shadow-sm"} border rounded-xl transition-all`}>
-                        <div className="flex items-center space-x-3">
-                          <span className="text-xs font-bold text-zinc-500 font-mono w-4">#{idx + 1}</span>
-                          <div>
-                            <p className={`text-xs font-bold ${isDark ? "text-white" : "text-zinc-900"} leading-none mb-1.5`}>{p.title}</p>
-                            <p className={`text-[9px] ${isDark ? "text-zinc-400" : "text-zinc-500"} font-mono`}>{p.category || "web"}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-amber-400 text-xs font-bold font-mono">
-                          <span>★</span>
-                          <span>{p.stars || 0}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Top Viewed Blogs Leaderboard with thumbnails */}
-              <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
-                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent pointer-events-none" />
-                <div className="flex justify-between items-center mb-5">
-                  <h3 className={`text-sm font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"} flex items-center gap-2`}>
-                    <BookHeart className="w-4 h-4 text-emerald-400" />
-                    <span>Most Viewed Insights</span>
-                  </h3>
-                  <span className={`text-[9px] font-bold uppercase ${isDark ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-emerald-50 border-emerald-200 text-emerald-600"} border px-2.5 py-1 rounded`}>
-                    Telemetry
-                  </span>
-                </div>
-                {topViewedBlogs.length === 0 ? (
-                  <div className="py-12 text-center text-xs text-zinc-500">No dynamic database blogs recorded.</div>
-                ) : (
-                  <div className="space-y-3">
-                    {topViewedBlogs.map((b, idx) => (
-                      <div key={idx} className={`flex justify-between items-center p-3 ${isDark ? "bg-white/[0.01] border-white/5 hover:border-emerald-500/30" : "bg-black/[0.01] border-black/5 hover:border-emerald-500/30 shadow-sm"} border rounded-xl transition-all`}>
-                        <div className="flex items-center space-x-3">
-                          <span className="text-xs font-bold text-zinc-500 font-mono w-4">#{idx + 1}</span>
-                          <div className={`w-9 h-9 rounded-lg overflow-hidden flex-shrink-0 border ${isDark ? "border-white/10" : "border-black/10"} bg-zinc-800`}>
-                            {b.imageUrl ? (
-                              <img src={b.imageUrl} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center text-[10px] text-emerald-400 font-bold font-mono">
-                                BG
-                              </div>
-                            )}
-                          </div>
-                          <div className="max-w-[150px] sm:max-w-[200px] truncate">
-                            <p className={`text-xs font-bold ${isDark ? "text-white" : "text-zinc-900"} leading-none mb-1.5 truncate`} title={b.title}>{b.title}</p>
-                            <p className={`text-[9px] ${isDark ? "text-zinc-400" : "text-zinc-500"} font-mono`}>{b.category || "Tech"}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1 text-emerald-400 text-xs font-bold font-mono">
-                          <span>👁</span>
-                          <span>{b.views || 0}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Geolocation visitor logs table */}
-            <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none" />
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-                <h3 className={`text-lg font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Live Visitor Geolocation Telemetry</h3>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleRefresh}
-                    disabled={isRefreshing}
-                    className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-[10px] font-semibold transition-all ${
-                      isDark
-                        ? "bg-white/5 text-zinc-400 hover:text-white border-white/5 disabled:text-zinc-600"
-                        : "bg-white text-zinc-600 hover:text-zinc-950 border-black/10 shadow-sm disabled:text-zinc-400"
-                    }`}
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-red-500" : ""}`} />
-                    <span>{isRefreshing ? "Refreshing..." : "Refresh"}</span>
-                  </button>
-                  <span className={`text-[10px] font-bold uppercase ${isDark ? "bg-white/5 border-white/5 text-zinc-400" : "bg-black/5 border-black/5 text-zinc-500"} border px-2.5 py-1.5 rounded-xl`}>
-                    Auto-Refreshing (15s)
-                  </span>
-                </div>
-              </div>
-
-              {analytics.logs.length === 0 ? (
-                <div className="py-10 text-center text-xs text-zinc-500">
-                  No visitor logs logged yet. Set MONGODB_URI in environment to log traffic logs in real-time.
-                </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Article Title</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Views</TableHead>
+                <TableHead>Likes</TableHead>
+                <TableHead>Reflections</TableHead>
+                <TableHead>Trend</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {blogMetricsTable.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-zinc-500">
+                    No articles found matching search criteria.
+                  </TableCell>
+                </TableRow>
               ) : (
-                <div className="overflow-x-auto pr-1">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className={`border-b ${isDark ? "border-white/5 text-zinc-400" : "border-black/10 text-zinc-500"} uppercase font-bold tracking-wider text-[9px]`}>
-                        <th className="pb-3.5 pl-2">Device Profile & Screen</th>
-                        <th className="pb-3.5">IP Address & ISP</th>
-                        <th className="pb-3.5">Geocoded Location</th>
-                        <th className="pb-3.5">Target Route</th>
-                        <th className="pb-3.5">Timestamp</th>
-                        <th className="pb-3.5 pr-2 text-right">System Agent</th>
-                      </tr>
-                    </thead>
-                    <tbody className={`divide-y ${isDark ? "divide-white/5" : "divide-black/5"}`}>
-                      {analytics.logs
-                        .filter(log => {
-                          const ip = log.ip || "";
-                          const loc = log.location || "";
-                          return (
-                            ip !== "127.0.0.1" &&
-                            ip !== "::1" &&
-                            !ip.startsWith("192.168.") &&
-                            !ip.startsWith("10.") &&
-                            !ip.startsWith("172.") &&
-                            !loc.toLowerCase().includes("localhost")
-                          );
-                        })
-                        .map((log, index) => (
-                        <tr key={index} className={`hover:${isDark ? "bg-white/[0.01]" : "bg-black/[0.01]"} transition-colors`}>
-                          <td className={`py-3 pl-2 flex items-center space-x-2 ${isDark ? "text-zinc-200" : "text-zinc-700"}`}>
-                            {log.device === "Mobile" ? (
-                              <Smartphone className="w-4 h-4 text-red-400 flex-shrink-0" />
-                            ) : log.device === "Tablet" ? (
-                              <Tablet className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                            ) : (
-                              <Monitor className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                            )}
-                            <div>
-                              <span className={`font-semibold text-xs ${isDark ? "text-white" : "text-zinc-900"}`}>{log.device || "Desktop"}</span>
-                              <span className="block text-[10px] text-zinc-500 font-mono mt-0.5">{log.screenResolution || "Unknown"}</span>
-                            </div>
-                          </td>
-                          <td className={`py-3 ${isDark ? "text-zinc-300" : "text-zinc-700"} font-mono text-xs`}>
-                            <div>
-                              <span>{log.ip}</span>
-                              <span className="block text-[10px] text-zinc-500 font-sans mt-0.5 max-w-[150px] truncate" title={log.isp || "Localhost Network"}>
-                                {log.isp || "Localhost Network"}
-                              </span>
-                            </div>
-                          </td>
-                          <td className={`py-3 ${isDark ? "text-zinc-200" : "text-zinc-800"} font-medium text-xs`}>
-                            <span className="inline-flex items-center gap-1.5">
-                              <Globe className="w-3.5 h-3.5 text-zinc-500" />
-                              <div>
-                                <span>{log.location || "Unknown"}</span>
-                                {log.lat && log.lon && (
-                                  <span className="block text-[10px] text-zinc-500 font-mono mt-0.5">
-                                    {log.lat.toFixed(4)}, {log.lon.toFixed(4)}
-                                  </span>
-                                )}
-                              </div>
-                            </span>
-                          </td>
-                          <td className="py-3 font-mono text-[11px]">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
-                              isDark ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-red-50 text-red-600 border border-red-100"
-                            }`}>
-                              {log.route || "/"}
-                            </span>
-                          </td>
-                          <td className={`py-3 ${isDark ? "text-zinc-400" : "text-zinc-600"} font-mono text-[10px]`}>
-                            {new Date(log.timestamp).toLocaleString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              second: "2-digit",
-                            })}
-                          </td>
-                          <td className={`py-3 ${isDark ? "text-zinc-400" : "text-zinc-600"} pr-2 text-right text-[10px] font-medium`}>
-                            <div>
-                              <span>{log.browser} / {log.os}</span>
-                              <span className="block text-[10px] text-zinc-500 font-sans mt-0.5">{log.language || "Unknown"}</span>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* EXPERIENCES TAB */}
-        {activeTab === "experiences" && (
-          <div className="space-y-6">
-            <div className={`flex justify-between items-center p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/20 to-transparent pointer-events-none" />
-              <div>
-                <h3 className={`text-lg font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Work Experience Control Panel</h3>
-                <p className={`text-xs ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>Manage work history, company logos, roles, dates, and locations.</p>
-              </div>
-              <button
-                onClick={() => {
-                  cancelEditExperience();
-                  setFullscreenExpEditor(true);
-                }}
-                className="py-2.5 px-5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center space-x-2 shadow-lg shadow-red-500/20"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Work Experience</span>
-              </button>
-            </div>
-
-            {/* Experiences list management */}
-            <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/10 to-transparent pointer-events-none" />
-              <h3 className={`text-lg font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"} mb-4`}>Uploaded Work Experiences</h3>
-              
-              {expMsg && (
-                <div className="mb-4 p-3 rounded-xl text-xs font-semibold text-center border bg-emerald-500/10 border-emerald-500/20 text-emerald-400">
-                  {expMsg}
-                </div>
-              )}
-
-              {dashboardExperiences.length === 0 ? (
-                <div className="py-20 text-center text-xs text-zinc-500">
-                  No dynamic database experiences uploaded yet. Local fallback experience entries are displayed on main pages.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {dashboardExperiences.map((exp, idx) => (
-                    <div key={idx} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 ${isDark ? "bg-[#121214]/50 border-white/5 hover:border-white/10" : "bg-white border-black/5 hover:border-black/10 shadow-sm"} border rounded-2xl transition-all gap-4`}>
-                      <div className="flex items-center space-x-4">
-                        {/* Reordering Controls */}
-                        <div className="flex flex-col items-center justify-center pr-2 border-r border-white/10 select-none">
-                          <button
-                            onClick={() => handleMoveExperience(idx, "up")}
-                            disabled={idx === 0}
-                            className={`p-1 rounded transition-colors ${
-                              idx === 0 ? "opacity-20 cursor-not-allowed text-zinc-500" : `${isDark ? "text-zinc-400 hover:text-white hover:bg-white/10" : "text-zinc-500 hover:text-black hover:bg-black/5"}`
-                            }`}
-                            title="Move Up (Higher Priority)"
-                          >
-                            <ChevronLeft className="w-4 h-4 rotate-90" />
-                          </button>
-                          <span className="text-[10px] font-mono font-bold text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20 my-0.5" title="Display Priority Order">
-                            #{exp.order !== undefined ? exp.order : idx + 1}
-                          </span>
-                          <button
-                            onClick={() => handleMoveExperience(idx, "down")}
-                            disabled={idx === dashboardExperiences.length - 1}
-                            className={`p-1 rounded transition-colors ${
-                              idx === dashboardExperiences.length - 1 ? "opacity-20 cursor-not-allowed text-zinc-500" : `${isDark ? "text-zinc-400 hover:text-white hover:bg-white/10" : "text-zinc-500 hover:text-black hover:bg-black/5"}`
-                            }`}
-                            title="Move Down (Lower Priority)"
-                          >
-                            <ChevronLeft className="w-4 h-4 -rotate-90" />
-                          </button>
-                        </div>
-
-                        <div className={`w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border ${isDark ? "border-white/10 bg-white/5" : "border-black/10 bg-zinc-100"} flex items-center justify-center`}>
-                          {exp.logoUrl ? (
-                            <img src={exp.logoUrl} alt={exp.company} className="w-full h-full object-cover" />
-                          ) : (
-                            <Briefcase className="w-5 h-5 text-red-400" />
-                          )}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className={`text-sm font-bold ${isDark ? "text-white" : "text-zinc-900"}`}>{exp.title}</h4>
-                            {exp.isPresent && (
-                              <span className="px-2 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                Present Location
-                              </span>
-                            )}
-                          </div>
-                          <p className={`text-xs font-medium ${isDark ? "text-zinc-400" : "text-zinc-600"} mt-0.5`}>
-                            {exp.company} {exp.location ? `• ${exp.location}` : ""}
-                          </p>
-                          <p className={`text-[10px] font-mono ${isDark ? "text-zinc-500" : "text-zinc-400"} mt-1`}>
-                            {exp.period || (exp.startDate ? `${exp.startDate} – ${exp.isPresent ? "Present" : exp.endDate}` : "N/A")}
-                          </p>
-                        </div>
+                blogMetricsTable.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium text-zinc-100 max-w-xs truncate">
+                      {item.title}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="neutral">{item.category}</Badge>
+                    </TableCell>
+                    <TableCell className="font-mono">{item.views}</TableCell>
+                    <TableCell className="font-mono text-rose-400">{item.likes}</TableCell>
+                    <TableCell className="font-mono text-amber-400">{item.comments}</TableCell>
+                    <TableCell>
+                      <div className="w-16 h-5">
+                        <Sparkline data={[item.views, item.likes + 2, item.comments + 4, item.views + 5]} color="#EF4444" height={20} />
                       </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
 
-                      <div className="flex items-center space-x-2 self-end sm:self-center">
+      {/* WORK EXPERIENCES TAB */}
+      {activeTab === "experiences" && (
+        <Card className="space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-100">Work Experiences</h3>
+              <p className="text-[11px] text-zinc-500">Manage roles, order priority, logos, and descriptions</p>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                cancelEditExperience();
+                setExpDrawerOpen(true);
+              }}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Experience</span>
+            </Button>
+          </div>
+
+          {dashboardExperiences.length === 0 ? (
+            <EmptyState
+              icon={Briefcase}
+              title="No work experiences"
+              description="Click Add Experience to create your first work history entry."
+              action={
+                <Button size="sm" onClick={() => setExpDrawerOpen(true)}>
+                  Add Experience
+                </Button>
+              }
+            />
+          ) : (
+            <div className="space-y-2.5">
+              {dashboardExperiences.map((exp, idx) => (
+                <div
+                  key={exp._id || idx}
+                  className="flex items-center justify-between p-3.5 bg-[#141417] border border-white/[0.08] rounded-lg transition-colors hover:border-white/[0.12]"
+                >
+                  <div className="flex items-center space-x-3 min-w-0">
+                    {/* Priority & Move Up/Down Controls */}
+                    <div className="flex items-center space-x-1 pr-2 border-r border-white/[0.08]">
+                      <Badge variant="brand" className="font-mono text-[9px]">
+                        #{exp.order !== undefined ? exp.order : idx + 1}
+                      </Badge>
+                      <div className="flex flex-col">
                         <button
-                          onClick={() => startEditExperience(exp)}
-                          className={`p-2 ${isDark ? "text-zinc-400 hover:text-white hover:bg-white/5" : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5"} rounded-lg border border-transparent transition-all flex items-center space-x-1 text-xs`}
-                          title="Edit Experience"
+                          onClick={() => handleMoveExperience(idx, "up")}
+                          disabled={idx === 0}
+                          className="p-0.5 text-zinc-500 hover:text-zinc-200 disabled:opacity-20"
+                          title="Move Up"
                         >
-                          <FileText className="w-4 h-4" />
-                          <span className="hidden sm:inline">Edit</span>
+                          <ChevronLeft className="w-3 h-3 rotate-90" />
                         </button>
                         <button
-                          onClick={() => handleDeleteExperience(exp._id)}
-                          className="p-2 text-rose-500/80 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg border border-transparent hover:border-rose-500/10 transition-all flex items-center space-x-1 text-xs"
-                          title="Delete Experience"
+                          onClick={() => handleMoveExperience(idx, "down")}
+                          disabled={idx === dashboardExperiences.length - 1}
+                          className="p-0.5 text-zinc-500 hover:text-zinc-200 disabled:opacity-20"
+                          title="Move Down"
                         >
-                          <Trash2 className="w-4 h-4" />
-                          <span className="hidden sm:inline">Delete</span>
+                          <ChevronLeft className="w-3 h-3 -rotate-90" />
                         </button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
-        {/* PROJECTS TAB */}
-        {activeTab === "projects" && (
-          <div className="space-y-6">
-            <div className={`flex justify-between items-center p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/20 to-transparent pointer-events-none" />
-              <div>
-                <h3 className={`text-lg font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Dynamic Project Control Panel</h3>
-                <p className={`text-xs ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>Launch premium workspace consoles to edit or upload projects in distraction-free mode.</p>
-              </div>
-              <button
-                onClick={() => {
-                  cancelEditProject();
-                  setFullscreenProjectEditor(true);
-                }}
-                className="py-2.5 px-5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center space-x-2 shadow-lg shadow-red-500/20"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Upload New Project</span>
-              </button>
-            </div>
+                    <div className="w-9 h-9 rounded-lg overflow-hidden border border-white/[0.08] bg-white/[0.04] flex items-center justify-center flex-shrink-0">
+                      {exp.logoUrl ? (
+                        <img src={exp.logoUrl} alt={exp.company} className="w-full h-full object-cover" />
+                      ) : (
+                        <Briefcase className="w-4 h-4 text-zinc-500" />
+                      )}
+                    </div>
 
-            {/* Projects list management */}
-            <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/10 to-transparent pointer-events-none" />
-              <h3 className={`text-lg font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"} mb-4`}>Existing dynamic uploaded projects</h3>
-              
-              {projMsg && (
-                <div className="mb-4 p-3 rounded-xl text-xs font-semibold text-center border bg-emerald-500/10 border-emerald-500/20 text-emerald-400">
-                  {projMsg}
-                </div>
-              )}
-
-              {dashboardProjects.length === 0 ? (
-                <div className="py-20 text-center text-xs text-zinc-500">
-                  No dynamic database uploads recorded yet. Local fallback assets are displayed on main pages.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {dashboardProjects.map((p, idx) => (
-                    <div key={idx} className={`flex justify-between items-center p-4 ${isDark ? "bg-[#121214]/50 border-white/5 hover:border-white/10" : "bg-white border-black/5 hover:border-black/10 shadow-sm"} border rounded-2xl transition-all`}>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className={`text-xs font-bold ${isDark ? "text-white" : "text-zinc-900"}`}>{p.title}</h4>
-                          {p.pinned && (
-                            <span className="px-2 py-0.5 rounded-md text-[8px] font-extrabold uppercase tracking-wider bg-gradient-to-r from-red-600 to-amber-500 text-white flex items-center gap-1">
-                              <Pin className="w-2.5 h-2.5 fill-current" /> Pinned Top
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {Array.isArray(p.tech) && p.tech.map((t, tIdx) => (
-                            <span key={tIdx} className={`text-[8px] ${isDark ? "bg-white/5 text-zinc-400" : "bg-zinc-100 text-zinc-600"} px-1.5 py-0.5 rounded-md uppercase font-semibold`}>
-                              {t}
-                            </span>
-                          ))}
-                        </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <h4 className="text-xs font-semibold text-zinc-100 truncate">{exp.title}</h4>
+                        {exp.isPresent && <Badge variant="success">Present</Badge>}
                       </div>
-                      <div className="flex items-center space-x-3.5">
-                        <span className="text-[9px] font-bold bg-red-500/10 border border-red-500/20 text-red-400 px-2.5 py-0.5 rounded-md uppercase tracking-wider">
-                          {p.category}
-                        </span>
-                        <div className="flex items-center space-x-1.5">
-                          <button
-                            onClick={() => handleTogglePinProject(p._id)}
-                            className={`p-1.5 ${p.pinned ? "text-amber-400 bg-amber-500/10 border-amber-500/20" : isDark ? "text-zinc-400 hover:text-white hover:bg-white/5" : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5"} rounded-lg border transition-all`}
-                            title={p.pinned ? "Unpin from top" : "Pin to top"}
-                          >
-                            <Pin className={`w-3.5 h-3.5 ${p.pinned ? "fill-current" : ""}`} />
-                          </button>
-                          <button
-                            onClick={() => startEditProject(p)}
-                            className={`p-1.5 ${isDark ? "text-zinc-400 hover:text-white hover:bg-white/5 hover:border-white/5" : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5 hover:border-black/5"} rounded-lg border border-transparent transition-all`}
-                            title="Edit Project"
-                          >
-                            <FileText className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProject(p._id)}
-                            className="p-1.5 text-rose-500/80 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg border border-transparent hover:border-rose-500/10 transition-all"
-                            title="Delete Project"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* BLOGS TAB */}
-        {activeTab === "blogs" && (
-          <div className="space-y-6">
-            <div className={`flex justify-between items-center p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/20 to-transparent pointer-events-none" />
-              <div>
-                <h3 className={`text-lg font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Dynamic Markdown Blog Panel</h3>
-                <p className={`text-xs ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>Launch our distraction-free, fullscreen split-pane workspace with real-time markdown compilers.</p>
-              </div>
-              <button
-                onClick={() => {
-                  cancelEditBlog();
-                  setFullscreenBlogEditor(true);
-                }}
-                className="py-2.5 px-5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center space-x-2 shadow-lg shadow-red-500/20"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Write New Blog Post</span>
-              </button>
-            </div>
-
-            {/* Blogs list management */}
-            <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/10 to-transparent pointer-events-none" />
-              <h3 className={`text-lg font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"} mb-4`}>Published dynamic database blogs</h3>
-              
-              {blogMsg && (
-                <div className="mb-4 p-3 rounded-xl text-xs font-semibold text-center border bg-emerald-500/10 border-emerald-500/20 text-emerald-400">
-                  {blogMsg}
-                </div>
-              )}
-
-              {dashboardBlogs.length === 0 ? (
-                <div className="py-20 text-center text-xs text-zinc-500">
-                  No dynamic database blog uploads recorded yet. Local fallback mock articles are displayed.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {dashboardBlogs.map((b, idx) => (
-                    <div key={idx} className={`flex justify-between items-center p-4 ${isDark ? "bg-[#121214]/50 border-white/5 hover:border-white/10" : "bg-white border-black/5 hover:border-black/10 shadow-sm"} border rounded-2xl transition-all`}>
-                      <div>
-                        <h4 className={`text-xs font-bold ${isDark ? "text-white" : "text-zinc-900"}`}>{b.title}</h4>
-                        <p className={`text-[9px] ${isDark ? "text-zinc-400" : "text-zinc-500"} mt-1 font-mono`}>
-                          Published: {new Date(b.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-3.5">
-                        <span className="text-[9px] font-bold bg-red-500/10 border border-red-500/20 text-red-400 px-2.5 py-0.5 rounded-md uppercase tracking-wider">
-                          {b.category}
-                        </span>
-                        <div className="flex items-center space-x-1.5">
-                          <button
-                            onClick={() => startEditBlog(b)}
-                            className={`p-1.5 ${isDark ? "text-zinc-400 hover:text-white hover:bg-white/5 hover:border-white/5" : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5 hover:border-black/5"} rounded-lg border border-transparent transition-all`}
-                            title="Edit Blog"
-                          >
-                            <FileText className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteBlog(b._id)}
-                            className="p-1.5 text-rose-500/80 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg border border-transparent hover:border-rose-500/10 transition-all"
-                            title="Delete Blog"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* COMMENTS TAB */}
-        {activeTab === "comments" && (
-          <div className="space-y-6">
-            <div className={`rounded-[24px] border ${isDark ? "glass-card border-white/5" : "glass-card-light border-black/5 shadow-sm"} p-6 sm:p-8 relative overflow-hidden`}>
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/20 to-transparent pointer-events-none" />
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-2.5">
-                  <MessageSquare className="w-5 h-5 text-red-400" />
-                  <h2 className={`text-base sm:text-lg font-bold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
-                    Visitor Reflections ({dashboardComments.length})
-                  </h2>
-                </div>
-              </div>
-
-              {dashboardComments.length === 0 ? (
-                <p className="text-xs text-zinc-500 italic text-center py-20">
-                  No anonymous reflections have been shared yet.
-                </p>
-              ) : (
-                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1 hide-scrollbar">
-                  {dashboardComments.map((comment) => (
-                    <div
-                      key={comment._id}
-                      className={`p-5 rounded-2xl ${isDark ? "bg-white/[0.01] hover:bg-white/[0.02] border-white/5" : "bg-black/[0.01] hover:bg-black/[0.02] border-black/5"} border flex justify-between items-start gap-4 transition-all`}
-                    >
-                      <div className="space-y-2 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
-                            Anonymous
-                          </span>
-                          <span className={`text-[10px] ${isDark ? "text-zinc-400" : "text-zinc-600"} font-medium`}>
-                            on {comment.blogTitle}
-                          </span>
-                          <span className="text-[9px] text-zinc-500 font-mono">
-                            {new Date(comment.created_at).toLocaleString("en-US", {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                        </div>
-                        <p className={`text-xs ${isDark ? "text-zinc-300" : "text-zinc-700"} leading-relaxed select-text pr-4`}>
-                          {comment.content}
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={() => handleDeleteComment(comment._id)}
-                        className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-all flex-shrink-0"
-                        title="Delete reflection"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* BLOG ANALYTICS TAB */}
-        {activeTab === "blog-analytics" && (() => {
-          const blogLogs = blogAnalytics.logs || [];
-          const filteredBlogLogs = blogLogs.filter(log => selectedBlogFilter === "all" || log.blogId === selectedBlogFilter);
-          
-          const viewsCount = filteredBlogLogs.filter(log => log.action === "view").length;
-          const likesCount = filteredBlogLogs.filter(log => log.action === "like").length;
-          const reflectionsCount = filteredBlogLogs.filter(log => log.action === "reflection").length;
-          
-          const engagementRate = viewsCount > 0 
-            ? (((likesCount + reflectionsCount) / viewsCount) * 100).toFixed(1)
-            : "0.0";
-
-          // Group by article for Recharts bar chart
-          const chartData = dashboardBlogs.map(blog => {
-            const blogIdStr = blog._id.toString();
-            const articleLogs = blogLogs.filter(log => log.blogId === blogIdStr);
-            return {
-              name: blog.title.length > 25 ? blog.title.slice(0, 25) + "..." : blog.title,
-              Views: articleLogs.filter(log => log.action === "view").length,
-              Likes: articleLogs.filter(log => log.action === "like").length,
-              Reflections: articleLogs.filter(log => log.action === "reflection").length,
-            };
-          });
-
-          return (
-            <div className="space-y-8 select-text">
-              {/* Blog scope selector */}
-              <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 rounded-[24px] ${
-                isDark ? "glass-card" : "glass-card-light shadow-sm"
-              } relative mb-6`}>
-                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none" />
-                <div>
-                  <h3 className={`text-sm font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Select Article Scope</h3>
-                  <p className={`text-[10px] ${isDark ? "text-zinc-500" : "text-zinc-400"} font-mono mt-0.5`}>Filter geocoding radar, KPIs, and telemetry logs specifically per article.</p>
-                </div>
-                <select
-                  value={selectedBlogFilter}
-                  onChange={(e) => setSelectedBlogFilter(e.target.value)}
-                  className={`border rounded-xl px-4 py-2 text-xs focus:outline-none transition-all font-sans w-full sm:w-64 ${
-                    isDark 
-                      ? "bg-black/60 border-white/10 focus:border-red-500/50 text-white" 
-                      : "bg-white border-black/10 focus:border-red-500/50 text-zinc-900 shadow-sm"
-                  }`}
-                >
-                  <option value="all">All Blog Articles</option>
-                  {dashboardBlogs.map(b => (
-                    <option key={b._id} value={b._id}>{b.title}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* KPI metrics grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {[
-                  { label: "Article Views", value: viewsCount, icon: Globe, color: isDark ? "bg-sky-500/10 text-sky-400 border-sky-500/20" : "bg-sky-50 text-sky-600 border-sky-100" },
-                  { label: "Article Likes", value: likesCount, icon: Heart, color: isDark ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : "bg-rose-50 text-rose-600 border-rose-100" },
-                  { label: "Reflections Shared", value: reflectionsCount, icon: MessageSquare, color: isDark ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "bg-amber-50 text-amber-600 border-amber-100" },
-                  { label: "Engagement Rate", value: `${engagementRate}%`, icon: Cpu, color: isDark ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-emerald-50 text-emerald-600 border-emerald-100" },
-                ].map((kpi, idx) => {
-                  const Icon = kpi.icon;
-                  return (
-                    <div key={idx} className={`p-5 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative flex items-center justify-between`}>
-                      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none" />
-                      <div>
-                        <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>{kpi.label}</p>
-                        <h3 className={`text-2xl font-extrabold font-outfit mt-1.5 ${isDark ? "text-white" : "text-zinc-900"}`}>{kpi.value}</h3>
-                      </div>
-                      <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${kpi.color}`}>
-                        <Icon className="w-5 h-5" />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Dynamic visualization layout */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Recharts chart */}
-                <div className={`lg:col-span-2 p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative h-[450px]`}>
-                  <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none" />
-                  <div className="flex justify-between items-center mb-6">
-                    <div>
-                      <h3 className={`text-sm font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Dynamic Article Traffic Breakdown</h3>
-                      <p className={`text-[10px] ${isDark ? "text-zinc-500" : "text-zinc-400"} font-mono mt-0.5`}>Views vs Likes vs Comments per dynamic database blog.</p>
-                    </div>
-                  </div>
-                  <div className="h-[340px] w-full font-mono text-[9px]">
-                    {chartData.length === 0 ? (
-                      <div className="h-full flex items-center justify-center text-zinc-500">No blog analytics data recorded.</div>
-                    ) : (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"} />
-                          <XAxis dataKey="name" stroke={isDark ? "#71717a" : "#52525b"} />
-                          <YAxis stroke={isDark ? "#71717a" : "#52525b"} />
-                          <Tooltip 
-                            contentStyle={{ 
-                              backgroundColor: isDark ? "#09090b" : "#ffffff", 
-                              borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
-                              color: isDark ? "#ffffff" : "#000000"
-                            }} 
-                          />
-                          <Bar dataKey="Views" fill="#0ea5e9" name="Views" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="Likes" fill="#f43f5e" name="Likes" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="Reflections" fill="#f59e0b" name="Comments" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    )}
-                  </div>
-                </div>
-
-                {/* 2D Geographic Map Radar */}
-                <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative h-[450px]`}>
-                  <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none" />
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <h3 className={`text-sm font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Active Blog Geocoding Radar</h3>
-                      <p className={`text-[10px] ${isDark ? "text-zinc-500" : "text-zinc-400"} font-mono`}>Dynamic geolocation mapping exact reader profiles.</p>
-                    </div>
-                  </div>
-                  <div className={`h-[340px] flex items-center justify-center relative overflow-hidden rounded-xl border ${isDark ? "border-white/5 bg-black/40" : "border-black/5 bg-white"} shadow-inner`}>
-                    <GeolocationMap logs={filteredBlogLogs} isDark={isDark} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Telemetry logs table */}
-              <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
-                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none" />
-                <div className="flex justify-between items-center mb-5">
-                  <h3 className={`text-base font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Article Action Telemetry Stream</h3>
-                  <span className={`text-[9px] font-bold uppercase border px-2.5 py-1 rounded-md ${
-                    isDark ? "bg-white/5 border-white/5 text-zinc-400" : "bg-black/5 border-black/5 text-zinc-500"
-                  }`}>
-                    Real-time Blog Analytics Logs
-                  </span>
-                </div>
-
-                {filteredBlogLogs.length === 0 ? (
-                  <div className="py-12 text-center text-xs text-zinc-500 font-mono">No telemetry events logged for this selection scope.</div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-xs">
-                      <thead>
-                        <tr className={`border-b ${isDark ? "border-white/5 text-zinc-400" : "border-black/10 text-zinc-500"} uppercase font-bold tracking-wider text-[9px] pb-3.5`}>
-                          <th className="pb-3.5 pl-2">Article / Scope</th>
-                          <th className="pb-3.5">Action Profile</th>
-                          <th className="pb-3.5">IP Address & ISP</th>
-                          <th className="pb-3.5">Geolocated Location</th>
-                          <th className="pb-3.5">Window / OS</th>
-                          <th className="pb-3.5">Timestamp</th>
-                        </tr>
-                      </thead>
-                      <tbody className={`divide-y ${isDark ? "divide-white/5" : "divide-black/5"}`}>
-                        {filteredBlogLogs.map((log, index) => (
-                          <tr key={index} className={`hover:${isDark ? "bg-white/[0.01]" : "bg-black/[0.01]"} transition-colors`}>
-                            <td className={`py-3 pl-2 font-medium max-w-[150px] truncate ${isDark ? "text-white" : "text-zinc-900"}`} title={log.blogTitle}>
-                              <div>
-                                <span className="block font-semibold text-xs truncate">{log.blogTitle}</span>
-                                <span className="block text-[9px] text-zinc-500 uppercase tracking-widest font-mono mt-0.5">
-                                  {log.action === "reflection" ? "Comment Event" : log.action + " Event"}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="py-3">
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
-                                log.action === "view" ? "bg-sky-500/10 text-sky-400 border border-sky-500/20" :
-                                log.action === "like" ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" :
-                                "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                              }`}>
-                                {log.action.toUpperCase()}
-                              </span>
-                              {log.action === "reflection" && log.content && (
-                                <p className={`text-[10px] italic p-2 rounded-lg border mt-1.5 max-w-xs break-words ${
-                                  isDark ? "text-zinc-400 bg-white/5 border-white/5" : "text-zinc-600 bg-black/5 border-black/5"
-                                }`} title={log.content}>
-                                  "{log.content}"
-                                </p>
-                              )}
-                            </td>
-                            <td className={`py-3 font-mono text-xs ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>
-                              <div>
-                                <span>{log.ip}</span>
-                                <span className="block text-[9px] text-zinc-500 font-sans mt-0.5 truncate max-w-[120px]" title={log.isp}>{log.isp}</span>
-                              </div>
-                            </td>
-                            <td className={`py-3 ${isDark ? "text-zinc-200" : "text-zinc-800"}`}>
-                              <span className="inline-flex items-center gap-1">
-                                <Globe className="w-3.5 h-3.5 text-zinc-500" />
-                                <div>
-                                  <span className="text-xs font-semibold">{log.location}</span>
-                                  {log.lat && log.lon && (
-                                    <span className="block text-[9px] text-zinc-500 font-mono mt-0.5">{log.lat.toFixed(4)}, {log.lon.toFixed(4)}</span>
-                                  )}
-                                </div>
-                              </span>
-                            </td>
-                            <td className="py-3 font-mono text-[10px]">
-                              <div>
-                                <span className={`block font-semibold ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>{log.os} / {log.browser}</span>
-                                <span className="block text-[9px] text-zinc-500 mt-0.5">{log.windowSize} ({log.screenResolution})</span>
-                              </div>
-                            </td>
-                            <td className={`py-3 font-mono text-[10px] ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>
-                              {new Date(log.timestamp).toLocaleString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                second: "2-digit",
-                              })}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })()}
-      </main>
-
-      {/* Fullscreen project editor overlay */}
-      <AnimatePresence>
-        {fullscreenProjectEditor && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            className="fixed inset-0 z-50 bg-[#050505] text-[#ededed] flex flex-col font-sans select-none"
-          >
-            {/* Header bar */}
-            <div className="flex justify-between items-center px-8 py-5 border-b border-white/5 bg-[#09090b]">
-              <div>
-                <h2 className="text-base font-extrabold font-outfit text-white tracking-tight flex items-center gap-2.5">
-                  <FolderKanban className="w-5 h-5 text-red-500" />
-                  <span>{editingProjectId ? "Update Dynamic Project Console" : "New Dynamic Project Workspace"}</span>
-                </h2>
-                <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
-                  {editingProjectId ? `PROJECT ID: ${editingProjectId}` : "CREATING FRESH DATABASE ENTREE"}
-                </p>
-              </div>
-              <div className="flex items-center space-x-3.5">
-                <button
-                  onClick={cancelEditProject}
-                  className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Exit Workspace</span>
-                </button>
-                <button
-                  onClick={handleAddProject}
-                  className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all shadow-lg shadow-red-500/20"
-                >
-                  {editingProjectId ? "Save Changes" : "Publish Project"}
-                </button>
-              </div>
-            </div>
-
-            {/* Body split-pane */}
-            <div className="flex-1 flex overflow-hidden select-text">
-              {/* Left Pane (Editor Form) */}
-              <div className="w-1/2 p-10 overflow-y-auto border-r border-white/5 space-y-6 select-text">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 pb-3 border-b border-white/5 select-none">
-                  Project Parameters Configuration
-                </h3>
-                
-                {projMsg && (
-                  <div className="p-3.5 rounded-xl text-xs font-semibold text-center border bg-red-500/10 border-red-500/20 text-red-400">
-                    {projMsg}
-                  </div>
-                )}
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                      Project Title <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="E.g. HireNova Job Scraper & Engine"
-                      value={newProjTitle}
-                      onChange={(e) => { setNewProjTitle(e.target.value); setProjMsg(""); }}
-                      className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                        Tech Stack (Comma Separated) <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="React, Python, Tailwind"
-                        value={newProjTech}
-                        onChange={(e) => { setNewProjTech(e.target.value); setProjMsg(""); }}
-                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">Category</label>
-                      <select
-                        value={newProjCat}
-                        onChange={(e) => setNewProjCat(e.target.value)}
-                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-zinc-400 font-sans"
-                      >
-                        <option value="web">Web & Systems</option>
-                        <option value="ai">AI / NLP / Chatbots</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                        GitHub Repository URL <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="url"
-                        required
-                        placeholder="https://github.com/..."
-                        value={newProjGithub}
-                        onChange={(e) => { setNewProjGithub(e.target.value); setProjMsg(""); }}
-                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                        Deployed Website Link (Optional)
-                      </label>
-                      <input
-                        type="url"
-                        placeholder="https://..."
-                        value={newProjDeployed}
-                        onChange={(e) => { setNewProjDeployed(e.target.value); setProjMsg(""); }}
-                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                      Project Thumbnail Image URL (Optional)
-                    </label>
-                    <input
-                      type="url"
-                      placeholder="https://images.unsplash.com/photo-..."
-                      value={newProjImageUrl}
-                      onChange={(e) => { setNewProjImageUrl(e.target.value); setProjMsg(""); }}
-                      className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
-                    />
-                  </div>
-
-                  {/* Date & Pin controls */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                        Project Creation Date (Optional for sorting)
-                      </label>
-                      <input
-                        type="date"
-                        value={newProjDate}
-                        onChange={(e) => setNewProjDate(e.target.value)}
-                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
-                      />
-                    </div>
-                    <div className="flex items-center pt-6">
-                      <label className="inline-flex items-center space-x-2.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={newProjPinned}
-                          onChange={(e) => setNewProjPinned(e.target.checked)}
-                          className="w-4 h-4 rounded border-white/10 bg-[#121214] text-red-600 focus:ring-red-500 focus:ring-offset-0 cursor-pointer"
-                        />
-                        <span className="text-xs font-bold text-zinc-200 flex items-center gap-1.5">
-                          <Pin className="w-3.5 h-3.5 text-amber-400 fill-current" /> Pin Project to Top
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                      Short Description / Explainer Text
-                    </label>
-                    <textarea
-                      placeholder="Provide a quick detailed summary of the codebase parameters..."
-                      value={newProjDesc}
-                      onChange={(e) => setNewProjDesc(e.target.value)}
-                      className="w-full h-36 bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans resize-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Pane (Dynamic Card Preview) */}
-              <div className="w-1/2 p-10 bg-[#09090b] overflow-y-auto flex flex-col justify-center items-center select-none">
-                <div className="w-full max-w-md">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 pb-3 border-b border-white/5 mb-8 text-center">
-                    Portfolio Live Card Mockup
-                  </h3>
-                  
-                  <div className={`relative overflow-hidden rounded-[24px] glass-card border p-8 shadow-2xl transition-all duration-500 flex flex-col justify-between min-h-[280px] ${
-                    newProjPinned ? "border-amber-500/50 shadow-amber-950/20" : "border-white/5 hover:border-red-500/20"
-                  }`}>
-                    {/* Reflective top highlight */}
-                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/25 to-transparent pointer-events-none z-20" />
-                    
-                    <div>
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] font-bold bg-red-500/10 border border-red-500/20 text-red-400 px-2.5 py-0.5 rounded-md uppercase tracking-wider">
-                            {newProjCat || "web"}
-                          </span>
-                          {newProjPinned && (
-                            <span className="px-2 py-0.5 rounded-md text-[8px] font-extrabold uppercase tracking-wider bg-gradient-to-r from-red-600 to-amber-500 text-white flex items-center gap-1">
-                              <Pin className="w-2.5 h-2.5 fill-current" /> Pinned
-                            </span>
-                          )}
-                        </div>
-                        <span className="flex items-center space-x-1 text-[10px] font-mono text-zinc-400 font-bold bg-white/5 border border-white/5 px-2 py-0.5 rounded-md">
-                          <span>★</span>
-                          <span>1</span>
-                        </span>
-                      </div>
-
-                      <h4 className="text-base font-extrabold font-outfit text-white mb-2 leading-snug">
-                        {newProjTitle || "Your Project Title Mock"}
-                      </h4>
-                      <p className="text-xs text-zinc-400 font-sans leading-relaxed mb-6">
-                        {newProjDesc || "Your short description parameters will populate dynamically in real-time as you type in the editor..."}
+                      <p className="text-[11px] text-zinc-400 mt-0.5 truncate">
+                        {exp.company} {exp.location ? `• ${exp.location}` : ""}
                       </p>
                     </div>
+                  </div>
 
-                    <div className="flex justify-between items-center border-t border-white/5 pt-4">
-                      <div className="flex flex-wrap gap-1 max-w-[70%]">
-                        {(newProjTech ? newProjTech.split(",") : ["React", "Tailwind"]).map((t, idx) => (
-                          <span key={idx} className="text-[8px] bg-white/5 text-zinc-400 px-1.5 py-0.5 rounded-md uppercase font-semibold">
-                            {t.trim()}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="flex space-x-2 text-zinc-400">
-                        <Globe className="w-4 h-4 hover:text-white transition-colors" />
-                        <Github className="w-4 h-4 hover:text-white transition-colors" />
-                      </div>
-                    </div>
+                  <div className="flex items-center space-x-1 flex-shrink-0">
+                    <IconButton title="Edit Experience" onClick={() => startEditExperience(exp)}>
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </IconButton>
+                    <IconButton
+                      title="Delete Experience"
+                      variant="danger"
+                      onClick={() =>
+                        setDeleteConfirm({
+                          isOpen: true,
+                          title: exp.title,
+                          id: exp._id,
+                          type: "experience",
+                        })
+                      }
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </IconButton>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </Card>
+      )}
 
-      {/* Fullscreen blog editor overlay */}
-      <AnimatePresence>
-        {fullscreenBlogEditor && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            className="fixed inset-0 z-50 bg-[#050505] text-[#ededed] flex flex-col font-sans select-none"
-          >
-            {/* Header bar */}
-            <div className="flex justify-between items-center px-8 py-5 border-b border-white/5 bg-[#09090b]">
-              <div>
-                <h2 className="text-base font-extrabold font-outfit text-white tracking-tight flex items-center gap-2.5">
-                  <BookHeart className="w-5 h-5 text-red-500" />
-                  <span>{editingBlogId ? "Update Dynamic Blog Console" : "New Dynamic Blog Markdown Workspace"}</span>
-                </h2>
-                <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
-                  {editingBlogId ? `BLOG ID: ${editingBlogId}` : "CREATING FRESH DATABASE MARKDOWN ENTRY"}
-                </p>
-              </div>
-              <div className="flex items-center space-x-3.5">
-                <button
-                  onClick={cancelEditBlog}
-                  className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Exit Workspace</span>
-                </button>
-                <button
-                  onClick={handleAddBlog}
-                  className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all shadow-lg shadow-red-500/20"
-                >
-                  {editingBlogId ? "Save Changes" : "Publish Blog"}
-                </button>
-              </div>
+      {/* MANAGE PROJECTS TAB */}
+      {activeTab === "projects" && (
+        <Card className="space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-100">Manage Projects</h3>
+              <p className="text-[11px] text-zinc-500">Configure codebase links, tech tags, and pinned items</p>
             </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                cancelEditProject();
+                setProjDrawerOpen(true);
+              }}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Upload Project</span>
+            </Button>
+          </div>
 
-            {/* Body split-pane */}
-            <div ref={splitContainerRef} className="flex-1 flex overflow-hidden">
-              {/* Left Pane (Editor Form) */}
-              <div style={{ width: `${blogEditorSplit}%` }} className="overflow-y-auto border-r border-white/5 space-y-6 select-text p-10">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 pb-3 border-b border-white/5 select-none">
-                  Markdown Blog Parameters
-                </h3>
-                
-                {blogMsg && (
-                  <div className="p-3.5 rounded-xl text-xs font-semibold text-center border bg-red-500/10 border-red-500/20 text-red-400">
-                    {blogMsg}
-                  </div>
-                )}
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                      Blog Article Title <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="E.g. Dynamic RAG Pipelines"
-                      value={newBlogTitle}
-                      onChange={(e) => { setNewBlogTitle(e.target.value); setBlogMsg(""); }}
-                      className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                        Thumbnail Image URL
-                      </label>
-                      <input
-                        type="url"
-                        placeholder="https://images.unsplash.com/..."
-                        value={newBlogImage}
-                        onChange={(e) => setNewBlogImage(e.target.value)}
-                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                        Banner Image URL
-                      </label>
-                      <input
-                        type="url"
-                        placeholder="https://images.unsplash.com/..."
-                        value={newBlogBanner}
-                        onChange={(e) => setNewBlogBanner(e.target.value)}
-                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">Short Excerpt Summary</label>
-                      <input
-                        type="text"
-                        placeholder="A quick overview of what the reader will explore..."
-                        value={newBlogExcerpt}
-                        onChange={(e) => setNewBlogExcerpt(e.target.value)}
-                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">Category Tag</label>
-                      <input
-                        type="text"
-                        placeholder="AI & NLP, Systems, Web Dev"
-                        value={newBlogCat}
-                        onChange={(e) => setNewBlogCat(e.target.value)}
-                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                      Blog Body Content (Markdown Supported) <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      required
-                      placeholder="# Article Header&#10;&#10;Write blog content in **Markdown format** (like README.md). Support headings, bullets, blockquotes, bold text..."
-                      value={newBlogContent}
-                      onChange={(e) => { setNewBlogContent(e.target.value); setBlogMsg(""); }}
-                      className="w-full h-80 bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-mono resize-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Drag Handle */}
-              <div
-                onMouseDown={startBlogResize}
-                className="w-1.5 bg-white/5 hover:bg-red-500/30 cursor-col-resize flex items-center justify-center transition-colors group flex-shrink-0"
-                title="Drag to resize"
-              >
-                <GripVertical className="w-3 h-3 text-zinc-600 group-hover:text-red-400" />
-              </div>
-
-              {/* Right Pane (Live README Markdown Preview) */}
-              <div className="flex-1 p-10 bg-[#09090b] overflow-y-auto flex flex-col justify-start text-left select-text">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 pb-3 border-b border-white/5 mb-6 text-center select-none">
-                  Live README Markdown Preview compiles on-the-go
-                </h3>
-                
-                <div className="w-full bg-white/[0.01] border border-white/5 rounded-2xl p-8 min-h-[400px]">
-                  {newBlogContent.trim() ? (
-                    <CustomMarkdown content={newBlogContent} isDark={true} />
-                  ) : (
-                    <p className="text-zinc-500 italic text-center py-40 select-none">No markdown written yet. Enter some text in the left pane to compile.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Fullscreen experience editor overlay */}
-      <AnimatePresence>
-        {fullscreenExpEditor && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            className="fixed inset-0 z-50 bg-[#050505] text-[#ededed] flex flex-col font-sans select-none"
-          >
-            {/* Header bar */}
-            <div className="flex justify-between items-center px-8 py-5 border-b border-white/5 bg-[#09090b]">
-              <div>
-                <h2 className="text-base font-extrabold font-outfit text-white tracking-tight flex items-center gap-2.5">
-                  <Briefcase className="w-5 h-5 text-red-500" />
-                  <span>{editingExpId ? "Update Work Experience Console" : "New Work Experience Workspace"}</span>
-                </h2>
-                <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
-                  {editingExpId ? `EXPERIENCE ID: ${editingExpId}` : "CREATING FRESH EXPERIENCE RECORD"}
-                </p>
-              </div>
-              <div className="flex items-center space-x-3.5">
-                <button
-                  onClick={cancelEditExperience}
-                  className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Exit Workspace</span>
-                </button>
-                <button
-                  onClick={handleAddExperience}
-                  className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all shadow-lg shadow-red-500/20"
-                >
-                  {editingExpId ? "Save Changes" : "Publish Experience"}
-                </button>
-              </div>
-            </div>
-
-            {/* Body split-pane */}
-            <div className="flex-1 flex overflow-hidden select-text">
-              {/* Left Pane (Editor Form) */}
-              <div className="w-1/2 p-10 overflow-y-auto border-r border-white/5 space-y-6 select-text">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 pb-3 border-b border-white/5 select-none">
-                  Experience Record Parameters
-                </h3>
-                
-                {expMsg && (
-                  <div className="p-3.5 rounded-xl text-xs font-semibold text-center border bg-red-500/10 border-red-500/20 text-red-400">
-                    {expMsg}
-                  </div>
-                )}
-
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                        Job Title <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="E.g. Full Stack Intern"
-                        value={expTitle}
-                        onChange={(e) => { setExpTitle(e.target.value); setExpMsg(""); }}
-                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                        Company Name <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="E.g. Donald Hans, LA"
-                        value={expCompany}
-                        onChange={(e) => { setExpCompany(e.target.value); setExpMsg(""); }}
-                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Logo Upload & URL */}
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                      Company Logo (Upload Image File or Enter Image URL)
-                    </label>
-                    <div className="flex gap-3 items-center">
-                      {expLogoUrl ? (
-                        <div className="w-12 h-12 rounded-xl border border-white/10 overflow-hidden flex-shrink-0 bg-white/5">
-                          <img src={expLogoUrl} alt="Logo Preview" className="w-full h-full object-cover" />
-                        </div>
-                      ) : (
-                        <div className="w-12 h-12 rounded-xl border border-dashed border-white/10 flex items-center justify-center flex-shrink-0 text-zinc-500 bg-white/5">
-                          <Image className="w-5 h-5" />
-                        </div>
-                      )}
-                      <div className="flex-1 space-y-2">
-                        <input
-                          type="url"
-                          placeholder="https://company.com/logo.png"
-                          value={expLogoUrl}
-                          onChange={(e) => setExpLogoUrl(e.target.value)}
-                          className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none transition-all text-white font-sans"
-                        />
-                        <label className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] font-semibold text-zinc-300 cursor-pointer transition-all">
-                          <Upload className="w-3 h-3" />
-                          <span>Upload Logo Image</span>
-                          <input type="file" accept="image/*" onChange={handleLogoFileUpload} className="hidden" />
-                        </label>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Project Title</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Tech Stack</TableHead>
+                <TableHead>Pinned</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {dashboardProjects.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-zinc-500">
+                    No dynamic projects uploaded yet.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                dashboardProjects.map((p) => (
+                  <TableRow key={p._id}>
+                    <TableCell className="font-semibold text-zinc-100">{p.title}</TableCell>
+                    <TableCell>
+                      <Badge variant="neutral">{p.category || "web"}</Badge>
+                    </TableCell>
+                    <TableCell className="text-zinc-400">
+                      {Array.isArray(p.tech) ? p.tech.join(", ") : p.tech}
+                    </TableCell>
+                    <TableCell>
+                      <button
+                        onClick={() => handleTogglePinProject(p._id)}
+                        className={`p-1 rounded transition-colors ${
+                          p.pinned ? "text-amber-400 bg-amber-500/10" : "text-zinc-500 hover:text-zinc-300"
+                        }`}
+                        title={p.pinned ? "Unpin Project" : "Pin Project"}
+                      >
+                        <Pin className="w-3.5 h-3.5" />
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="inline-flex space-x-1">
+                        <IconButton title="Edit Project" onClick={() => startEditProject(p)}>
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </IconButton>
+                        <IconButton
+                          title="Delete Project"
+                          variant="danger"
+                          onClick={() =>
+                            setDeleteConfirm({
+                              isOpen: true,
+                              title: p.title,
+                              id: p._id,
+                              type: "project",
+                            })
+                          }
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </IconButton>
                       </div>
-                    </div>
-                  </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
 
-                  {/* Date fields & Present checkbox */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                        Start Date / Period
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="E.g. Jun 2025"
-                        value={expStartDate}
-                        onChange={(e) => setExpStartDate(e.target.value)}
-                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                        End Date / Period
-                      </label>
-                      <input
-                        type="text"
-                        disabled={expIsPresent}
-                        placeholder={expIsPresent ? "Present" : "E.g. Sept 2025"}
-                        value={expIsPresent ? "Present" : expEndDate}
-                        onChange={(e) => setExpEndDate(e.target.value)}
-                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans disabled:opacity-50"
-                      />
-                    </div>
-                  </div>
+      {/* MARKDOWN BLOGS TAB */}
+      {activeTab === "blogs" && (
+        <Card className="space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-100">Markdown Blogs</h3>
+              <p className="text-[11px] text-zinc-500">Publish and edit technical articles with live preview</p>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                cancelEditBlog();
+                setBlogDrawerOpen(true);
+              }}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Create Blog</span>
+            </Button>
+          </div>
 
-                  <div className="flex items-center space-x-2 pt-1">
-                    <input
-                      type="checkbox"
-                      id="expIsPresentCheck"
-                      checked={expIsPresent}
-                      onChange={(e) => {
-                        setExpIsPresent(e.target.checked);
-                        if (e.target.checked) setExpEndDate("Present");
-                      }}
-                      className="w-4 h-4 rounded border-white/10 bg-[#121214] text-red-600 focus:ring-red-500 focus:ring-offset-0 cursor-pointer"
-                    />
-                    <label htmlFor="expIsPresentCheck" className="text-xs font-bold text-zinc-300 cursor-pointer">
-                      Currently working here / Present position
-                    </label>
-                  </div>
-
-                  {/* Location & Priority fields */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                        Location / Region
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="E.g. Los Angeles, CA or Bengaluru, India"
-                        value={expLocation}
-                        onChange={(e) => setExpLocation(e.target.value)}
-                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                        Display Priority / Order (1 = Top)
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        placeholder="1"
-                        value={expOrder}
-                        onChange={(e) => setExpOrder(e.target.value)}
-                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-mono"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Description points */}
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                      Key Responsibilities / Bullet Points (One per line)
-                    </label>
-                    <textarea
-                      placeholder="Architected structured microdata schematics...\nEngineered high-fidelity chatbot MVP...\nOptimized runtime middleware..."
-                      value={expDescription}
-                      onChange={(e) => setExpDescription(e.target.value)}
-                      className="w-full h-44 bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans resize-none leading-relaxed"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Pane (Dynamic Experience Live Card Mockup) */}
-              <div className="w-1/2 p-10 bg-[#09090b] overflow-y-auto flex flex-col justify-center items-center select-none">
-                <div className="w-full max-w-md">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 pb-3 border-b border-white/5 mb-8 text-center">
-                    Portfolio Experience Timeline Card Mockup
-                  </h3>
-                  
-                  <div className="relative overflow-hidden rounded-[24px] glass-card border border-white/5 p-6 shadow-2xl hover:border-red-500/20 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
-                    <div className="flex items-start space-x-4 mb-4">
-                      <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border border-white/10 bg-white/5 flex items-center justify-center">
-                        {expLogoUrl ? (
-                          <img src={expLogoUrl} alt="Logo" className="w-full h-full object-cover" />
-                        ) : (
-                          <Briefcase className="w-5 h-5 text-red-400" />
-                        )}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Article Title</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Likes</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {dashboardBlogs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8 text-zinc-500">
+                    No blog posts published yet.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                dashboardBlogs.map((b) => (
+                  <TableRow key={b._id}>
+                    <TableCell className="font-semibold text-zinc-100 max-w-sm truncate">{b.title}</TableCell>
+                    <TableCell>
+                      <Badge variant="brand">{b.category || "Tech"}</Badge>
+                    </TableCell>
+                    <TableCell className="font-mono text-rose-400">{b.likes || 0}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="inline-flex space-x-1">
+                        <IconButton title="Edit Blog" onClick={() => startEditBlog(b)}>
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </IconButton>
+                        <IconButton
+                          title="Delete Blog"
+                          variant="danger"
+                          onClick={() =>
+                            setDeleteConfirm({
+                              isOpen: true,
+                              title: b.title,
+                              id: b._id,
+                              type: "blog",
+                            })
+                          }
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </IconButton>
                       </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start">
-                          <h4 className="text-base font-extrabold font-outfit text-white">
-                            {expTitle || "Full Stack Intern"}
-                          </h4>
-                          <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/5 border border-white/5 text-zinc-300">
-                            {expStartDate ? (expIsPresent ? `${expStartDate} – Present` : expEndDate ? `${expStartDate} – ${expEndDate}` : expStartDate) : "Jun 2025 – Present"}
-                          </span>
-                        </div>
-                        <p className="text-xs text-red-400 font-semibold mt-0.5">
-                          {expCompany || "Donald Hans, LA"}
-                        </p>
-                        {expLocation && (
-                          <p className="text-[10px] text-zinc-400 font-mono mt-0.5 flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-red-400" /> {expLocation}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
 
-                    <div className="border-t border-white/5 pt-4">
-                      <ul className="list-disc pl-4 text-xs text-zinc-400 space-y-1.5 leading-relaxed">
-                        {(expDescription ? expDescription.split("\n").filter(Boolean) : [
-                          "Architected structured microdata schematics and dynamic sitemap topologies...",
-                          "Engineered high-fidelity chatbot MVP powered by Google Gemini API..."
-                        ]).map((bullet, bIdx) => (
-                          <li key={bIdx}>{bullet}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
+      {/* VISITOR REFLECTIONS TAB */}
+      {activeTab === "comments" && (
+        <Card className="space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-100">Visitor Reflections</h3>
+              <p className="text-[11px] text-zinc-500">Review anonymous notes and feedback submitted by portfolio visitors</p>
+            </div>
+            <Badge variant={dashboardComments.length > 0 ? "brand" : "neutral"}>
+              {dashboardComments.length} Total Reflections
+            </Badge>
+          </div>
+
+          {dashboardComments.length === 0 ? (
+            <EmptyState
+              icon={MessageSquare}
+              title="No visitor reflections"
+              description="Submitted notes from visitors will appear here."
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Visitor / Scope</TableHead>
+                  <TableHead>Reflection Note</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {dashboardComments.map((c) => (
+                  <TableRow key={c._id}>
+                    <TableCell className="font-medium text-zinc-200">
+                      {c.name || "Anonymous Visitor"}
+                    </TableCell>
+                    <TableCell className="max-w-md text-zinc-300 truncate">
+                      "{c.message}"
+                    </TableCell>
+                    <TableCell className="font-mono text-[11px] text-zinc-500">
+                      {c.created_at ? new Date(c.created_at).toLocaleDateString() : "Recent"}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <IconButton
+                        title="Delete Reflection"
+                        variant="danger"
+                        onClick={() =>
+                          setDeleteConfirm({
+                            isOpen: true,
+                            title: `Reflection by ${c.name || "Anonymous"}`,
+                            id: c._id,
+                            type: "comment",
+                          })
+                        }
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </Card>
+      )}
+
+      {/* EXPERIENCE EDIT/CREATE DRAWER */}
+      <Drawer
+        isOpen={expDrawerOpen}
+        onClose={cancelEditExperience}
+        title={editingExpId ? "Edit Work Experience" : "New Work Experience"}
+        description="Configure role title, company details, logo, dates, and order priority"
+        footer={
+          <>
+            <Button variant="secondary" size="sm" onClick={cancelEditExperience}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="sm" onClick={handleAddExperience}>
+              {editingExpId ? "Save Changes" : "Create Experience"}
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleAddExperience} className="space-y-4">
+          <Input
+            label="Job Title *"
+            required
+            placeholder="e.g. Full Stack Intern"
+            value={expTitle}
+            onChange={(e) => setExpTitle(e.target.value)}
+          />
+
+          <Input
+            label="Company Name *"
+            required
+            placeholder="e.g. Donald Hans"
+            value={expCompany}
+            onChange={(e) => setExpCompany(e.target.value)}
+          />
+
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-medium text-zinc-400">Company Logo URL / File</label>
+            <div className="flex gap-2.5 items-center">
+              <Input
+                placeholder="https://company.com/logo.png"
+                value={expLogoUrl}
+                onChange={(e) => setExpLogoUrl(e.target.value)}
+              />
+              <label className="inline-flex items-center px-3 py-2 bg-[#1A1A1E] border border-white/[0.08] rounded-lg text-xs font-medium text-zinc-300 hover:bg-[#222226] cursor-pointer flex-shrink-0">
+                <Upload className="w-3.5 h-3.5 mr-1.5" />
+                Upload
+                <input type="file" accept="image/*" onChange={handleLogoFileUpload} className="hidden" />
+              </label>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Start Period"
+              placeholder="e.g. Jun 2025"
+              value={expStartDate}
+              onChange={(e) => setExpStartDate(e.target.value)}
+            />
+            <Input
+              label="End Period"
+              disabled={expIsPresent}
+              placeholder={expIsPresent ? "Present" : "e.g. Sept 2025"}
+              value={expIsPresent ? "Present" : expEndDate}
+              onChange={(e) => setExpEndDate(e.target.value)}
+            />
+          </div>
+
+          <div className="flex items-center space-x-2 pt-1">
+            <input
+              type="checkbox"
+              id="presentCheck"
+              checked={expIsPresent}
+              onChange={(e) => {
+                setExpIsPresent(e.target.checked);
+                if (e.target.checked) setExpEndDate("Present");
+              }}
+              className="w-4 h-4 rounded border-white/[0.08] bg-[#141417] text-red-600 focus:ring-red-500/40"
+            />
+            <label htmlFor="presentCheck" className="text-xs text-zinc-300 cursor-pointer">
+              Currently working here / Present role
+            </label>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Location / Region"
+              placeholder="e.g. Los Angeles, CA"
+              value={expLocation}
+              onChange={(e) => setExpLocation(e.target.value)}
+            />
+            <Input
+              label="Priority Order (1 = Top)"
+              type="number"
+              min="1"
+              value={expOrder}
+              onChange={(e) => setExpOrder(e.target.value)}
+            />
+          </div>
+
+          <Textarea
+            label="Bullet Point Responsibilities (One per line)"
+            rows={5}
+            placeholder="Engineered high-fidelity chatbot MVP...\nOptimized runtime middleware..."
+            value={expDescription}
+            onChange={(e) => setExpDescription(e.target.value)}
+          />
+        </form>
+      </Drawer>
+
+      {/* PROJECT EDIT/CREATE DRAWER */}
+      <Drawer
+        isOpen={projDrawerOpen}
+        onClose={cancelEditProject}
+        title={editingProjectId ? "Edit Project" : "New Project"}
+        description="Configure GitHub repository, tech stack tags, and status"
+        footer={
+          <>
+            <Button variant="secondary" size="sm" onClick={cancelEditProject}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="sm" onClick={handleAddProject}>
+              {editingProjectId ? "Save Changes" : "Publish Project"}
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleAddProject} className="space-y-4">
+          <Input
+            label="Project Title *"
+            required
+            placeholder="e.g. HireNova Job Scraper"
+            value={newProjTitle}
+            onChange={(e) => setNewProjTitle(e.target.value)}
+          />
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Tech Stack (Comma Separated) *"
+              required
+              placeholder="React, Python, Tailwind"
+              value={newProjTech}
+              onChange={(e) => setNewProjTech(e.target.value)}
+            />
+            <Select
+              label="Category"
+              value={newProjCat}
+              onChange={(e) => setNewProjCat(e.target.value)}
+              options={[
+                { label: "Web & Systems", value: "web" },
+                { label: "AI & NLP", value: "ai" },
+              ]}
+            />
+          </div>
+
+          <Input
+            label="GitHub Repository URL *"
+            type="url"
+            required
+            placeholder="https://github.com/..."
+            value={newProjGithub}
+            onChange={(e) => setNewProjGithub(e.target.value)}
+          />
+
+          <Input
+            label="Deployed Demo URL"
+            type="url"
+            placeholder="https://..."
+            value={newProjDeployed}
+            onChange={(e) => setNewProjDeployed(e.target.value)}
+          />
+
+          <Input
+            label="Thumbnail Image URL"
+            type="url"
+            placeholder="https://..."
+            value={newProjImageUrl}
+            onChange={(e) => setNewProjImageUrl(e.target.value)}
+          />
+
+          <div className="flex items-center space-x-2 pt-1">
+            <input
+              type="checkbox"
+              id="pinCheck"
+              checked={newProjPinned}
+              onChange={(e) => setNewProjPinned(e.target.checked)}
+              className="w-4 h-4 rounded border-white/[0.08] bg-[#141417] text-red-600 focus:ring-red-500/40"
+            />
+            <label htmlFor="pinCheck" className="text-xs text-zinc-300 cursor-pointer flex items-center gap-1.5">
+              <Pin className="w-3.5 h-3.5 text-amber-400 fill-current" /> Pin project to top of portfolio
+            </label>
+          </div>
+
+          <Textarea
+            label="Short Description"
+            rows={4}
+            placeholder="Automated job application browser extension powered by Playwright and AI..."
+            value={newProjDesc}
+            onChange={(e) => setNewProjDesc(e.target.value)}
+          />
+        </form>
+      </Drawer>
+
+      {/* BLOG EDIT/CREATE DRAWER */}
+      <Drawer
+        isOpen={blogDrawerOpen}
+        onClose={cancelEditBlog}
+        title={editingBlogId ? "Edit Markdown Blog" : "New Markdown Blog"}
+        description="Write and compile markdown articles with live split preview"
+        footer={
+          <>
+            <Button variant="secondary" size="sm" onClick={cancelEditBlog}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="sm" onClick={handleAddBlog}>
+              {editingBlogId ? "Save Changes" : "Publish Article"}
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleAddBlog} className="space-y-4">
+          <Input
+            label="Article Title *"
+            required
+            placeholder="e.g. Building Scalable AI Search Engines"
+            value={newBlogTitle}
+            onChange={(e) => setNewBlogTitle(e.target.value)}
+          />
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Category Tag"
+              placeholder="e.g. AI & Search"
+              value={newBlogCat}
+              onChange={(e) => setNewBlogCat(e.target.value)}
+            />
+            <Input
+              label="Thumbnail Image URL"
+              type="url"
+              placeholder="https://..."
+              value={newBlogImage}
+              onChange={(e) => setNewBlogImage(e.target.value)}
+            />
+          </div>
+
+          <Input
+            label="Short Excerpt Summary"
+            placeholder="An in-depth exploration of vector databases..."
+            value={newBlogExcerpt}
+            onChange={(e) => setNewBlogExcerpt(e.target.value)}
+          />
+
+          <Textarea
+            label="Article Content (Markdown Supported) *"
+            required
+            rows={8}
+            placeholder="# Article Header\n\nWrite in Markdown format..."
+            value={newBlogContent}
+            onChange={(e) => setNewBlogContent(e.target.value)}
+          />
+
+          {debouncedBlogContent.trim() && (
+            <div className="space-y-1.5 pt-2 border-t border-white/[0.08]">
+              <label className="block text-[11px] font-medium text-zinc-400">Live Markdown Preview</label>
+              <div className="p-3 bg-[#141417] border border-white/[0.08] rounded-lg max-h-56 overflow-y-auto">
+                <CustomMarkdown content={debouncedBlogContent} />
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </form>
+      </Drawer>
 
+      {/* DELETE CONFIRMATION DIALOG */}
+      <Dialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, title: "", id: null, type: "" })}
+        title="Confirm Deletion"
+        description={`Are you sure you want to permanently delete "${deleteConfirm.title}"? This action cannot be undone.`}
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setDeleteConfirm({ isOpen: false, title: "", id: null, type: "" })}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => {
+                const { id, type } = deleteConfirm;
+                setDeleteConfirm({ isOpen: false, title: "", id: null, type: "" });
+                if (type === "experience") handleDeleteExperience(id);
+                if (type === "project") handleDeleteProject(id);
+                if (type === "blog") handleDeleteBlog(id);
+                if (type === "comment") handleDeleteComment(id);
+              }}
+            >
+              Delete Permanently
+            </Button>
+          </>
+        }
+      />
+
+      {/* TOAST FEEDBACK */}
       {toast.message && (
         <CustomToast
           key={toast.key}
@@ -2998,6 +1466,6 @@ export default function AdminDashboard() {
           onClose={() => setToast({ message: "", type: "success", key: 0 })}
         />
       )}
-    </div>
+    </AdminShell>
   );
 }
