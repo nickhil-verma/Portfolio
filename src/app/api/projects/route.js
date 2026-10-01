@@ -45,7 +45,7 @@ export async function POST(request) {
     const db = client.db("portfolio");
     const body = await request.json();
 
-    const { title, tech, githubUrl, deployedUrl, description, category, imageUrl } = body;
+    const { title, tech, githubUrl, deployedUrl, description, category, imageUrl, pinned, created_at, date } = body;
 
     if (!title || !tech || !githubUrl) {
       return NextResponse.json({ error: "Title, Tech Stack, and GitHub URL are compulsory fields" }, { status: 400 });
@@ -64,8 +64,9 @@ export async function POST(request) {
       imageUrl: imageUrl || null,
       tech: techArray,
       category: category || "web",
+      pinned: Boolean(pinned),
       stars: Math.floor(Math.random() * 15) + 1, // Generate premium initial stars count
-      created_at: new Date(),
+      created_at: date ? new Date(date) : created_at ? new Date(created_at) : new Date(),
     };
 
     const result = await db.collection("projects").insertOne(newProject);
@@ -110,7 +111,7 @@ export async function PUT(request) {
       return NextResponse.json({ error: "Database not configured" }, { status: 503 });
     }
     const body = await request.json();
-    const { id, title, tech, githubUrl, deployedUrl, description, category, imageUrl } = body;
+    const { id, title, tech, githubUrl, deployedUrl, description, category, imageUrl, pinned, created_at, date } = body;
 
     if (!id || !title || !tech || !githubUrl) {
       return NextResponse.json({ error: "ID, Title, Tech Stack, and GitHub URL are required fields" }, { status: 400 });
@@ -122,19 +123,23 @@ export async function PUT(request) {
 
     const client = await clientPromise;
     const db = client.db("portfolio");
+    const updateFields = {
+      title,
+      description: description || "No description provided.",
+      link: githubUrl,
+      deployedUrl: deployedUrl || null,
+      imageUrl: imageUrl || null,
+      tech: techArray,
+      category: category || "web",
+      pinned: Boolean(pinned),
+    };
+    if (date || created_at) {
+      updateFields.created_at = new Date(date || created_at);
+    }
+
     const result = await db.collection("projects").updateOne(
       { _id: new ObjectId(id) },
-      {
-        $set: {
-          title,
-          description: description || "No description provided.",
-          link: githubUrl,
-          deployedUrl: deployedUrl || null,
-          imageUrl: imageUrl || null,
-          tech: techArray,
-          category: category || "web",
-        }
-      }
+      { $set: updateFields }
     );
 
     if (result.matchedCount === 0) {
@@ -156,7 +161,7 @@ export async function PATCH(request) {
     }
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
-    const action = searchParams.get("action"); // "star" or "unstar"
+    const action = searchParams.get("action"); // "star", "unstar", or "togglePin"
     
     if (!id) {
       return NextResponse.json({ error: "Project ID is required" }, { status: 400 });
@@ -164,6 +169,19 @@ export async function PATCH(request) {
 
     const client = await clientPromise;
     const db = client.db("portfolio");
+
+    if (action === "togglePin") {
+      const existing = await db.collection("projects").findOne({ _id: new ObjectId(id) });
+      if (!existing) {
+        return NextResponse.json({ error: "Project not found" }, { status: 404 });
+      }
+      const newPinned = !existing.pinned;
+      await db.collection("projects").updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { pinned: newPinned } }
+      );
+      return NextResponse.json({ success: true, pinned: newPinned }, { status: 200 });
+    }
     
     const increment = action === "unstar" ? -1 : 1;
     const result = await db.collection("projects").updateOne(
@@ -180,6 +198,6 @@ export async function PATCH(request) {
     return NextResponse.json({ success: true, stars: updatedProject.stars }, { status: 200 });
   } catch (error) {
     console.error("Error in PATCH /api/projects:", error);
-    return NextResponse.json({ error: "Failed to update stars" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update project parameter" }, { status: 500 });
   }
 }

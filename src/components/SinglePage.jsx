@@ -161,6 +161,7 @@ export default function Portfolio() {
   const [liveProjects, setLiveProjects] = useState([]);
   const [starredProjectIds, setStarredProjectIds] = useState([]);
   const [liveBlogs, setLiveBlogs] = useState([]);
+  const [liveExperiences, setLiveExperiences] = useState([]);
   const [likedBlogIds, setLikedBlogIds] = useState([]);
   const [interactions, setInteractions] = useState({});
   const [toast, setToast] = useState({ message: "", type: "success", key: 0 });
@@ -419,7 +420,18 @@ export default function Portfolio() {
         console.error("Failed to fetch live blogs from MongoDB:", err);
       }
 
-      // 4. Fetch interactions
+      // 4. Fetch experiences
+      try {
+        const res = await fetch("/api/experiences");
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setLiveExperiences(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch live experiences from MongoDB:", err);
+      }
+
+      // 5. Fetch interactions
       try {
         const res = await fetch("/api/interactions");
         const data = await res.json();
@@ -471,12 +483,63 @@ export default function Portfolio() {
   };
 
   const combinedProjects = [...liveProjects, ...staticFallbackProjects].sort((a, b) => {
-    const isAPinned = a.pinned || a.title?.toLowerCase().includes("hirenova");
-    const isBPinned = b.pinned || b.title?.toLowerCase().includes("hirenova");
+    const isAPinned = Boolean(a.pinned || a.title?.toLowerCase().includes("hirenova"));
+    const isBPinned = Boolean(b.pinned || b.title?.toLowerCase().includes("hirenova"));
     if (isAPinned && !isBPinned) return -1;
     if (!isAPinned && isBPinned) return 1;
-    return (b.stars || 0) - (a.stars || 0);
+    const dateA = new Date(a.date || a.created_at || 0);
+    const dateB = new Date(b.date || b.created_at || 0);
+    return dateB - dateA;
   });
+
+  const sortExperiencesLatestFirst = (expList) => {
+    if (!Array.isArray(expList)) return [];
+    return [...expList].sort((a, b) => {
+      const aIsPresent = Boolean(a.isPresent || (a.endDate && a.endDate.toString().toLowerCase().includes("present")));
+      const bIsPresent = Boolean(b.isPresent || (b.endDate && b.endDate.toString().toLowerCase().includes("present")));
+
+      const parseStr = (s) => {
+        if (!s) return 0;
+        const d = new Date(s);
+        if (!isNaN(d.getTime())) return d.getTime();
+        const months = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11 };
+        const parts = s.toString().trim().split(/\s+|-|\//);
+        if (parts.length >= 2) {
+          const yr = parseInt(parts[parts.length - 1], 10);
+          const mStr = parts[0].toLowerCase().slice(0, 4);
+          const m = months[mStr] !== undefined ? months[mStr] : 0;
+          if (!isNaN(yr)) return new Date(yr, m, 1).getTime();
+        } else if (parts.length === 1) {
+          const yr = parseInt(parts[0], 10);
+          if (!isNaN(yr)) return new Date(yr, 0, 1).getTime();
+        }
+        return 0;
+      };
+
+      if (aIsPresent && !bIsPresent) return -1;
+      if (!aIsPresent && bIsPresent) return 1;
+
+      const endA = aIsPresent ? Date.now() : parseStr(a.endDate);
+      const endB = bIsPresent ? Date.now() : parseStr(b.endDate);
+
+      if (endB !== endA) {
+        return endB - endA;
+      }
+
+      const startA = parseStr(a.startDate);
+      const startB = parseStr(b.startDate);
+
+      if (startB !== startA) {
+        return startB - startA;
+      }
+
+      const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return timeB - timeA;
+    });
+  };
+
+  const combinedExperiences = sortExperiencesLatestFirst(liveExperiences.length > 0 ? liveExperiences : experiences);
   const combinedBlogs = [...liveBlogs, ...fallbackBlogs].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
 // Loaded static lists from staticFallbacks data module
@@ -652,11 +715,12 @@ export default function Portfolio() {
                   {/* Vertical Timeline Track Line - Mathematically aligned at center = 16px */}
                   <div className={`absolute left-[15px] top-3 bottom-3 w-0.5 ${isDark ? "bg-zinc-800" : "bg-zinc-200"}`} />
 
-                  {experiences.map((exp, index) => {
+                  {combinedExperiences.map((exp, index) => {
                     const isExpanded = expandedExperience === index;
+                    const periodText = exp.period || (exp.startDate ? `${exp.startDate} – ${exp.isPresent ? "Present" : exp.endDate || ""}` : "");
                     return (
                       <div
-                        key={index}
+                        key={exp._id || index}
                         onClick={() => setExpandedExperience(isExpanded ? null : index)}
                         className={`relative p-4 rounded-2xl transition-all duration-300 ml-2 cursor-pointer ${
                           isDark 
@@ -673,20 +737,27 @@ export default function Portfolio() {
                           <div className="w-1.5 h-1.5 rounded-full bg-white" />
                         </div>
 
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className={`font-bold font-outfit text-sm sm:text-base ${isDark ? "text-white" : "text-zinc-900"}`}>
-                              {exp.title}
-                            </h3>
-                            <p className={`text-xs font-medium tracking-wide mt-0.5 ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>
-                              {exp.company}
-                            </p>
+                        <div className="flex justify-between items-start gap-3">
+                          <div className="flex items-center space-x-3">
+                            {exp.logoUrl && (
+                              <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 border border-white/10 bg-white/5 shadow-sm">
+                                <img src={exp.logoUrl} alt={exp.company} className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                            <div>
+                              <h3 className={`font-bold font-outfit text-sm sm:text-base ${isDark ? "text-white" : "text-zinc-900"}`}>
+                                {exp.title}
+                              </h3>
+                              <p className={`text-xs font-medium tracking-wide mt-0.5 ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>
+                                {exp.company} {exp.location ? `• ${exp.location}` : ""}
+                              </p>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 flex-shrink-0">
                             <span className={`px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${
                               isDark ? "bg-[#1e1e24] text-zinc-300 border border-white/5" : "bg-zinc-100 text-zinc-600"
                             }`}>
-                              {exp.period}
+                              {periodText}
                             </span>
                             <ChevronRight className={`w-3.5 h-3.5 text-zinc-400 transition-transform duration-300 ${isExpanded ? "rotate-90 text-red-500" : ""}`} />
                           </div>
@@ -703,11 +774,19 @@ export default function Portfolio() {
                               className="overflow-hidden"
                             >
                               <ul className="list-disc pl-4 text-xs space-y-1.5 border-t pt-3 border-dashed border-zinc-700/30">
-                                {exp.description.map((point, idx) => (
-                                  <li key={idx} className={isDark ? "text-zinc-300" : "text-zinc-700"}>
-                                    {point}
-                                  </li>
-                                ))}
+                                {Array.isArray(exp.description)
+                                  ? exp.description.map((point, idx) => (
+                                      <li key={idx} className={isDark ? "text-zinc-300" : "text-zinc-700"}>
+                                        {point}
+                                      </li>
+                                    ))
+                                  : typeof exp.description === "string"
+                                  ? exp.description.split("\n").filter(Boolean).map((point, idx) => (
+                                      <li key={idx} className={isDark ? "text-zinc-300" : "text-zinc-700"}>
+                                        {point}
+                                      </li>
+                                    ))
+                                  : null}
                               </ul>
                             </motion.div>
                           )}

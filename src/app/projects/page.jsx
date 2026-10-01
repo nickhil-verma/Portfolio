@@ -242,13 +242,15 @@ export default function ProjectsPage() {
     fetchProjectsAndInteractions();
   }, []);
 
-  // Merge lists and sort with pinned projects prioritized at the top, then by created_at
+  // Merge lists and sort with pinned projects prioritized at the top, then by created_at / date descending
   const combinedProjects = [...liveProjects, ...baseProjects].sort((a, b) => {
-    const isAPinned = a.pinned || a.title?.toLowerCase().includes("hirenova");
-    const isBPinned = b.pinned || b.title?.toLowerCase().includes("hirenova");
+    const isAPinned = Boolean(a.pinned || a.title?.toLowerCase().includes("hirenova"));
+    const isBPinned = Boolean(b.pinned || b.title?.toLowerCase().includes("hirenova"));
     if (isAPinned && !isBPinned) return -1;
     if (!isAPinned && isBPinned) return 1;
-    return new Date(b.created_at) - new Date(a.created_at);
+    const dateA = new Date(a.date || a.created_at || 0);
+    const dateB = new Date(b.date || b.created_at || 0);
+    return dateB - dateA;
   });
 
   const filteredProjects = combinedProjects.filter((project) => {

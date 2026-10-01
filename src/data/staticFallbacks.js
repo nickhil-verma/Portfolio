@@ -19,6 +19,7 @@ export const fallbackBlogs = [
 
 export const staticFallbackProjects = [
   {
+    _id: "sf1",
     title: "HireNova – AI Job Search & Auto-Apply Engine",
     description: "Job search engine and automated job application browser extension powered by smart web scrapers and Ollama AI resume matching.",
     link: "https://github.com/nickhil-verma/hirenova_jobscraper",
@@ -26,54 +27,81 @@ export const staticFallbackProjects = [
     tech: ["Python", "Browser Extension", "Playwright", "Ollama AI", "React"],
     stars: 28,
     pinned: true,
-    category: "ai"
+    category: "ai",
+    created_at: new Date("2026-05-10")
   },
   {
+    _id: "sf2",
     title: "DocuQuery AI RAG Engine",
     description: "FAISS + Gemini based PDF analyzer with precise citations",
     link: "https://github.com/nickhil-verma/DocuQuery-AI-PDF-RAG",
     deployedLink: null,
     tech: ["Python", "Playwright", "MERN", "NLP"],
-    stars: 12
+    stars: 12,
+    pinned: false,
+    category: "ai",
+    created_at: new Date("2026-04-15")
   },
   {
+    _id: "sf3",
     title: "MOSDAC ISRO Chatbot",
     description: "FAISS + Gemma 3B based chatbot for ISRO queries",
     link: "https://github.com/nickhil-verma/MOSDAC_PARENT_REPO/tree/main",
     deployedLink: null,
     tech: ["React", "Node.js", "Gemma 3B", "MongoDB"],
-    stars: 8
+    stars: 8,
+    pinned: false,
+    category: "ai",
+    created_at: new Date("2026-04-20")
   },
   {
+    _id: "sf4",
     title: "Eternalan Concerts",
     description: "Concert booking platform tailored for Chinese and US audiences.",
     link: "https://github.com/nickhil-verma/eternalan",
     deployedLink: "https://eternalan.vercel.app",
     tech: ["React", "Tailwind CSS", "JavaScript"],
-    stars: 15
+    stars: 15,
+    pinned: false,
+    category: "web",
+    created_at: new Date("2026-03-30")
   },
   {
+    _id: "sf5",
     title: "Plant Disease Detection",
     description: "95% accuracy CNN model for 15 leaf diseases",
     link: "https://github.com/nickhil-verma/Plant-disease-detection-model",
     deployedLink: null,
     tech: ["TensorFlow", "Keras", "NumPy", "HuggingFace"],
-    stars: 9
+    stars: 9,
+    pinned: false,
+    category: "ai",
+    created_at: new Date("2026-02-15")
   },
   {
+    _id: "sf6",
     title: "CEDAXDSU Club Website",
     description: "IEEE Bangalore Chapter × DSU – Frontend Portal",
     link: "https://github.com/nickhil-verma/CEDAXDSU",
     deployedLink: "https://dsuieeeceda.vercel.app/",
     tech: ["React", "Tailwind CSS", "framer-motion", "Node js"],
-    stars: 11
+    stars: 11,
+    pinned: false,
+    category: "web",
+    created_at: new Date("2026-01-05")
   }
 ];
 
 export const experiences = [
   {
+    _id: "exp1",
     title: "Full Stack Intern",
-    company: "Donald Hans, LA (Remote)",
+    company: "Donald Hans",
+    location: "Los Angeles, CA (Remote)",
+    logoUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&q=80",
+    startDate: "Jun 2025",
+    endDate: "Sept 2025",
+    isPresent: false,
     period: "Jun 2025 – Sept 2025",
     description: [
       "Advanced SEO Engineering: Architected structured microdata schematics and dynamic sitemap topologies, accelerating organic discoverability and elevating the SEO score from 71% to 94%.",
@@ -83,8 +111,14 @@ export const experiences = [
     ],
   },
   {
+    _id: "exp2",
     title: "Webmaster Head",
-    company: "IEEE CEDA Student Chapter (Remote)",
+    company: "IEEE CEDA Student Chapter",
+    location: "Bengaluru, India (Remote)",
+    logoUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=200&q=80",
+    startDate: "Sept 2024",
+    endDate: "Present",
+    isPresent: true,
     period: "Sept 2024 – Present",
     description: [
       "Engineered a high-throughput email broadcasting pipeline reaching 500+ members, leveraging automated workflows with n8n, NodeMailer, and Twilio integrations.",

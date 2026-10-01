@@ -6,7 +6,7 @@ import {
   ArrowLeft, LayoutDashboard, FolderKanban, BookHeart, LogOut, 
   Plus, Trash2, Users, Cpu, FileText, CheckCircle2, Globe, Monitor, Smartphone, Tablet,
   Github, X, MessageSquare, Sun, Moon, GripVertical, Heart,
-  Bell, Menu, ChevronLeft, ChevronRight, RefreshCw
+  Bell, Menu, ChevronLeft, ChevronRight, RefreshCw, Briefcase, Pin, Upload, Image, Calendar, MapPin
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -489,6 +489,7 @@ export default function AdminDashboard() {
   const [dashboardProjects, setDashboardProjects] = useState([]);
   const [dashboardBlogs, setDashboardBlogs] = useState([]);
   const [dashboardComments, setDashboardComments] = useState([]);
+  const [dashboardExperiences, setDashboardExperiences] = useState([]);
   
   // Traffic analytics state
   const [analytics, setAnalytics] = useState({
@@ -578,7 +579,22 @@ export default function AdminDashboard() {
   const [newProjDesc, setNewProjDesc] = useState("");
   const [newProjCat, setNewProjCat] = useState("web");
   const [newProjImageUrl, setNewProjImageUrl] = useState("");
+  const [newProjPinned, setNewProjPinned] = useState(false);
+  const [newProjDate, setNewProjDate] = useState("");
   const [projMsg, setProjMsg] = useState("");
+
+  // Form states - Experiences
+  const [expTitle, setExpTitle] = useState("");
+  const [expCompany, setExpCompany] = useState("");
+  const [expLogoUrl, setExpLogoUrl] = useState("");
+  const [expStartDate, setExpStartDate] = useState("");
+  const [expEndDate, setExpEndDate] = useState("");
+  const [expIsPresent, setExpIsPresent] = useState(false);
+  const [expLocation, setExpLocation] = useState("");
+  const [expDescription, setExpDescription] = useState("");
+  const [expMsg, setExpMsg] = useState("");
+  const [editingExpId, setEditingExpId] = useState(null);
+  const [fullscreenExpEditor, setFullscreenExpEditor] = useState(false);
 
   // Form states - Blogs
   const [newBlogTitle, setNewBlogTitle] = useState("");
@@ -693,6 +709,17 @@ export default function AdminDashboard() {
         setDashboardBlogs(blogData);
       }
 
+      // Fetch dynamic experiences
+      try {
+        const expRes = await fetch("/api/experiences");
+        const expData = await expRes.json();
+        if (Array.isArray(expData)) {
+          setDashboardExperiences(expData);
+        }
+      } catch (e) {
+        console.error("Failed to load experiences:", e);
+      }
+
       // Fetch dynamic anonymous comments
       try {
         const commentsRes = await fetch("/api/blogs/comments");
@@ -723,9 +750,8 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       console.error("Failed to load active data:", err);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const handleRefresh = async () => {
@@ -758,6 +784,132 @@ export default function AdminDashboard() {
     }
   }, [activeTab, authorized]);
 
+  // Experience handlers
+  const handleLogoFileUpload = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        triggerToast("Logo image size should be less than 2MB", "warn");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setExpLogoUrl(reader.result);
+        triggerToast("Logo uploaded successfully! 📷", "success");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAddExperience = async (e) => {
+    e.preventDefault();
+    if (!expTitle.trim() || !expCompany.trim()) {
+      triggerToast("Job Title and Company Name are compulsory fields", "warn");
+      return;
+    }
+
+    try {
+      const url = "/api/experiences";
+      const method = editingExpId ? "PUT" : "POST";
+      const payload = {
+        title: expTitle,
+        company: expCompany,
+        logoUrl: expLogoUrl,
+        startDate: expStartDate,
+        endDate: expIsPresent ? "Present" : expEndDate,
+        isPresent: expIsPresent,
+        location: expLocation,
+        description: expDescription,
+      };
+      if (editingExpId) {
+        payload.id = editingExpId;
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        triggerToast(editingExpId ? "Experience record updated! 💼" : "Experience record added! 💼", "success");
+        cancelEditExperience();
+        fetchData();
+      } else {
+        triggerToast(data.error || "Failed to submit experience data", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error submitting experience payload", "error");
+    }
+  };
+
+  const startEditExperience = (exp) => {
+    setEditingExpId(exp._id);
+    setExpTitle(exp.title || "");
+    setExpCompany(exp.company || "");
+    setExpLogoUrl(exp.logoUrl || "");
+    setExpStartDate(exp.startDate || "");
+    setExpEndDate(exp.endDate === "Present" ? "" : exp.endDate || "");
+    setExpIsPresent(Boolean(exp.isPresent || exp.endDate === "Present"));
+    setExpLocation(exp.location || "");
+    setExpDescription(Array.isArray(exp.description) ? exp.description.join("\n") : exp.description || "");
+    setExpMsg("");
+    setFullscreenExpEditor(true);
+  };
+
+  const cancelEditExperience = () => {
+    setEditingExpId(null);
+    setExpTitle("");
+    setExpCompany("");
+    setExpLogoUrl("");
+    setExpStartDate("");
+    setExpEndDate("");
+    setExpIsPresent(false);
+    setExpLocation("");
+    setExpDescription("");
+    setExpMsg("");
+    setFullscreenExpEditor(false);
+  };
+
+  const handleDeleteExperience = async (id) => {
+    if (!window.confirm("Are you sure you want to permanently delete this experience entry?")) return;
+    try {
+      const res = await fetch(`/api/experiences?id=${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast("Experience deleted successfully! 🗑️", "success");
+        fetchData();
+      } else {
+        triggerToast(data.error || "Failed to delete experience", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error deleting experience", "error");
+    }
+  };
+
+  const handleTogglePinProject = async (id) => {
+    try {
+      const res = await fetch(`/api/projects?id=${id}&action=togglePin`, {
+        method: "PATCH",
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast(data.pinned ? "Project pinned to top! 📌" : "Project unpinned! 📌", "success");
+        fetchData();
+      } else {
+        triggerToast(data.error || "Failed to update pin status", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error updating pin status", "error");
+    }
+  };
+
   const handleAddProject = async (e) => {
     e.preventDefault();
     if (!newProjTitle.trim() || !newProjTech.trim() || !newProjGithub.trim()) {
@@ -776,6 +928,8 @@ export default function AdminDashboard() {
         description: newProjDesc,
         category: newProjCat,
         imageUrl: newProjImageUrl,
+        pinned: newProjPinned,
+        date: newProjDate,
       };
       if (editingProjectId) {
         payload.id = editingProjectId;
@@ -796,6 +950,8 @@ export default function AdminDashboard() {
         setNewProjDeployed("");
         setNewProjDesc("");
         setNewProjImageUrl("");
+        setNewProjPinned(false);
+        setNewProjDate("");
         setEditingProjectId(null);
         setFullscreenProjectEditor(false);
         fetchData();
@@ -811,12 +967,14 @@ export default function AdminDashboard() {
   const startEditProject = (p) => {
     setEditingProjectId(p._id);
     setNewProjTitle(p.title);
-    setNewProjTech(p.tech.join(", "));
-    setNewProjGithub(p.link);
-    setNewProjDeployed(p.deployedUrl || "");
-    setNewProjDesc(p.description);
-    setNewProjCat(p.category);
+    setNewProjTech(Array.isArray(p.tech) ? p.tech.join(", ") : p.tech || "");
+    setNewProjGithub(p.link || p.githubUrl || "");
+    setNewProjDeployed(p.deployedUrl || p.deployedLink || "");
+    setNewProjDesc(p.description || "");
+    setNewProjCat(p.category || "web");
     setNewProjImageUrl(p.imageUrl || "");
+    setNewProjPinned(Boolean(p.pinned));
+    setNewProjDate(p.created_at ? new Date(p.created_at).toISOString().split("T")[0] : "");
     setProjMsg("");
     setFullscreenProjectEditor(true);
   };
@@ -829,6 +987,8 @@ export default function AdminDashboard() {
     setNewProjDeployed("");
     setNewProjDesc("");
     setNewProjImageUrl("");
+    setNewProjPinned(false);
+    setNewProjDate("");
     setProjMsg("");
     setFullscreenProjectEditor(false);
   };
@@ -987,7 +1147,8 @@ export default function AdminDashboard() {
             {[
               { id: "overview", label: "Overview & Analytics", icon: LayoutDashboard },
               { id: "blog-analytics", label: "Blog Analytics App", icon: Cpu },
-               { id: "projects", label: "Manage Projects", icon: FolderKanban },
+              { id: "experiences", label: "Work Experiences", icon: Briefcase },
+              { id: "projects", label: "Manage Projects", icon: FolderKanban },
               { id: "blogs", label: "Markdown Blogs", icon: BookHeart },
               { id: "comments", label: "Visitor Reflections", icon: MessageSquare },
             ].map((item) => {
@@ -1089,6 +1250,7 @@ export default function AdminDashboard() {
                 {[
                   { id: "overview", label: "Overview & Analytics", icon: LayoutDashboard },
                   { id: "blog-analytics", label: "Blog Analytics App", icon: Cpu },
+                  { id: "experiences", label: "Work Experiences", icon: Briefcase },
                   { id: "projects", label: "Manage Projects", icon: FolderKanban },
                   { id: "blogs", label: "Markdown Blogs", icon: BookHeart },
                   { id: "comments", label: "Visitor Reflections", icon: MessageSquare },
@@ -1173,6 +1335,7 @@ export default function AdminDashboard() {
             <h1 className={`text-3xl font-extrabold font-outfit tracking-tight ${isDark ? "text-white" : "text-zinc-900"} flex items-center gap-2`}>
               {activeTab === "overview" && "Analytics Overview"}
               {activeTab === "blog-analytics" && "Blog Analytics App"}
+              {activeTab === "experiences" && "Work Experiences Manager"}
               {activeTab === "projects" && "Projects Manager"}
               {activeTab === "blogs" && "Blogging Dashboard"}
               {activeTab === "comments" && "Anonymous Comments"}
@@ -1559,6 +1722,98 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* EXPERIENCES TAB */}
+        {activeTab === "experiences" && (
+          <div className="space-y-6">
+            <div className={`flex justify-between items-center p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/20 to-transparent pointer-events-none" />
+              <div>
+                <h3 className={`text-lg font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"}`}>Work Experience Control Panel</h3>
+                <p className={`text-xs ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>Manage work history, company logos, roles, dates, and locations.</p>
+              </div>
+              <button
+                onClick={() => {
+                  cancelEditExperience();
+                  setFullscreenExpEditor(true);
+                }}
+                className="py-2.5 px-5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center space-x-2 shadow-lg shadow-red-500/20"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Work Experience</span>
+              </button>
+            </div>
+
+            {/* Experiences list management */}
+            <div className={`p-6 rounded-[24px] ${isDark ? "glass-card" : "glass-card-light shadow-sm"} relative`}>
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/10 to-transparent pointer-events-none" />
+              <h3 className={`text-lg font-bold font-outfit ${isDark ? "text-white" : "text-zinc-900"} mb-4`}>Uploaded Work Experiences</h3>
+              
+              {expMsg && (
+                <div className="mb-4 p-3 rounded-xl text-xs font-semibold text-center border bg-emerald-500/10 border-emerald-500/20 text-emerald-400">
+                  {expMsg}
+                </div>
+              )}
+
+              {dashboardExperiences.length === 0 ? (
+                <div className="py-20 text-center text-xs text-zinc-500">
+                  No dynamic database experiences uploaded yet. Local fallback experience entries are displayed on main pages.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {dashboardExperiences.map((exp, idx) => (
+                    <div key={idx} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 ${isDark ? "bg-[#121214]/50 border-white/5 hover:border-white/10" : "bg-white border-black/5 hover:border-black/10 shadow-sm"} border rounded-2xl transition-all gap-4`}>
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border ${isDark ? "border-white/10 bg-white/5" : "border-black/10 bg-zinc-100"} flex items-center justify-center`}>
+                          {exp.logoUrl ? (
+                            <img src={exp.logoUrl} alt={exp.company} className="w-full h-full object-cover" />
+                          ) : (
+                            <Briefcase className="w-5 h-5 text-red-400" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className={`text-sm font-bold ${isDark ? "text-white" : "text-zinc-900"}`}>{exp.title}</h4>
+                            {exp.isPresent && (
+                              <span className="px-2 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                Present Location
+                              </span>
+                            )}
+                          </div>
+                          <p className={`text-xs font-medium ${isDark ? "text-zinc-400" : "text-zinc-600"} mt-0.5`}>
+                            {exp.company} {exp.location ? `• ${exp.location}` : ""}
+                          </p>
+                          <p className={`text-[10px] font-mono ${isDark ? "text-zinc-500" : "text-zinc-400"} mt-1`}>
+                            {exp.period || (exp.startDate ? `${exp.startDate} – ${exp.isPresent ? "Present" : exp.endDate}` : "N/A")}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2 self-end sm:self-center">
+                        <button
+                          onClick={() => startEditExperience(exp)}
+                          className={`p-2 ${isDark ? "text-zinc-400 hover:text-white hover:bg-white/5" : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5"} rounded-lg border border-transparent transition-all flex items-center space-x-1 text-xs`}
+                          title="Edit Experience"
+                        >
+                          <FileText className="w-4 h-4" />
+                          <span className="hidden sm:inline">Edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteExperience(exp._id)}
+                          className="p-2 text-rose-500/80 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg border border-transparent hover:border-rose-500/10 transition-all flex items-center space-x-1 text-xs"
+                          title="Delete Experience"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span className="hidden sm:inline">Delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* PROJECTS TAB */}
         {activeTab === "projects" && (
           <div className="space-y-6">
@@ -1600,9 +1855,16 @@ export default function AdminDashboard() {
                   {dashboardProjects.map((p, idx) => (
                     <div key={idx} className={`flex justify-between items-center p-4 ${isDark ? "bg-[#121214]/50 border-white/5 hover:border-white/10" : "bg-white border-black/5 hover:border-black/10 shadow-sm"} border rounded-2xl transition-all`}>
                       <div>
-                        <h4 className={`text-xs font-bold ${isDark ? "text-white" : "text-zinc-900"}`}>{p.title}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className={`text-xs font-bold ${isDark ? "text-white" : "text-zinc-900"}`}>{p.title}</h4>
+                          {p.pinned && (
+                            <span className="px-2 py-0.5 rounded-md text-[8px] font-extrabold uppercase tracking-wider bg-gradient-to-r from-red-600 to-amber-500 text-white flex items-center gap-1">
+                              <Pin className="w-2.5 h-2.5 fill-current" /> Pinned Top
+                            </span>
+                          )}
+                        </div>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {p.tech.map((t, tIdx) => (
+                          {Array.isArray(p.tech) && p.tech.map((t, tIdx) => (
                             <span key={tIdx} className={`text-[8px] ${isDark ? "bg-white/5 text-zinc-400" : "bg-zinc-100 text-zinc-600"} px-1.5 py-0.5 rounded-md uppercase font-semibold`}>
                               {t}
                             </span>
@@ -1614,6 +1876,13 @@ export default function AdminDashboard() {
                           {p.category}
                         </span>
                         <div className="flex items-center space-x-1.5">
+                          <button
+                            onClick={() => handleTogglePinProject(p._id)}
+                            className={`p-1.5 ${p.pinned ? "text-amber-400 bg-amber-500/10 border-amber-500/20" : isDark ? "text-zinc-400 hover:text-white hover:bg-white/5" : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5"} rounded-lg border transition-all`}
+                            title={p.pinned ? "Unpin from top" : "Pin to top"}
+                          >
+                            <Pin className={`w-3.5 h-3.5 ${p.pinned ? "fill-current" : ""}`} />
+                          </button>
                           <button
                             onClick={() => startEditProject(p)}
                             className={`p-1.5 ${isDark ? "text-zinc-400 hover:text-white hover:bg-white/5 hover:border-white/5" : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5 hover:border-black/5"} rounded-lg border border-transparent transition-all`}
@@ -2135,6 +2404,34 @@ export default function AdminDashboard() {
                     />
                   </div>
 
+                  {/* Date & Pin controls */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                        Project Creation Date (Optional for sorting)
+                      </label>
+                      <input
+                        type="date"
+                        value={newProjDate}
+                        onChange={(e) => setNewProjDate(e.target.value)}
+                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
+                      />
+                    </div>
+                    <div className="flex items-center pt-6">
+                      <label className="inline-flex items-center space-x-2.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={newProjPinned}
+                          onChange={(e) => setNewProjPinned(e.target.checked)}
+                          className="w-4 h-4 rounded border-white/10 bg-[#121214] text-red-600 focus:ring-red-500 focus:ring-offset-0 cursor-pointer"
+                        />
+                        <span className="text-xs font-bold text-zinc-200 flex items-center gap-1.5">
+                          <Pin className="w-3.5 h-3.5 text-amber-400 fill-current" /> Pin Project to Top
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
                       Short Description / Explainer Text
@@ -2143,7 +2440,7 @@ export default function AdminDashboard() {
                       placeholder="Provide a quick detailed summary of the codebase parameters..."
                       value={newProjDesc}
                       onChange={(e) => setNewProjDesc(e.target.value)}
-                      className="w-full h-40 bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans resize-none"
+                      className="w-full h-36 bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans resize-none"
                     />
                   </div>
                 </div>
@@ -2156,15 +2453,24 @@ export default function AdminDashboard() {
                     Portfolio Live Card Mockup
                   </h3>
                   
-                  <div className="relative overflow-hidden rounded-[24px] glass-card border border-white/5 p-8 shadow-2xl hover:border-red-500/20 transition-all duration-500 flex flex-col justify-between min-h-[280px]">
+                  <div className={`relative overflow-hidden rounded-[24px] glass-card border p-8 shadow-2xl transition-all duration-500 flex flex-col justify-between min-h-[280px] ${
+                    newProjPinned ? "border-amber-500/50 shadow-amber-950/20" : "border-white/5 hover:border-red-500/20"
+                  }`}>
                     {/* Reflective top highlight */}
                     <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/25 to-transparent pointer-events-none z-20" />
                     
                     <div>
                       <div className="flex justify-between items-start mb-4">
-                        <span className="text-[9px] font-bold bg-red-500/10 border border-red-500/20 text-red-400 px-2.5 py-0.5 rounded-md uppercase tracking-wider">
-                          {newProjCat || "web"}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] font-bold bg-red-500/10 border border-red-500/20 text-red-400 px-2.5 py-0.5 rounded-md uppercase tracking-wider">
+                            {newProjCat || "web"}
+                          </span>
+                          {newProjPinned && (
+                            <span className="px-2 py-0.5 rounded-md text-[8px] font-extrabold uppercase tracking-wider bg-gradient-to-r from-red-600 to-amber-500 text-white flex items-center gap-1">
+                              <Pin className="w-2.5 h-2.5 fill-current" /> Pinned
+                            </span>
+                          )}
+                        </div>
                         <span className="flex items-center space-x-1 text-[10px] font-mono text-zinc-400 font-bold bg-white/5 border border-white/5 px-2 py-0.5 rounded-md">
                           <span>★</span>
                           <span>1</span>
@@ -2358,6 +2664,248 @@ export default function AdminDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Fullscreen experience editor overlay */}
+      <AnimatePresence>
+        {fullscreenExpEditor && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="fixed inset-0 z-50 bg-[#050505] text-[#ededed] flex flex-col font-sans select-none"
+          >
+            {/* Header bar */}
+            <div className="flex justify-between items-center px-8 py-5 border-b border-white/5 bg-[#09090b]">
+              <div>
+                <h2 className="text-base font-extrabold font-outfit text-white tracking-tight flex items-center gap-2.5">
+                  <Briefcase className="w-5 h-5 text-red-500" />
+                  <span>{editingExpId ? "Update Work Experience Console" : "New Work Experience Workspace"}</span>
+                </h2>
+                <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                  {editingExpId ? `EXPERIENCE ID: ${editingExpId}` : "CREATING FRESH EXPERIENCE RECORD"}
+                </p>
+              </div>
+              <div className="flex items-center space-x-3.5">
+                <button
+                  onClick={cancelEditExperience}
+                  className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Exit Workspace</span>
+                </button>
+                <button
+                  onClick={handleAddExperience}
+                  className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold tracking-wide transition-all shadow-lg shadow-red-500/20"
+                >
+                  {editingExpId ? "Save Changes" : "Publish Experience"}
+                </button>
+              </div>
+            </div>
+
+            {/* Body split-pane */}
+            <div className="flex-1 flex overflow-hidden select-text">
+              {/* Left Pane (Editor Form) */}
+              <div className="w-1/2 p-10 overflow-y-auto border-r border-white/5 space-y-6 select-text">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 pb-3 border-b border-white/5 select-none">
+                  Experience Record Parameters
+                </h3>
+                
+                {expMsg && (
+                  <div className="p-3.5 rounded-xl text-xs font-semibold text-center border bg-red-500/10 border-red-500/20 text-red-400">
+                    {expMsg}
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                        Job Title <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="E.g. Full Stack Intern"
+                        value={expTitle}
+                        onChange={(e) => { setExpTitle(e.target.value); setExpMsg(""); }}
+                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                        Company Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="E.g. Donald Hans, LA"
+                        value={expCompany}
+                        onChange={(e) => { setExpCompany(e.target.value); setExpMsg(""); }}
+                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Logo Upload & URL */}
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                      Company Logo (Upload Image File or Enter Image URL)
+                    </label>
+                    <div className="flex gap-3 items-center">
+                      {expLogoUrl ? (
+                        <div className="w-12 h-12 rounded-xl border border-white/10 overflow-hidden flex-shrink-0 bg-white/5">
+                          <img src={expLogoUrl} alt="Logo Preview" className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl border border-dashed border-white/10 flex items-center justify-center flex-shrink-0 text-zinc-500 bg-white/5">
+                          <Image className="w-5 h-5" />
+                        </div>
+                      )}
+                      <div className="flex-1 space-y-2">
+                        <input
+                          type="url"
+                          placeholder="https://company.com/logo.png"
+                          value={expLogoUrl}
+                          onChange={(e) => setExpLogoUrl(e.target.value)}
+                          className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none transition-all text-white font-sans"
+                        />
+                        <label className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] font-semibold text-zinc-300 cursor-pointer transition-all">
+                          <Upload className="w-3 h-3" />
+                          <span>Upload Logo Image</span>
+                          <input type="file" accept="image/*" onChange={handleLogoFileUpload} className="hidden" />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Date fields & Present checkbox */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                        Start Date / Period
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="E.g. Jun 2025"
+                        value={expStartDate}
+                        onChange={(e) => setExpStartDate(e.target.value)}
+                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                        End Date / Period
+                      </label>
+                      <input
+                        type="text"
+                        disabled={expIsPresent}
+                        placeholder={expIsPresent ? "Present" : "E.g. Sept 2025"}
+                        value={expIsPresent ? "Present" : expEndDate}
+                        onChange={(e) => setExpEndDate(e.target.value)}
+                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2 pt-1">
+                    <input
+                      type="checkbox"
+                      id="expIsPresentCheck"
+                      checked={expIsPresent}
+                      onChange={(e) => {
+                        setExpIsPresent(e.target.checked);
+                        if (e.target.checked) setExpEndDate("Present");
+                      }}
+                      className="w-4 h-4 rounded border-white/10 bg-[#121214] text-red-600 focus:ring-red-500 focus:ring-offset-0 cursor-pointer"
+                    />
+                    <label htmlFor="expIsPresentCheck" className="text-xs font-bold text-zinc-300 cursor-pointer">
+                      Currently working here / Present position
+                    </label>
+                  </div>
+
+                  {/* Location field */}
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                      Location / Region
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="E.g. Los Angeles, CA (Remote) or Bengaluru, India"
+                      value={expLocation}
+                      onChange={(e) => setExpLocation(e.target.value)}
+                      className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
+                    />
+                  </div>
+
+                  {/* Description points */}
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                      Key Responsibilities / Bullet Points (One per line)
+                    </label>
+                    <textarea
+                      placeholder="Architected structured microdata schematics...\nEngineered high-fidelity chatbot MVP...\nOptimized runtime middleware..."
+                      value={expDescription}
+                      onChange={(e) => setExpDescription(e.target.value)}
+                      className="w-full h-44 bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans resize-none leading-relaxed"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Pane (Dynamic Experience Live Card Mockup) */}
+              <div className="w-1/2 p-10 bg-[#09090b] overflow-y-auto flex flex-col justify-center items-center select-none">
+                <div className="w-full max-w-md">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 pb-3 border-b border-white/5 mb-8 text-center">
+                    Portfolio Experience Timeline Card Mockup
+                  </h3>
+                  
+                  <div className="relative overflow-hidden rounded-[24px] glass-card border border-white/5 p-6 shadow-2xl hover:border-red-500/20 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
+                    <div className="flex items-start space-x-4 mb-4">
+                      <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border border-white/10 bg-white/5 flex items-center justify-center">
+                        {expLogoUrl ? (
+                          <img src={expLogoUrl} alt="Logo" className="w-full h-full object-cover" />
+                        ) : (
+                          <Briefcase className="w-5 h-5 text-red-400" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <h4 className="text-base font-extrabold font-outfit text-white">
+                            {expTitle || "Full Stack Intern"}
+                          </h4>
+                          <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/5 border border-white/5 text-zinc-300">
+                            {expStartDate ? (expIsPresent ? `${expStartDate} – Present` : expEndDate ? `${expStartDate} – ${expEndDate}` : expStartDate) : "Jun 2025 – Present"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-red-400 font-semibold mt-0.5">
+                          {expCompany || "Donald Hans, LA"}
+                        </p>
+                        {expLocation && (
+                          <p className="text-[10px] text-zinc-400 font-mono mt-0.5 flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-red-400" /> {expLocation}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-white/5 pt-4">
+                      <ul className="list-disc pl-4 text-xs text-zinc-400 space-y-1.5 leading-relaxed">
+                        {(expDescription ? expDescription.split("\n").filter(Boolean) : [
+                          "Architected structured microdata schematics and dynamic sitemap topologies...",
+                          "Engineered high-fidelity chatbot MVP powered by Google Gemini API..."
+                        ]).map((bullet, bIdx) => (
+                          <li key={bIdx}>{bullet}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {toast.message && (
         <CustomToast
           key={toast.key}
