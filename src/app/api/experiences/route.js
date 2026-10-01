@@ -8,6 +8,17 @@ let experiencesCache = null;
 
 function sortExperiencesLatestFirst(expList) {
   return [...expList].sort((a, b) => {
+    const orderA = typeof a.order === "number" ? a.order : (a.order ? parseInt(a.order, 10) : null);
+    const orderB = typeof b.order === "number" ? b.order : (b.order ? parseInt(b.order, 10) : null);
+
+    if (orderA !== null && orderB !== null && !isNaN(orderA) && !isNaN(orderB)) {
+      if (orderA !== orderB) return orderA - orderB;
+    } else if (orderA !== null && !isNaN(orderA)) {
+      return -1;
+    } else if (orderB !== null && !isNaN(orderB)) {
+      return 1;
+    }
+
     const aIsPresent = Boolean(a.isPresent || (a.endDate && a.endDate.toString().toLowerCase().includes("present")));
     const bIsPresent = Boolean(b.isPresent || (b.endDate && b.endDate.toString().toLowerCase().includes("present")));
 
@@ -97,7 +108,7 @@ export async function POST(request) {
       endDate,
       isPresent,
       location,
-      description,
+      order,
     } = body;
 
     if (!title || !company) {
@@ -140,6 +151,7 @@ export async function POST(request) {
       period: periodStr,
       location: location || "",
       description: descriptionArray,
+      order: order !== undefined ? parseInt(order, 10) : 1,
       created_at: new Date(),
     };
 
@@ -174,7 +186,7 @@ export async function PUT(request) {
       endDate,
       isPresent,
       location,
-      description,
+      order,
     } = body;
 
     if (!id || !title || !company) {
@@ -219,6 +231,7 @@ export async function PUT(request) {
           period: periodStr,
           location: location || "",
           description: descriptionArray,
+          order: order !== undefined ? parseInt(order, 10) : 1,
           updated_at: new Date(),
         },
       }
@@ -270,5 +283,35 @@ export async function DELETE(request) {
   } catch (error) {
     console.error("Error in DELETE /api/experiences:", error);
     return NextResponse.json({ error: "Failed to delete experience" }, { status: 500 });
+  }
+}
+
+export async function PATCH(request) {
+  try {
+    experiencesCache = null;
+    if (!clientPromise) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+    }
+
+    const client = await clientPromise;
+    const db = client.db("portfolio");
+    const { searchParams } = new URL(request.url);
+    const action = searchParams.get("action");
+
+    if (action === "reorder") {
+      const body = await request.json();
+      if (Array.isArray(body)) {
+        for (const item of body) {
+          const query = ObjectId.isValid(item.id) ? { _id: new ObjectId(item.id) } : { _id: item.id };
+          await db.collection("experiences").updateOne(query, { $set: { order: parseInt(item.order, 10) || 1 } });
+        }
+        return NextResponse.json({ success: true, message: "Experiences reordered successfully" }, { status: 200 });
+      }
+    }
+
+    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+  } catch (error) {
+    console.error("Error in PATCH /api/experiences:", error);
+    return NextResponse.json({ error: "Failed to update priority" }, { status: 500 });
   }
 }

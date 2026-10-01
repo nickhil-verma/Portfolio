@@ -592,6 +592,7 @@ export default function AdminDashboard() {
   const [expIsPresent, setExpIsPresent] = useState(false);
   const [expLocation, setExpLocation] = useState("");
   const [expDescription, setExpDescription] = useState("");
+  const [expOrder, setExpOrder] = useState(1);
   const [expMsg, setExpMsg] = useState("");
   const [editingExpId, setEditingExpId] = useState(null);
   const [fullscreenExpEditor, setFullscreenExpEditor] = useState(false);
@@ -820,6 +821,7 @@ export default function AdminDashboard() {
         isPresent: expIsPresent,
         location: expLocation,
         description: expDescription,
+        order: parseInt(expOrder, 10) || 1,
       };
       if (editingExpId) {
         payload.id = editingExpId;
@@ -855,6 +857,7 @@ export default function AdminDashboard() {
     setExpIsPresent(Boolean(exp.isPresent || exp.endDate === "Present"));
     setExpLocation(exp.location || "");
     setExpDescription(Array.isArray(exp.description) ? exp.description.join("\n") : exp.description || "");
+    setExpOrder(exp.order !== undefined ? exp.order : 1);
     setExpMsg("");
     setFullscreenExpEditor(true);
   };
@@ -869,6 +872,7 @@ export default function AdminDashboard() {
     setExpIsPresent(false);
     setExpLocation("");
     setExpDescription("");
+    setExpOrder(1);
     setExpMsg("");
     setFullscreenExpEditor(false);
   };
@@ -889,6 +893,43 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error(err);
       triggerToast("Error deleting experience", "error");
+    }
+  };
+
+  const handleMoveExperience = async (index, direction) => {
+    if (direction === "up" && index === 0) return;
+    if (direction === "down" && index === dashboardExperiences.length - 1) return;
+
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    const newList = [...dashboardExperiences];
+    
+    const temp = newList[index];
+    newList[index] = newList[targetIndex];
+    newList[targetIndex] = temp;
+
+    const reorderedItems = newList.map((item, i) => ({
+      id: item._id,
+      order: i + 1,
+    }));
+
+    setDashboardExperiences(newList.map((item, i) => ({ ...item, order: i + 1 })));
+
+    try {
+      const res = await fetch("/api/experiences?action=reorder", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(reorderedItems),
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast("Experience display order updated! 🔄", "success");
+        fetchData();
+      } else {
+        triggerToast(data.error || "Failed to save order", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error reordering experiences", "error");
     }
   };
 
@@ -1763,6 +1804,33 @@ export default function AdminDashboard() {
                   {dashboardExperiences.map((exp, idx) => (
                     <div key={idx} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 ${isDark ? "bg-[#121214]/50 border-white/5 hover:border-white/10" : "bg-white border-black/5 hover:border-black/10 shadow-sm"} border rounded-2xl transition-all gap-4`}>
                       <div className="flex items-center space-x-4">
+                        {/* Reordering Controls */}
+                        <div className="flex flex-col items-center justify-center pr-2 border-r border-white/10 select-none">
+                          <button
+                            onClick={() => handleMoveExperience(idx, "up")}
+                            disabled={idx === 0}
+                            className={`p-1 rounded transition-colors ${
+                              idx === 0 ? "opacity-20 cursor-not-allowed text-zinc-500" : `${isDark ? "text-zinc-400 hover:text-white hover:bg-white/10" : "text-zinc-500 hover:text-black hover:bg-black/5"}`
+                            }`}
+                            title="Move Up (Higher Priority)"
+                          >
+                            <ChevronLeft className="w-4 h-4 rotate-90" />
+                          </button>
+                          <span className="text-[10px] font-mono font-bold text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20 my-0.5" title="Display Priority Order">
+                            #{exp.order !== undefined ? exp.order : idx + 1}
+                          </span>
+                          <button
+                            onClick={() => handleMoveExperience(idx, "down")}
+                            disabled={idx === dashboardExperiences.length - 1}
+                            className={`p-1 rounded transition-colors ${
+                              idx === dashboardExperiences.length - 1 ? "opacity-20 cursor-not-allowed text-zinc-500" : `${isDark ? "text-zinc-400 hover:text-white hover:bg-white/10" : "text-zinc-500 hover:text-black hover:bg-black/5"}`
+                            }`}
+                            title="Move Down (Lower Priority)"
+                          >
+                            <ChevronLeft className="w-4 h-4 -rotate-90" />
+                          </button>
+                        </div>
+
                         <div className={`w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border ${isDark ? "border-white/10 bg-white/5" : "border-black/10 bg-zinc-100"} flex items-center justify-center`}>
                           {exp.logoUrl ? (
                             <img src={exp.logoUrl} alt={exp.company} className="w-full h-full object-cover" />
@@ -2823,18 +2891,33 @@ export default function AdminDashboard() {
                     </label>
                   </div>
 
-                  {/* Location field */}
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                      Location / Region
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="E.g. Los Angeles, CA (Remote) or Bengaluru, India"
-                      value={expLocation}
-                      onChange={(e) => setExpLocation(e.target.value)}
-                      className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
-                    />
+                  {/* Location & Priority fields */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                        Location / Region
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="E.g. Los Angeles, CA or Bengaluru, India"
+                        value={expLocation}
+                        onChange={(e) => setExpLocation(e.target.value)}
+                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                        Display Priority / Order (1 = Top)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        placeholder="1"
+                        value={expOrder}
+                        onChange={(e) => setExpOrder(e.target.value)}
+                        className="w-full bg-[#121214]/60 border border-white/5 focus:border-white/10 rounded-xl py-3 px-4 text-xs focus:outline-none transition-all text-white font-mono"
+                      />
+                    </div>
                   </div>
 
                   {/* Description points */}
